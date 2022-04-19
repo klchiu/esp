@@ -7,8 +7,8 @@
 
 // Helper random generator
 static std::uniform_real_distribution<float> *dis;
-static std::random_device rd;
-static std::mt19937 *gen;
+static std::random_device                     rd;
+static std::mt19937 *                         gen;
 
 #include "in_data"
 #include "out_data"
@@ -22,11 +22,7 @@ static void init_random_distribution(void)
     dis = new std::uniform_real_distribution<float>(LO, HI);
 }
 
-static float gen_random_float(void)
-{
-    return (*dis)(*gen);
-}
-
+static float gen_random_float(void) { return (*dis)(*gen); }
 
 // Process
 void system_t::config_proc()
@@ -48,12 +44,12 @@ void system_t::config_proc()
         // Custom configuration
         /* <<--params-->> */
         config.logn_samples = logn_samples;
-        config.num_ffts = num_ffts;
-        config.do_inverse = do_inverse;
-        config.do_shift = do_shift;
+        config.num_ffts     = num_ffts;
+        config.do_inverse   = do_inverse;
+        config.do_shift     = do_shift;
         config.scale_factor = scale_factor;
 
-        wait(); 
+        wait();
         conf_info.write(config);
         conf_done.write(true);
     }
@@ -67,7 +63,9 @@ void system_t::config_proc()
         ESP_REPORT_TIME(begin_time, "BEGIN - fft2");
 
         // Wait the termination of the accelerator
-        do { wait(); } while (!acc_done.read());
+        do {
+            wait();
+        } while (!acc_done.read());
         debug_info_t debug_code = debug.read();
 
         // Print information about end time
@@ -75,7 +73,7 @@ void system_t::config_proc()
         ESP_REPORT_TIME(end_time, "END - fft2");
 
         esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
-        wait(); 
+        wait();
         conf_done.write(false);
     }
 
@@ -84,15 +82,31 @@ void system_t::config_proc()
         const double ERROR_COUNT_TH = 0.02;
         dump_memory(); // store the output in more suitable data structure if needed
         // check the results with the golden model
-        int errs = validate();
+        int    errs    = validate();
         double pct_err = ((double)errs / (double)(2 * num_ffts * num_samples));
-        if (pct_err > ERROR_COUNT_TH)
-        {
-            ESP_REPORT_ERROR("DMA %u FX %u nFFT %u logn %u : Exceeding error count threshold : %d of %u = %g vs %g : validation failed!", DMA_WIDTH, FX_WIDTH, num_ffts, logn_samples, errs, (2 * num_ffts * num_samples), pct_err, ERROR_COUNT_TH);
+
+        ESP_REPORT_INFO("-------------------------------------");
+        if (pct_err > ERROR_COUNT_TH) {
+            ESP_REPORT_ERROR(
+                "DMA %u FX %u nFFT %u logn %u : Exceeding error count threshold : %d of %u = %g vs %g:", DMA_WIDTH,
+                FX_WIDTH, num_ffts, logn_samples, errs, (2 * num_ffts * num_samples), pct_err, ERROR_COUNT_TH);
+            ESP_REPORT_INFO("Validation Failed!");
         } else {
-            ESP_REPORT_INFO("DMA %u FX %u nFFT %u logn %u : Not exceeding error count threshold : %d of %u = %g vs %g: validation passed!", DMA_WIDTH, FX_WIDTH, num_ffts, logn_samples, errs, (2 * num_ffts * num_samples), pct_err, ERROR_COUNT_TH);
+            ESP_REPORT_INFO(
+                "DMA %u FX %u nFFT %u logn %u : Not exceeding error count threshold : %d of %u = %g vs %g:", DMA_WIDTH,
+                FX_WIDTH, num_ffts, logn_samples, errs, (2 * num_ffts * num_samples), pct_err, ERROR_COUNT_TH);
+            ESP_REPORT_INFO("Validation Passed!");
         }
+        ESP_REPORT_INFO("-------------------------------------");
     }
+
+    ESP_REPORT_INFO("FX64_IL = %d", FX64_IL);
+    ESP_REPORT_INFO("FX32_IL = %d", FX32_IL);
+    ESP_REPORT_INFO("FPDATA_IL = %d", FPDATA_IL);
+    ESP_REPORT_INFO("DMA_WIDTH = %d", DMA_WIDTH);
+    ESP_REPORT_INFO("FX_WIDTH = %d", FX_WIDTH);
+    ESP_REPORT_INFO("WORD_SIZE = %d", WORD_SIZE);
+    ESP_REPORT_INFO("-------------------------------------");
 
     // Conclude
     {
@@ -105,8 +119,7 @@ void system_t::load_memory()
 {
     // Optional usage check
 #ifdef CADENCE
-    if (esc_argc() != 1)
-    {
+    if (esc_argc() != 1) {
         ESP_REPORT_INFO("usage: %s\n", esc_argv()[0]);
         sc_stop();
     }
@@ -123,27 +136,30 @@ void system_t::load_memory()
 
     in_size  = in_words_adj;
     out_size = out_words_adj;
-    printf("TEST : MEM : MEM_SIZE = %u : in_size = %u  out_size = %u  gold_size = %u\n", MEM_SIZE, in_size, out_size, out_size);
+    printf("TEST : MEM : MEM_SIZE = %u : in_size = %u  out_size = %u  gold_size = %u\n", MEM_SIZE, in_size, out_size,
+           out_size);
     if (in_size > MEM_SIZE) {
-        ESP_REPORT_INFO("ERROR : Specified in_size is %u and MEM_SIZE is %u -- in_size must be <= MEM_SIZE", in_size, MEM_SIZE);
+        ESP_REPORT_INFO("ERROR : Specified in_size is %u and MEM_SIZE is %u -- in_size must be <= MEM_SIZE", in_size,
+                        MEM_SIZE);
     }
     if (out_size > MEM_SIZE) {
-        ESP_REPORT_INFO("ERROR : Specified out_size is %u and MEM_SIZE is %u -- out_size must be <= MEM_SIZE", out_size, MEM_SIZE);
+        ESP_REPORT_INFO("ERROR : Specified out_size is %u and MEM_SIZE is %u -- out_size must be <= MEM_SIZE", out_size,
+                        MEM_SIZE);
     }
 
     init_random_distribution();
     in = new float[in_size];
-    printf("TEST : MEM : in[%d] @ %p  :: in[%d] @ %p\n", 0, &in[0], (in_size-1), &in[in_size-1]);
+    printf("TEST : MEM : in[%d] @ %p  :: in[%d] @ %p\n", 0, &in[0], (in_size - 1), &in[in_size - 1]);
     printf("IN_DATA:\n");
     printf("float FFT_INPUTS[%u] = {\n", 2 * num_ffts * num_samples);
     for (int j = 0; j < 2 * num_ffts * num_samples; j++) {
-        if (use_input_files) { 
+        if (use_input_files) {
             in[j] = FFT_INPUTS[j];
         } else {
             in[j] = gen_random_float();
         }
-        //in[j] = ((float)j); ///10000.0;
-        printf("    %.15f,\n", in[j]);
+        // in[j] = ((float)j); ///10000.0;
+        // printf("    %.15f,\n", in[j]);
     }
     printf("};\nEND_OF_IN_DATA\n");
 
@@ -153,25 +169,26 @@ void system_t::load_memory()
 
     fft2_comp(gold, num_ffts, num_samples, logn_samples, do_inverse, do_shift); // do_bitrev is always true
 
-    printf("OUT_DATA:\n");
+    printf("GOLD_OUT_DATA:\n");
     printf("float FFT_OUTPUTS[%u] = {\n", 2 * num_ffts * num_samples);
     for (int j = 0; j < 2 * num_ffts * num_samples; j++) {
-        printf("    %.15f,\n", gold[j]);
+        // printf("    %.15f,\n", gold[j]);
     }
-    printf("};\nEND_OF_OUT_DATA\n");
+    printf("};\nEND_OF_GOLD_OUT_DATA\n");
 
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)
-    for (int i = 0; i < in_size; i++)  {
+    for (int i = 0; i < in_size; i++) {
         sc_dt::sc_bv<DATA_WIDTH> data_bv(in[i]);
         for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] = data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
 #else
-    for (int i = 0; i < in_size / DMA_WORD_PER_BEAT; i++)  {
+    for (int i = 0; i < in_size / DMA_WORD_PER_BEAT; i++) {
         sc_dt::sc_bv<DMA_WIDTH> data_bv;
         for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
-            data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) = fp2bv<FPDATA, WORD_SIZE>(FPDATA(in[i * DMA_WORD_PER_BEAT + j]));
+            data_bv.range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
+                fp2bv<FPDATA, WORD_SIZE>(FPDATA(in[i * DMA_WORD_PER_BEAT + j]));
         mem[i] = data_bv;
     }
 #endif
@@ -182,26 +199,26 @@ void system_t::load_memory()
 void system_t::dump_memory()
 {
     // Get results from memory
-    out = new float[out_size];
+    out             = new float[out_size];
     uint32_t offset = 0;
 
 #if (DMA_WORD_PER_BEAT == 0)
     offset = offset * DMA_BEAT_PER_WORD;
-    for (int i = 0; i < out_size; i++)  {
+    for (int i = 0; i < out_size; i++) {
         sc_dt::sc_bv<DATA_WIDTH> data_bv;
 
         for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
             data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH) = mem[offset + DMA_BEAT_PER_WORD * i + j];
 
         FPDATA out_fx = bv2fp<FPDATA, WORD_SIZE>(data_bv);
-        out[i] = (float) out_fx;
+        out[i]        = (float)out_fx;
     }
 #else
     offset = offset / DMA_WORD_PER_BEAT;
     for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++)
         for (int j = 0; j < DMA_WORD_PER_BEAT; j++) {
             FPDATA out_fx = bv2fp<FPDATA, WORD_SIZE>(mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH));
-            out[i * DMA_WORD_PER_BEAT + j] = (float) out_fx;
+            out[i * DMA_WORD_PER_BEAT + j] = (float)out_fx;
         }
 #endif
 
@@ -211,35 +228,38 @@ void system_t::dump_memory()
 int system_t::validate()
 {
     // Check for mismatches
-    uint32_t errors1 = 0;
-    uint32_t errors2 = 0;
-    uint32_t errors3 = 0;
-    const float ERR_TH = 0.05;
-    const float minV = 1.0/(float)(1<<14);
+    uint32_t    errors1 = 0;
+    uint32_t    errors2 = 0;
+    uint32_t    errors3 = 0;
+    const float ERR_TH  = 0.05;
+    const float minV    = 1.0 / (float)(1 << 14);
     printf("minV = %.15f\n", minV);
-    for (int nf = 0; nf < num_ffts; nf++ ) {
+    for (int nf = 0; nf < num_ffts; nf++) {
         for (int j = 0; j < 2 * num_samples; j++) {
-            int idx = 2 * nf * num_samples + j;
-            float eOvG = (fabs(gold[idx] - out[idx] ) / fabs(gold[idx]));
-            float eGvO = (fabs(out[idx]  - gold[idx]) / fabs(out[idx]));
-            //if ((fabs(gold[idx] - out[idx]) / fabs(gold[idx])) > ERR_TH) {
+            int   idx  = 2 * nf * num_samples + j;
+            float eOvG = (fabs(gold[idx] - out[idx]) / fabs(gold[idx]));
+            float eGvO = (fabs(out[idx] - gold[idx]) / fabs(out[idx]));
+            // if ((fabs(gold[idx] - out[idx]) / fabs(gold[idx])) > ERR_TH) {
             if ((eOvG > ERR_TH) && (eGvO > ERR_TH)) {
                 if (errors1 < 4) {
-                    //ESP_REPORT_INFO(" ERROR : GOLD[%u] = %f vs %f = out[%u]\n", idx, gold[idx], out[idx], idx);
-                    ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : gold %.15f  out %.15f", errors1, nf, idx, gold[idx], out[idx]);
+                    // ESP_REPORT_INFO(" ERROR : GOLD[%u] = %f vs %f = out[%u]\n", idx, gold[idx], out[idx], idx);
+                    ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : gold %.15f  out %.15f", errors1, nf, idx, gold[idx],
+                                    out[idx]);
                 }
                 errors1++;
                 if (fabs(gold[j]) > minV) {
                     if (errors2 < 4) {
-                        //ESP_REPORT_INFO(" ERROR : GOLD[%u] = %f vs %f = out[%u]\n", idx, gold[idx], out[idx], idx);
-                        ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : gold %.15f  out %.15f", errors2, nf, idx, gold[idx], out[idx]);
+                        // ESP_REPORT_INFO(" ERROR : GOLD[%u] = %f vs %f = out[%u]\n", idx, gold[idx], out[idx], idx);
+                        ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : gold %.15f  out %.15f", errors2, nf, idx,
+                                        gold[idx], out[idx]);
                     }
                     errors2++;
                 }
                 if (fabs(out[j]) > minV) {
                     if (errors3 < 4) {
-                        //ESP_REPORT_INFO(" ERROR : GOLD[%u] = %f vs %f = out[%u]\n", idx, gold[idx], out[idx], idx);
-                        ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : gold %.15f  out %.15f", errors3, nf, idx, gold[idx], out[idx]);
+                        // ESP_REPORT_INFO(" ERROR : GOLD[%u] = %f vs %f = out[%u]\n", idx, gold[idx], out[idx], idx);
+                        ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : gold %.15f  out %.15f", errors3, nf, idx,
+                                        gold[idx], out[idx]);
                     }
                     errors3++;
                 }
@@ -247,15 +267,17 @@ int system_t::validate()
             /*
             if ((fabs(FFT_OUTPUTS[idx] - out[idx]) / fabs(FFT_OUTPUTS[idx])) > ERR_TH) {
                 if (errors2 < 4) {
-                    //ESP_REPORT_INFO(" ERROR : FFT_OUTPUTS[%u] = %f vs %f = out[%u]\n", idx, FFT_OUTPUTS[idx], out[idx], idx);
-                    ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : FFT_OUTPUTS %.15f  out %.15f", errors2, nf, idx, FFT_OUTPUTS[idx], out[idx]);
+                    //ESP_REPORT_INFO(" ERROR : FFT_OUTPUTS[%u] = %f vs %f = out[%u]\n", idx, FFT_OUTPUTS[idx],
+            out[idx], idx); ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : FFT_OUTPUTS %.15f  out %.15f", errors2, nf,
+            idx, FFT_OUTPUTS[idx], out[idx]);
                 }
                 errors2++;
             }
             if ((fabs(FFT_OUTPUTS[idx] - gold[idx]) / fabs(FFT_OUTPUTS[idx])) > ERR_TH) {
                 if (errors3 < 4) {
-                    //ESP_REPORT_INFO(" ERROR : FFT_OUTPUTS[%u] = %f vs %f = gold[%u]\n", idx, FFT_OUTPUTS[idx], gold[idx], idx);
-                    ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : FFT_OUTPUTS %.15f  GOLD %.15f", errors3, nf, idx, FFT_OUTPUTS[idx], gold[idx]);
+                    //ESP_REPORT_INFO(" ERROR : FFT_OUTPUTS[%u] = %f vs %f = gold[%u]\n", idx, FFT_OUTPUTS[idx],
+            gold[idx], idx); ESP_REPORT_INFO(" ERROR %u : fft %u : idx %u : FFT_OUTPUTS %.15f  GOLD %.15f", errors3, nf,
+            idx, FFT_OUTPUTS[idx], gold[idx]);
                 }
                 errors3++;
             }
@@ -263,12 +285,13 @@ int system_t::validate()
         }
     }
 
-    ESP_REPORT_INFO("DMA %u FX %u nFFT %u logn %u : Rel-Err > %f for %d OvG %d Gmin %d Omin values out of %d\n", 
-                    DMA_WIDTH, FX_WIDTH, num_ffts,logn_samples,  ERR_TH, errors1, errors2, errors3, 2*num_ffts*num_samples);
+    ESP_REPORT_INFO("DMA %u FX %u nFFT %u logn %u : Rel-Err > %f for %d OvG %d Gmin %d Omin values out of %d\n",
+                    DMA_WIDTH, FX_WIDTH, num_ffts, logn_samples, ERR_TH, errors1, errors2, errors3,
+                    2 * num_ffts * num_samples);
 
-    delete [] in;
-    delete [] out;
-    delete [] gold;
+    delete[] in;
+    delete[] out;
+    delete[] gold;
 
     return errors1;
 }

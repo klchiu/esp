@@ -73,7 +73,7 @@ void fft2::load_input()
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
 #else
             fprintf(stderr, "LOAD DMA INFO : rem %u : off = %u , len %u\n", rem, (offset / DMA_WORD_PER_BEAT),
-                   (len / DMA_WORD_PER_BEAT));
+                    (len / DMA_WORD_PER_BEAT));
             dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
 #endif
             offset += len;
@@ -109,14 +109,15 @@ void fft2::load_input()
                 }
             }
 #endif
-            fprintf(stderr, "LOAD hit the load-compute handshake...\n");
+            loads_done++;
+            fprintf(stderr, "--- LOAD hit the load-compute handshake... loads_done = %d\n", loads_done);
             this->load_compute_handshake();
             this->load_to_store_handshake();
-            loads_done++;
+
         } // for (rem = length downto 0 )
     }     // Load scope
 
-    // fprintf(stderr, "LOAD process is done -- did %u loads\n", loads_done);
+    fprintf(stderr, "LOAD process is done -- did %u loads\n", loads_done);
     // Conclude
     {
         this->process_done();
@@ -184,7 +185,8 @@ void fft2::store_output()
 #endif
         // Chunking
         for (int rem = length; rem > 0; rem -= PLM_OUT_WORD) {
-            fprintf(stderr, "STORE hit the store-compute handshake...\n");
+
+            fprintf(stderr, "--- STORE hit the store-compute handshake...\n");
             this->store_compute_handshake();
 
             // Configure DMA transaction
@@ -194,7 +196,7 @@ void fft2::store_output()
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
 #else
             fprintf(stderr, "STORE DMA INFO : rem %u : off = %u , len = %u\n", rem, (offset / DMA_WORD_PER_BEAT),
-                   (len / DMA_WORD_PER_BEAT));
+                    (len / DMA_WORD_PER_BEAT));
             dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
 #endif
             offset += len;
@@ -234,10 +236,13 @@ void fft2::store_output()
 #endif
             stores_done++;
             // rem = 0;
+
+            fprintf(stderr, "--- STORE hit the store-load handshake... stores_done = %d\n", stores_done);
             this->store_to_load_handshake();
         } // for (rem = length downto 0
     }     // Store scope
-    // fprintf(stderr, "STORE process is done - did %u stores!\n", stores_done);
+
+    fprintf(stderr, "STORE process is done - did %u stores!\n", stores_done);
     // Conclude
     {
         this->accelerator_done();
@@ -286,8 +291,8 @@ void fft2::compute_kernel()
         do_shift    = config.do_shift;
         // scale_factor = config.scale_factor;
     }
-    // fprintf(stderr, "COMPUTE: logn_samples %u num_samples %u num_ffts %u inverse %u shift %u\n", logn_samples, num_samples,
-    // num_ffts, do_inverse, do_shift);
+    // fprintf(stderr, "COMPUTE: logn_samples %u num_samples %u num_ffts %u inverse %u shift %u\n", logn_samples,
+    // num_samples, num_ffts, do_inverse, do_shift);
 
     // Compute
     // Loop through the num_ffts successive FFT computations
@@ -298,32 +303,41 @@ void fft2::compute_kernel()
         unsigned max_in_ffts = 1 << (MAX_LOGN_SAMPLES - logn_samples);
         unsigned ffts_done   = 0;
         fprintf(stderr, "COMPUTE: in_len %u : max_in_ffts %u >> %u = %u\n", in_length, MAX_LOGN_SAMPLES, logn_samples,
-               max_in_ffts);
+                max_in_ffts);
         // Chunking : Load/Store Memory transfers (refill memory)
         for (int in_rem = in_length; in_rem > 0; in_rem -= PLM_IN_WORD) {
             uint32_t in_len  = in_rem > PLM_IN_WORD ? PLM_IN_WORD : in_rem;
             uint32_t out_len = out_rem > PLM_OUT_WORD ? PLM_OUT_WORD : out_rem;
 
             // Compute FFT(s) in the PLM
-            fprintf(stderr, "COMPUTE INFO : in_rem %u : in_len %u :: out_rem %u : out_len %u\n", in_rem, in_len, out_rem,
-                   out_len);
-            fprintf(stderr, "COMPUTE hit the compute-load handshake...\n");
+            fprintf(stderr, "COMPUTE INFO: in_rem = %d, in_len = %d, out_rem = %d, out_len = %d\n", in_rem, in_len,
+                    out_rem, out_len);
+
+            fprintf(stderr, "--- COMPUTE hit the compute-load handshake...\n");
             this->compute_load_handshake();
+
             unsigned rem_ffts = (num_ffts - ffts_done);
             unsigned in_ffts  = (rem_ffts > max_in_ffts) ? max_in_ffts : rem_ffts;
-            fprintf(stderr, "COMPUTE has %u rem_ffts : proceeding to the next %u FFT computations...\n", rem_ffts, in_ffts);
+            fprintf(stderr, "COMPUTE has %u rem_ffts : proceeding to the next %u FFT computations...\n", rem_ffts,
+                    in_ffts);
+
             for (unsigned fftn = 0; fftn < in_ffts; fftn++) {
                 unsigned offset = fftn * num_samples; // Offset into Mem for start of this FFT
-                fprintf(stderr, "COMPUTE: starting FFT %u of %u = %u : offset = %u\n", fftn, in_ffts, ffts_done, offset);
+                fprintf(stderr, "COMPUTE: starting FFT %u of %u = %u : offset = %u\n", fftn, in_ffts, ffts_done,
+                        offset);
                 int sin_sign = (do_inverse) ? -1 : 1; // This modifes the mySin
                                                       // values used below
                 if (do_inverse && do_shift) {
                     // fprintf(stderr, "ACCEL: Calling Inverse-Do-Shift\n");
+                    fprintf(stderr, "----- before do shift\n");
                     fft2_do_shift(offset, num_samples, logn_samples);
+                    fprintf(stderr, "----- after do shift\n");
                 }
 
                 // Do the bit-reverse
+                fprintf(stderr, "----- before bit reverse\n");
                 fft2_bit_reverse(offset, num_samples, logn_samples);
+                fprintf(stderr, "----- after bit reverse\n");
 
                 // Computing phase implementation
                 int m = 1; // iterative FFT
@@ -351,11 +365,34 @@ FFT2_SINGLE_L3:
                             int kj  = offset + k + j;
                             int kjm = offset + k + j + md2;
                             // if ((k == 0) && (j == 0)) {
-                            //     fprintf(stderr, "  L3 : FFT %u = %u : k %u j %u md2 %u : kj %u kjm %u : kji %u kjmi %u\n",
-                            //     fftn, ffts_done, k, j, md2, kj, kjm, 2*kj, 2*kjm);
+                            //     fprintf(stderr, "  L3 : FFT %u = %u : k %u j %u md2 %u : kj %u kjm %u : kji %u kjmi
+                            //     %u\n", fftn, ffts_done, k, j, md2, kj, kjm, 2*kj, 2*kjm);
                             // }
                             CompNum akj, akjm;
                             CompNum bkj, bkjm;
+
+#if 0
+// for this weird PLM reading issue
+                            sc_dt::sc_int<DATA_WIDTH> tempA;
+                            sc_dt::sc_int<DATA_WIDTH> tempB;
+                            sc_dt::sc_int<DATA_WIDTH> tempC;
+                            sc_dt::sc_int<DATA_WIDTH> tempD;
+
+                            {
+                                HLS_PROTO("compute_read_A0");
+                                wait();
+                                tempA = A0[2 * kj];
+                                tempB = A0[2 * kj + 1];
+                                wait();
+                                tempC = A0[2 * kjm];
+                                tempD = A0[2 * kjm + 1];
+                            }
+
+                            akj.re = int2fp<FPDATA, WORD_SIZE>(tempA);
+                            akj.im = int2fp<FPDATA, WORD_SIZE>(tempB);
+                            akjm.re = int2fp<FPDATA, WORD_SIZE>(tempC);
+                            akjm.im = int2fp<FPDATA, WORD_SIZE>(tempD);
+#endif
 
                             akj.re  = int2fp<FPDATA, WORD_SIZE>(A0[2 * kj]);
                             akj.im  = int2fp<FPDATA, WORD_SIZE>(A0[2 * kj + 1]);
@@ -384,8 +421,8 @@ FFT2_SINGLE_L3:
                                 // cout << "DFT: A0 " << kj << ": " << A0[kj].re.to_hex() << " " << A0[kj].im.to_hex()
                                 // << endl; cout << "DFT: A0 " << kjm << ": " << A0[kjm].re.to_hex() << " " <<
                                 // A0[kjm].im.to_hex() << endl; if ((k == 0) && (j == 0)) {
-                                //         fprintf(stderr, "  L3 : WROTE A0 %u and %u and %u and %u\n", 2*kj, 2*kj + 1, 2*kjm,
-                                //         2*kjm + 1);
+                                //         fprintf(stderr, "  L3 : WROTE A0 %u and %u and %u and %u\n", 2*kj, 2*kj + 1,
+                                //         2*kjm, 2*kjm + 1);
                                 // }
                             }
                         } // for (j = 0 .. md2)
@@ -405,8 +442,10 @@ FFT2_SINGLE_L3:
                 offset += num_samples; // Offset into Mem for start of this FFT
             }                          // for( n = 0 .. mnum_ffts)
             out_rem -= PLM_OUT_WORD;
-            fprintf(stderr, "COMPUTE hit the compute-store handshake...\n");
+
+            fprintf(stderr, "--- COMPUTE hit the compute-store handshake...\n");
             this->compute_store_handshake();
+
         } // for (in_rem = in_length downto 0)
 
         // Conclude

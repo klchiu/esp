@@ -15,7 +15,7 @@
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 /* <<--defines-->> */
-#define MAX_LOGN_SAMPLES 14
+#define MAX_LOGN_SAMPLES 14 // PLM size will be 2^(MAX_LOGN_SAMPLES+1)
 #define MAX_NUM_SAMPLES  (1 << MAX_LOGN_SAMPLES)
 #define DATA_WIDTH       FX_WIDTH
 
@@ -50,6 +50,7 @@ class fft2 : public esp_accelerator_3P<DMA_WIDTH>
         // Map arrays to memories
         /* <<--plm-bind-->> */
         HLS_MAP_plm(A0, PLM_IN_NAME);
+        HLS_MAP_plm(B0, PLM_IN_NAME);
     }
 
     // Processes
@@ -88,6 +89,7 @@ class fft2 : public esp_accelerator_3P<DMA_WIDTH>
 
     // Private local memories
     sc_dt::sc_int<DATA_WIDTH> A0[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> B0[PLM_IN_WORD];
 };
 
 #endif /* __FFT2_HPP__ */

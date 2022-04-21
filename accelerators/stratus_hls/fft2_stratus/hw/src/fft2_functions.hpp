@@ -48,11 +48,15 @@ inline unsigned int fft2_rev(unsigned int v)
 
 inline void fft2::fft2_bit_reverse(unsigned int offset, unsigned int n, unsigned int bits)
 {
+    // fprintf(stderr, "fft2_bit_reverse\n");
+
     unsigned int i, s, shift;
     s     = 31;
     shift = s - bits + 1;
-    // printf(" BIT_REV offset %u  n %u bits %u\n", offset, n, bits);
+    // fprintf(stderr, " BIT_REV offset %u  n %u bits %u\n", offset, n, bits);
     for (i = 0; i < n; i++) {
+        // HLS_UNROLL_SIMPLE;
+
         unsigned int r;
         FPDATA_WORD  t1_real, t1_imag;
         FPDATA_WORD  t2_real, t2_imag;
@@ -62,7 +66,7 @@ inline void fft2::fft2_bit_reverse(unsigned int offset, unsigned int n, unsigned
 
         unsigned int iidx = 2 * (offset + i);
         unsigned int ridx = 2 * (offset + r);
-        // printf("   BR : offset %u i %u r %u : iidx %u ridx %u\n", offset, i, r, iidx, ridx);
+        // fprintf(stderr, "   BR : offset %u i %u r %u : iidx %u ridx %u\n", offset, i, r, iidx, ridx);
 
         wait();
         t1_real = A0[iidx];
@@ -82,16 +86,21 @@ inline void fft2::fft2_bit_reverse(unsigned int offset, unsigned int n, unsigned
             A0[ridx + 1] = t1_imag;
         }
     }
-    // printf(" ... BIT_REV returns...\n");
+    // fprintf(stderr, " ... BIT_REV returns...\n");
 }
 
 inline void fft2::fft2_do_shift(unsigned int offset, unsigned int num_samples, unsigned int logn_samples)
 {
+    // fprintf(stderr, "fft2_do_shift\n");
+
     int md = (num_samples / 2);
     for (unsigned oi = 0; oi < md; oi++) {
+        // HLS_UNROLL_N(2, "fft2_do_shift-unroll");
+
         unsigned int iidx = 2 * (offset + oi);
         unsigned int midx = 2 * (offset + md + oi);
-        // printf("ACCEL: DO_SHIFT: offset %u : iidx %u %u midx %u %u\n", offset, iidx, (iidx+1), midx, (midx+1));
+        // fprintf(stderr, "ACCEL: DO_SHIFT: offset %u : iidx %u %u midx %u %u\n", offset, iidx, (iidx+1), midx,
+        // (midx+1));
 
         FPDATA_WORD ti_real, ti_imag;
         FPDATA_WORD tim_real, tim_imag;

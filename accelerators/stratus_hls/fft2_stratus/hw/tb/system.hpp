@@ -59,9 +59,15 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
         // logn_samples = 6;
         // num_ffts = 46;
 
+        // [humu]: original
         use_input_files = 0;
         logn_samples    = 12;
         num_ffts        = 15;
+
+        // [humu]: test
+        // use_input_files = 0;
+        // logn_samples    = 12;
+        // num_ffts        = 16;
 
         // use_input_files = 1;
         // logn_samples = 6;
@@ -86,6 +92,12 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 
     // Validate accelerator results
     int validate();
+
+    // Generate input
+    void generate_input();
+
+    // Compute golden output
+    void compute_golden_output();
 
     // Accelerator-specific data
     /* <<--params-->> */

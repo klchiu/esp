@@ -68,22 +68,26 @@ inline void fft2::fft2_bit_reverse(unsigned int offset, unsigned int n, unsigned
         unsigned int ridx = 2 * (offset + r);
         // fprintf(stderr, "   BR : offset %u i %u r %u : iidx %u ridx %u\n", offset, i, r, iidx, ridx);
 
-        wait();
+//{
+//        HLS_PROTO("bit-rev-mem-read");
+//        HLS_BREAK_DEP(A0);
+//        wait();
         t1_real = A0[iidx];
         t1_imag = A0[iidx + 1];
-        wait();
+//        wait();
         t2_real = A0[ridx];
         t2_imag = A0[ridx + 1];
+//}
 
         if (i < r) {
-            HLS_PROTO("bit-rev-memwrite");
-            HLS_BREAK_DEP(A0);
+            HLS_PROTO("bit-rev-mem-write");
+            HLS_BREAK_DEP(B0);
             wait();
-            A0[iidx]     = t2_real;
-            A0[iidx + 1] = t2_imag;
+            B0[iidx]     = t2_real;
+            B0[iidx + 1] = t2_imag;
             wait();
-            A0[ridx]     = t1_real;
-            A0[ridx + 1] = t1_imag;
+            B0[ridx]     = t1_real;
+            B0[ridx + 1] = t1_imag;
         }
     }
     // fprintf(stderr, " ... BIT_REV returns...\n");
@@ -104,21 +108,25 @@ inline void fft2::fft2_do_shift(unsigned int offset, unsigned int num_samples, u
 
         FPDATA_WORD ti_real, ti_imag;
         FPDATA_WORD tim_real, tim_imag;
-        wait();
+//{
+        //HLS_PROTO("do-shift-mem-read");
+        //HLS_BREAK_DEP(A0);
+        //wait();
         ti_real = A0[iidx];
         ti_imag = A0[iidx + 1];
-        wait();
+        //wait();
         tim_real = A0[midx];
         tim_imag = A0[midx + 1];
+//}
         {
-            HLS_PROTO("do-shift-memwrite");
-            HLS_BREAK_DEP(A0);
+            HLS_PROTO("do-shift-mem-write");
+            HLS_BREAK_DEP(B0);
             wait();
-            A0[iidx]     = tim_real;
-            A0[iidx + 1] = tim_imag;
+            B0[iidx]     = tim_real;
+            B0[iidx + 1] = tim_imag;
             wait();
-            A0[midx]     = ti_real;
-            A0[midx + 1] = ti_imag;
+            B0[midx]     = ti_real;
+            B0[midx + 1] = ti_imag;
         }
     }
 }

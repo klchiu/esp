@@ -55,19 +55,26 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
         acc->debug(debug);
 
         /* <<--params-default-->> */
-        // use_input_files = 1
+        // [humu]: this doesn't work
+        // use_input_files = 1;
         // logn_samples = 6;
         // num_ffts = 46;
 
+        use_input_files = 1;
+        logn_samples = 8;
+        num_ffts = 16;
+
+
+
         // [humu]: original
-        use_input_files = 0;
-        logn_samples    = 12;
-        num_ffts        = 15;
+        // use_input_files = 0;
+        // logn_samples    = 12;
+        // num_ffts        = 15;
 
         // [humu]: test
         // use_input_files = 0;
         // logn_samples    = 12;
-        // num_ffts        = 16;
+        // num_ffts        = 32;
 
         // use_input_files = 1;
         // logn_samples = 6;

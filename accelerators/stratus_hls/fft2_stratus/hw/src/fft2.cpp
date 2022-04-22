@@ -83,6 +83,8 @@ void fft2::load_input()
 #if (DMA_WORD_PER_BEAT == 0)
             // data word is wider than NoC links
             for (uint16_t i = 0; i < len; i++) {
+                HLS_BREAK_DEP(A0);
+
                 sc_dt::sc_bv<DATA_WIDTH> dataBv;
 
                 for (uint16_t k = 0; k < DMA_BEAT_PER_WORD; k++) {
@@ -206,6 +208,8 @@ void fft2::store_output()
 #if (DMA_WORD_PER_BEAT == 0)
             // data word is wider than NoC links
             for (uint16_t i = 0; i < len; i++) {
+                HLS_BREAK_DEP(A0);
+
                 // Read from PLM
                 sc_dt::sc_int<DATA_WIDTH> data;
                 wait();
@@ -223,6 +227,8 @@ void fft2::store_output()
             }
 #else
             for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
+                HLS_BREAK_DEP(A0);
+
                 sc_dt::sc_bv<DMA_WIDTH> dataBv;
 
                 // Read from PLM
@@ -302,6 +308,7 @@ void fft2::compute_kernel()
         uint32_t out_rem     = out_length;
         unsigned max_in_ffts = 1 << (MAX_LOGN_SAMPLES - logn_samples);
         unsigned ffts_done   = 0;
+
         fprintf(stderr, "COMPUTE: in_len %u : max_in_ffts %u >> %u = %u\n", in_length, MAX_LOGN_SAMPLES, logn_samples,
                 max_in_ffts);
         // Chunking : Load/Store Memory transfers (refill memory)
@@ -318,13 +325,13 @@ void fft2::compute_kernel()
 
             unsigned rem_ffts = (num_ffts - ffts_done);
             unsigned in_ffts  = (rem_ffts > max_in_ffts) ? max_in_ffts : rem_ffts;
-            fprintf(stderr, "COMPUTE has %u rem_ffts : proceeding to the next %u FFT computations...\n", rem_ffts,
+            fprintf(stderr, "COMPUTE: rem_ffts = %d : proceeding to the next %d FFT computations...\n", rem_ffts,
                     in_ffts);
 
             for (unsigned fftn = 0; fftn < in_ffts; fftn++) {
                 unsigned offset = fftn * num_samples; // Offset into Mem for start of this FFT
-                fprintf(stderr, "COMPUTE: starting FFT %u of %u = %u : offset = %u\n", fftn, in_ffts, ffts_done,
-                        offset);
+                fprintf(stderr, "COMPUTE: starting FFT #: %d, in_ffts = %d, ffts_done = %d, offset = %d\n", fftn,
+                        in_ffts, ffts_done, offset);
                 int sin_sign = (do_inverse) ? -1 : 1; // This modifes the mySin
                                                       // values used below
                 if (do_inverse && do_shift) {
@@ -371,8 +378,7 @@ FFT2_SINGLE_L3:
                             CompNum akj, akjm;
                             CompNum bkj, bkjm;
 
-#if 0
-// for this weird PLM reading issue
+                            // for this weird PLM reading issue
                             sc_dt::sc_int<DATA_WIDTH> tempA;
                             sc_dt::sc_int<DATA_WIDTH> tempB;
                             sc_dt::sc_int<DATA_WIDTH> tempC;
@@ -380,24 +386,19 @@ FFT2_SINGLE_L3:
 
                             {
                                 HLS_PROTO("compute_read_A0");
+                                HLS_BREAK_DEP(B0);
                                 wait();
-                                tempA = A0[2 * kj];
-                                tempB = A0[2 * kj + 1];
+                                tempA = B0[2 * kj];
+                                tempB = B0[2 * kj + 1];
                                 wait();
-                                tempC = A0[2 * kjm];
-                                tempD = A0[2 * kjm + 1];
+                                tempC = B0[2 * kjm];
+                                tempD = B0[2 * kjm + 1];
                             }
 
-                            akj.re = int2fp<FPDATA, WORD_SIZE>(tempA);
-                            akj.im = int2fp<FPDATA, WORD_SIZE>(tempB);
+                            akj.re  = int2fp<FPDATA, WORD_SIZE>(tempA);
+                            akj.im  = int2fp<FPDATA, WORD_SIZE>(tempB);
                             akjm.re = int2fp<FPDATA, WORD_SIZE>(tempC);
                             akjm.im = int2fp<FPDATA, WORD_SIZE>(tempD);
-#endif
-
-                            akj.re  = int2fp<FPDATA, WORD_SIZE>(A0[2 * kj]);
-                            akj.im  = int2fp<FPDATA, WORD_SIZE>(A0[2 * kj + 1]);
-                            akjm.re = int2fp<FPDATA, WORD_SIZE>(A0[2 * kjm]);
-                            akjm.im = int2fp<FPDATA, WORD_SIZE>(A0[2 * kjm + 1]);
 
                             CompNum t;
                             compMul(w, akjm, t);
@@ -409,21 +410,29 @@ FFT2_SINGLE_L3:
                             wwm.im = w.im + (wm.im * w.re - wm.re * w.im);
                             w      = wwm;
 
+                            // static int xx = 0;
+                            // if (xx < 20) {
+                            //    fprintf(stderr, "xx = %d\takj.re = %f\n", xx, (float)akj.re);
+                            //    fprintf(stderr, "xx = %d\takj.im = %f\n", xx, (float)akj.im);
+                            //    fprintf(stderr, "xx = %d\takjm.re = %f\n", xx, (float)akjm.re);
+                            //    fprintf(stderr, "xx = %d\takjm.im = %f\n", xx, (float)akjm.im);
+                            //    xx++;
+                            //}
+
+                            tempA = fp2int<FPDATA, WORD_SIZE>(bkj.re);
+                            tempB = fp2int<FPDATA, WORD_SIZE>(bkj.im);
+                            tempC = fp2int<FPDATA, WORD_SIZE>(bkjm.re);
+                            tempD = fp2int<FPDATA, WORD_SIZE>(bkjm.im);
+
                             {
                                 HLS_PROTO("compute_write_A0");
                                 HLS_BREAK_DEP(A0);
                                 wait();
-                                A0[2 * kj]     = fp2int<FPDATA, WORD_SIZE>(bkj.re);
-                                A0[2 * kj + 1] = fp2int<FPDATA, WORD_SIZE>(bkj.im);
+                                A0[2 * kj]     = tempA;
+                                A0[2 * kj + 1] = tempB;
                                 wait();
-                                A0[2 * kjm]     = fp2int<FPDATA, WORD_SIZE>(bkjm.re);
-                                A0[2 * kjm + 1] = fp2int<FPDATA, WORD_SIZE>(bkjm.im);
-                                // cout << "DFT: A0 " << kj << ": " << A0[kj].re.to_hex() << " " << A0[kj].im.to_hex()
-                                // << endl; cout << "DFT: A0 " << kjm << ": " << A0[kjm].re.to_hex() << " " <<
-                                // A0[kjm].im.to_hex() << endl; if ((k == 0) && (j == 0)) {
-                                //         fprintf(stderr, "  L3 : WROTE A0 %u and %u and %u and %u\n", 2*kj, 2*kj + 1,
-                                //         2*kjm, 2*kjm + 1);
-                                // }
+                                A0[2 * kjm]     = tempC;
+                                A0[2 * kjm + 1] = tempD;
                             }
                         } // for (j = 0 .. md2)
                     }     // for (k = 0 .. num_samples)

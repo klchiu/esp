@@ -82,6 +82,7 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 
         num_samples  = (1 << logn_samples);
         do_inverse   = 0;
+        //do_inverse   = 1;
         do_shift     = 0;
         scale_factor = 1;
     }

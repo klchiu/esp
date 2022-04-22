@@ -25,7 +25,7 @@
     #elif (FX_WIDTH == 32)
         #define DMA_BEAT_PER_WORD 1
         #define DMA_WORD_PER_BEAT 2
-        #define PLM_IN_NAME       "fft2_plm_block_in_fx32"
+        #define PLM_IN_NAME       "fft2_plm_block_in_fx32_4w4r"
         #define PLM_OUT_NAME      "fft2_plm_block_out_fx32"
     #endif // FX_WIDTH
 #endif     // DMA_WIDTH

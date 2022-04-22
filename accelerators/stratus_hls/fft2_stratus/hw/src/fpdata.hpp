@@ -21,11 +21,11 @@ const unsigned int WORD_SIZE = FX_WIDTH;
 const unsigned int FPDATA_WL = 32;
 
 #if (FX_WIDTH == 64)
-const unsigned int FPDATA_IL = FX64_IL;
-// const unsigned int FPDATA_IL = 43;
+// const unsigned int FPDATA_IL = FX64_IL;
+const unsigned int FPDATA_IL = 42;
 #elif (FX_WIDTH == 32)
 // const unsigned int FPDATA_IL = FX32_IL;
-const unsigned int FPDATA_IL = 10;
+const unsigned int FPDATA_IL = 14;
 #endif // FX_WIDTH
 
 // [humu]: where does FX64_IL come from? (from project.tcl)

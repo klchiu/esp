@@ -1,2 +1,5 @@
-fft2_plm_block_in_fx32 32768 32 2w:0r 0w:2r
+fft2_plm_block_in_fx32_1w1r 32768 32 1w:0r 0w:1r
+fft2_plm_block_in_fx32_2w2r 32768 32 2w:0r 0w:2r
+fft2_plm_block_in_fx32_4w4r 32768 32 4w:0r 0w:4ru
+fft2_plm_block_in_fx32_8w8r 32768 32 8w:0r 0w:8r
 fft2_plm_block_in_fx64 32768 64 2w:0r 0w:2r

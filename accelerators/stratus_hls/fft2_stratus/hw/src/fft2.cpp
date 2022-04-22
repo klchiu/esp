@@ -72,7 +72,7 @@ void fft2::load_input()
             // data word is wider than NoC links
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
 #else
-            fprintf(stderr, "LOAD DMA INFO : rem %u : off = %u , len %u\n", rem, (offset / DMA_WORD_PER_BEAT),
+            fprintf(stderr, "LOAD DMA INFO : rem %d : off = %d , len %d\n", rem, (offset / DMA_WORD_PER_BEAT),
                     (len / DMA_WORD_PER_BEAT));
             dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
 #endif
@@ -119,7 +119,7 @@ void fft2::load_input()
         } // for (rem = length downto 0 )
     }     // Load scope
 
-    fprintf(stderr, "LOAD process is done -- did %u loads\n", loads_done);
+    fprintf(stderr, "LOAD process is done -- did %d loads\n", loads_done);
     // Conclude
     {
         this->process_done();
@@ -197,7 +197,7 @@ void fft2::store_output()
             // data word is wider than NoC links
             dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
 #else
-            fprintf(stderr, "STORE DMA INFO : rem %u : off = %u , len = %u\n", rem, (offset / DMA_WORD_PER_BEAT),
+            fprintf(stderr, "STORE DMA INFO : rem %d : off = %d , len = %d\n", rem, (offset / DMA_WORD_PER_BEAT),
                     (len / DMA_WORD_PER_BEAT));
             dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
 #endif
@@ -248,7 +248,7 @@ void fft2::store_output()
         } // for (rem = length downto 0
     }     // Store scope
 
-    fprintf(stderr, "STORE process is done - did %u stores!\n", stores_done);
+    fprintf(stderr, "STORE process is done - did %d stores!\n", stores_done);
     // Conclude
     {
         this->accelerator_done();
@@ -309,7 +309,7 @@ void fft2::compute_kernel()
         unsigned max_in_ffts = 1 << (MAX_LOGN_SAMPLES - logn_samples);
         unsigned ffts_done   = 0;
 
-        fprintf(stderr, "COMPUTE: in_len %u : max_in_ffts %u >> %u = %u\n", in_length, MAX_LOGN_SAMPLES, logn_samples,
+        fprintf(stderr, "COMPUTE: in_len %d : max_in_ffts %d >> %d = %d\n", in_length, MAX_LOGN_SAMPLES, logn_samples,
                 max_in_ffts);
         // Chunking : Load/Store Memory transfers (refill memory)
         for (int in_rem = in_length; in_rem > 0; in_rem -= PLM_IN_WORD) {
@@ -342,7 +342,8 @@ void fft2::compute_kernel()
                 }
 
                 // Do the bit-reverse
-                fprintf(stderr, "----- before bit reverse\n");
+                fprintf(stderr, "----- before bit reverse, offset: %d, num_samples: %d, logn_samples: %d\n", offset,
+                        num_samples, logn_samples);
                 fft2_bit_reverse(offset, num_samples, logn_samples);
                 fprintf(stderr, "----- after bit reverse\n");
 

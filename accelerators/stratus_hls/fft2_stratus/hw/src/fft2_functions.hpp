@@ -48,7 +48,9 @@ inline unsigned int fft2_rev(unsigned int v)
 
 inline void fft2::fft2_bit_reverse(unsigned int offset, unsigned int n, unsigned int bits)
 {
-    // fprintf(stderr, "fft2_bit_reverse\n");
+    // n = num_samples
+    // bits = logn_samples
+    fprintf(stderr, "fft2_bit_reverse, offset: %d, n: %d, bits: %d\n", offset, n, bits);
 
     unsigned int i, s, shift;
     s     = 31;
@@ -66,18 +68,19 @@ inline void fft2::fft2_bit_reverse(unsigned int offset, unsigned int n, unsigned
 
         unsigned int iidx = 2 * (offset + i);
         unsigned int ridx = 2 * (offset + r);
-        // fprintf(stderr, "   BR : offset %u i %u r %u : iidx %u ridx %u\n", offset, i, r, iidx, ridx);
+        // fprintf(stderr, "i: %d, r: %d, iidx: %d, ridx: %d\n", i, r, iidx, ridx);
 
-//{
-//        HLS_PROTO("bit-rev-mem-read");
-//        HLS_BREAK_DEP(A0);
-//        wait();
+        {
+        HLS_PROTO("bit-rev-mem-read");
+        HLS_BREAK_DEP(A0);
+        wait();
         t1_real = A0[iidx];
         t1_imag = A0[iidx + 1];
-//        wait();
+        //wait();
         t2_real = A0[ridx];
         t2_imag = A0[ridx + 1];
-//}
+        wait();
+        }
 
         if (i < r) {
             HLS_PROTO("bit-rev-mem-write");

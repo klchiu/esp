@@ -459,6 +459,32 @@ $(ACC-app): $(SOFT_BUILD)/sysroot soft-build
 $(ACC-app-clean):
 	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-app-clean=)/linux/app
 
+# TODO: [kuanlin]
+$(ACC-app-py): $(SOFT_BUILD)/sysroot soft-build
+	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-app=)/linux/app; \
+	ACC_PATH=$(filter %/$(@:-app=), $(ACC_PATHS)); \
+	if [ `ls -1 $$ACC_PATH/sw/linux/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
+		echo '   ' MAKE $@; \
+		mkdir -p $(SOFT_BUILD)/sysroot/applications/test/; \
+		mkdir -p $$BUILD_PATH; \
+		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
+		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
+			echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe; \
+		else \
+			echo '   ' WARNING $@ compilation failed!; \
+		fi; \
+	else \
+		echo '   ' WARNING $@ not found!; \
+	fi;
+
+# TODO: [kuanlin]
+$(ACC-app-py-clean):
+	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-app-py-clean=)/linux/app
+
+
+
+
+
 $(ACC-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-baremetal=)/baremetal; \
         ACC_PATH=$(filter %/$(@:-baremetal=), $(ACC_PATHS)); \

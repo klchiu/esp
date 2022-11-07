@@ -1,9 +1,9 @@
 # Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-##########################
-###    ESP Makefile    ###
-##########################
+#################################
+###    ESP Global Makefile    ###
+#################################
 
 ### Set variables needed before including the other makefiles
 SOFT              = $(ESP_ROOT)/soft/$(CPU_ARCH)
@@ -118,7 +118,7 @@ include $(ESP_ROOT)/utils/make/bsg.mk
 include $(ESP_ROOT)/utils/make/rtl.mk
 
 
-# ### Vivado targets ###
+### Vivado targets ###
 include $(ESP_ROOT)/utils/make/vivado.mk
 include $(ESP_ROOT)/utils/make/zynq.mk
 
@@ -126,15 +126,16 @@ include $(ESP_ROOT)/utils/make/zynq.mk
 ### Modelsim targets ###
 include $(ESP_ROOT)/utils/make/modelsim.mk
 
-### Modelsim targets ###
+
+### Questa targets ###
 include $(ESP_ROOT)/utils/make/questa.mk
 
 
-# ### Xcelium targets ###
+### Xcelium targets ###
 include $(ESP_ROOT)/utils/make/xmsim.mk
 
 
-# ### Incisive targets ###
+### Incisive targets ###
 include $(ESP_ROOT)/utils/make/ncsim.mk
 
 

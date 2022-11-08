@@ -83,6 +83,9 @@ ACC-driver       = $(addsuffix -driver, $(STRATUSHLS_ACC)) $(addsuffix -driver, 
 ACC-driver-clean = $(addsuffix -driver-clean, $(STRATUSHLS_ACC)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(HLS4ML_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACC)) $(addsuffix -driver-clean, $(CATAPULTHLS_ACC)) $(addsuffix -driver-clean, $(RTL_ACC))
 ACC-app          = $(addsuffix -app, $(STRATUSHLS_ACC)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACC)) $(addsuffix -app, $(CATAPULTHLS_ACC)) $(addsuffix -app, $(RTL_ACC)) 
 ACC-app-clean    = $(addsuffix -app-clean, $(STRATUSHLS_ACC)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(HLS4ML_ACC)) $(addsuffix -app-clean, $(CHISEL_ACC)) $(addsuffix -app-clean, $(CATAPULTHLS_ACC)) $(addsuffix -app-clean, $(RTL_ACC))
+ACC-app-py       = $(addsuffix -app-py, $(STRATUSHLS_ACC)) $(addsuffix -app-py, $(VIVADOHLS_ACC)) $(addsuffix -app-py, $(HLS4ML_ACC)) $(addsuffix -app-py, $(CHISEL_ACC)) $(addsuffix -app-py, $(CATAPULTHLS_ACC)) $(addsuffix -app-py, $(RTL_ACC))
+ACC-app-py-clean = $(addsuffix -app-py-clean, $(STRATUSHLS_ACC)) $(addsuffix -app-py-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-py-clean, $(HLS4ML_ACC)) $(addsuffix -app-py-clean, $(CHISEL_ACC)) $(addsuffix -app-py-clean, $(CATAPULTHLS_ACC)) $(addsuffix -app-py-clean, $(RTL_ACC))
+
 ACC-baremetal        = $(addsuffix -baremetal, $(STRATUSHLS_ACC)) $(addsuffix -baremetal, $(VIVADOHLS_ACC)) $(addsuffix -baremetal, $(HLS4ML_ACC)) $(addsuffix -baremetal, $(CHISEL_ACC)) $(addsuffix -baremetal, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal, $(RTL_ACC))
 ACC-baremetal-clean  = $(addsuffix -baremetal-clean, $(STRATUSHLS_ACC)) $(addsuffix -baremetal-clean, $(VIVADOHLS_ACC)) $(addsuffix -baremetal-clean, $(HLS4ML_ACC)) $(addsuffix -baremetal-clean, $(CHISEL_ACC)) $(addsuffix -baremetal-clean, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal-clean, $(RTL_ACC))
 
@@ -461,15 +464,18 @@ $(ACC-app-clean):
 
 # TODO: [kuanlin]
 $(ACC-app-py): $(SOFT_BUILD)/sysroot soft-build
-	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-app=)/linux/app; \
-	ACC_PATH=$(filter %/$(@:-app=), $(ACC_PATHS)); \
-	if [ `ls -1 $$ACC_PATH/sw/linux/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
+	@BUILD_PATH=$(SOFT_BUILD)/drivers/$(@:-app-py=)/linux/app-py; \
+	ACC_PATH=$(filter %/$(@:-app-py=), $(ACC_PATHS)); \
+	if [ `ls -1 $$ACC_PATH/sw/linux/app-py/*.py 2>/dev/null | wc -l ` -gt 0 ]; then \
+		echo ' test1 '; \
 		echo '   ' MAKE $@; \
-		mkdir -p $(SOFT_BUILD)/sysroot/applications/test/; \
+		mkdir -p $(SOFT_BUILD)/sysroot/applications/test-py/; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
-		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe; \
+		$(CROSS_COMPILE_LINUX)gcc -fPIC -shared -o $$BUILD_PATH/myfunctions.so $$ACC_PATH/sw/linux/app-py/myfunctions.c; \
+		$(CROSS_COMPILE_LINUX)gcc -fPIC -shared -o $$BUILD_PATH/libcmult.so $$ACC_PATH/sw/linux/app-py/cmult.c; \
+		if [ `ls -1 $$BUILD_PATH/*.so 2>/dev/null | wc -l ` -gt 0 ]; then \
+			echo '   ' CP $@; cp  $$BUILD_PATH/*.so $(SOFT_BUILD)/sysroot/applications/test-py/; \
+			cp $$ACC_PATH/sw/linux/app-py/*.py $(SOFT_BUILD)/sysroot/applications/test-py/; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \
 		fi; \
@@ -477,9 +483,11 @@ $(ACC-app-py): $(SOFT_BUILD)/sysroot soft-build
 		echo '   ' WARNING $@ not found!; \
 	fi;
 
+
 # TODO: [kuanlin]
 $(ACC-app-py-clean):
-	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-app-py-clean=)/linux/app
+	$(QUIET_CLEAN)$(RM) $(SOFT_BUILD)/drivers/$(@:-app-py-clean=)/linux/app-py;
+#	$(RM) $(SOFT_BUILD)/sysroot/applications/test-py/*
 
 
 

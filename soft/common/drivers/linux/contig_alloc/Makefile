@@ -1,6 +1,7 @@
 # Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 CFLAGS := -Wall -Werror -O3 -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -L./
+# [kuanlin]: -I$(DRIVERS)/../common/include should be -I$(DRV_LINUX)/../common/include??
 LIBCONTIG := libcontig.a
 
 target: driver $(LIBCONTIG) contig_alloc-libtest

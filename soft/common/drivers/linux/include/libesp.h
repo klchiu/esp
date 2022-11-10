@@ -60,5 +60,8 @@ void *esp_alloc(size_t size);
 void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nacc);
 void esp_run(esp_thread_info_t cfg[], unsigned nacc);
 void esp_free(void *buf);
+int esp_dummy(int x);
+int esp_py_run(int x1, int x2);
+
 
 #endif /* __ESPLIB_H__ */

@@ -463,6 +463,8 @@ $(ACC-app-clean):
 	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-app-clean=)/linux/app
 
 # TODO: [kuanlin]
+PY_INCDIR = -I$(DRIVERS)/include -I$(DRV_LINUX)/include -I$(DRV_LINUX)/../common/include -L./
+
 $(ACC-app-py): $(SOFT_BUILD)/sysroot soft-build
 	@BUILD_PATH=$(SOFT_BUILD)/drivers/$(@:-app-py=)/linux/app-py; \
 	ACC_PATH=$(filter %/$(@:-app-py=), $(ACC_PATHS)); \
@@ -473,9 +475,11 @@ $(ACC-app-py): $(SOFT_BUILD)/sysroot soft-build
 		mkdir -p $$BUILD_PATH; \
 		$(CROSS_COMPILE_LINUX)gcc -fPIC -shared -o $$BUILD_PATH/myfunctions.so $$ACC_PATH/sw/linux/app-py/myfunctions.c; \
 		$(CROSS_COMPILE_LINUX)gcc -fPIC -shared -o $$BUILD_PATH/libcmult.so $$ACC_PATH/sw/linux/app-py/cmult.c; \
+		$(CROSS_COMPILE_LINUX)gcc -fPIC -shared $(PY_INCDIR) -o $$BUILD_PATH/libesp.so $(DRV_LINUX)/libesp/libesp.c $(DRV_LINUX)/contig_alloc/lib.c; \
+		echo ' test2 '; \
 		if [ `ls -1 $$BUILD_PATH/*.so 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp  $$BUILD_PATH/*.so $(SOFT_BUILD)/sysroot/applications/test-py/; \
-			cp $$ACC_PATH/sw/linux/app-py/*.py $(SOFT_BUILD)/sysroot/applications/test-py/; \
+			echo '   ' CP $@; cp  $$BUILD_PATH/*.so $(SOFT_BUILD)/sysroot/root/; \
+			cp $$ACC_PATH/sw/linux/app-py/*.py $(SOFT_BUILD)/sysroot/root/; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \
 		fi; \
@@ -488,9 +492,6 @@ $(ACC-app-py): $(SOFT_BUILD)/sysroot soft-build
 $(ACC-app-py-clean):
 	$(QUIET_CLEAN)$(RM) $(SOFT_BUILD)/drivers/$(@:-app-py-clean=)/linux/app-py;
 #	$(RM) $(SOFT_BUILD)/sysroot/applications/test-py/*
-
-
-
 
 
 $(ACC-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
@@ -515,7 +516,7 @@ $(ACC-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
 $(ACC-baremetal-clean):
 	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-baremetal-clean=)/baremetal
 
-.PHONY: $(ACC-driver) $(ACC-driver-clean) $(ACC-app) $(ACC-app-clean) $(ACC-baremetal) $(ACC-baremetal-clean)
+.PHONY: $(ACC-driver) $(ACC-driver-clean) $(ACC-app) $(ACC-app-clean) $(ACC-app-py) $(ACC-app-py-clean) $(ACC-baremetal) $(ACC-baremetal-clean)
 
 acc-driver: $(ACC-driver)
 

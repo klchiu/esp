@@ -18,6 +18,7 @@ CFLAGS += -Werror
 
 OUT := $(BUILD_PATH)/libesp.a
 OBJS := $(BUILD_PATH)/libesp.o
+SO_OBJS := $(BUILD_PATH)/libesp.so
 
 all: $(OUT)
 
@@ -26,11 +27,20 @@ all: $(OUT)
 $(BUILD_PATH)/%.o: %.c
 	$(CROSS_COMPILE)gcc $(CFLAGS) -c $^ -o $@
 
-$(OUT): $(OBJS)
+$(BUILD_PATH)/libesp.so:
+	@echo "-----------------------"
+	@echo $^
+	@echo "-----------------------"
+	$(CROSS_COMPILE)gcc $(CFLAGS) -fPIC -shared libesp.c -o $@
+
+
+$(OUT): $(OBJS) $(SO_OBJS)
 	$(CROSS_COMPILE)ar r $@ $^
 	$(CROSS_COMPILE)ranlib $@
 
 clean:
+	@echo "-----------------------"
+	@echo "-----------------------"
 	rm -rf $(BUILD_PATH)
 
 .PHONY: all clean

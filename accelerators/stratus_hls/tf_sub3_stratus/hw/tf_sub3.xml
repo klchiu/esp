@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="tf_sub3" desc="TF_SUB3" data_size="100" device_id="075" hls_tool="stratus_hls">
+    <param name="length" desc="length"/>
+    <param name="src_dst_offset_0" desc="output"/>
+    <param name="src_dst_offset_1" desc="input 1"/>
+    <param name="src_dst_offset_2" desc="input 2"/>
+  </accelerator>
+</sld>

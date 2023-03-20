@@ -90,7 +90,7 @@ struct tf_add3_stratus_access tf_add3_cfg_000[] = {
 	}
 };
 
-esp_thread_info_t cfg_tf_add3[]] = {
+esp_thread_info_t cfg_tf_add3[] = {
 	{
 		.run = true,
 		.devname = "tf_add3_stratus.0",

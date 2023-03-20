@@ -56,16 +56,16 @@ static void init_parameters(int len)
     base_addr_2 = len*2;
 
 
-    cfg_tf_add3[0].tf_length = len;
-    cfg_tf_add3[0].tf_src_dst_offset_0 = base_addr_0;
-	cfg_tf_add3[0].tf_src_dst_offset_1 = base_addr_1;
-	cfg_tf_add3[0].tf_src_dst_offset_2 = base_addr_2;
+    tf_add3_cfg_000[0].tf_length = len;
+    tf_add3_cfg_000[0].tf_src_dst_offset_0 = base_addr_0;
+	tf_add3_cfg_000[0].tf_src_dst_offset_1 = base_addr_1;
+	tf_add3_cfg_000[0].tf_src_dst_offset_2 = base_addr_2;
 
     printf("  %s parameters\n", cfg_tf_add3[0].devname);
-    printf("    .length = %d\n", cfg_tf_add3[0].tf_length);
-    printf("    .src_dst_offset_0 = %d\n", cfg_tf_add3[0].tf_src_dst_offset_0);
-    printf("    .src_dst_offset_1 = %d\n", cfg_tf_add3[0].tf_src_dst_offset_1);
-    printf("    .src_dst_offset_2 = %d\n", cfg_tf_add3[0].tf_src_dst_offset_2);
+    printf("    .length = %d\n", tf_add3_cfg_000[0].tf_length);
+    printf("    .src_dst_offset_0 = %d\n", tf_add3_cfg_000[0].tf_src_dst_offset_0);
+    printf("    .src_dst_offset_1 = %d\n", tf_add3_cfg_000[0].tf_src_dst_offset_1);
+    printf("    .src_dst_offset_2 = %d\n", tf_add3_cfg_000[0].tf_src_dst_offset_2);
 }
 
 
@@ -85,48 +85,6 @@ static void free_arrays()
     free(gold_0);
 }
 
-static void sw_run(int32_t do_relu, int32_t transpose, int32_t ninputs,
-		   int32_t d3, int32_t d2, int32_t d1,
-		   native_t *in1, native_t *in2, native_t *out)
-{
-    int i, j, k, l;
-    struct timespec th_start, th_end;
-    native_t *in1_l, *in2_l, *out_l;
-
-    gettime(&th_start);
-
-    for (l = 0; l < ninputs; ++l)
-    {
-	in1_l = &in1[l * d1 * d2];
-	in2_l = &in2[l * d2 * d3];
-	out_l = &out[l * d1 * d3];
-
-	for (i = 0; i < d1; ++i)
-	{
-	    for (j = 0; j < d3; ++j)
-	    {
-		native_t accumulator = 0.0;
-
-		for (k = 0; k < d2; ++k)
-		{
-		    int mtx_in1_i = i * d2 + k;
-		    int mtx_in2_i = transpose ? (j * d2 + k) : (k * d3 + j);
-
-		    accumulator += in1_l[mtx_in1_i] * in2_l[mtx_in2_i];
-		}
-
-		out_l[i * d3 + j] = accumulator;
-	    }
-	}
-    }
-
-    gettime(&th_end);
-
-    unsigned long long hw_ns = ts_subtract(&th_start, &th_end);
-    printf("    Software execution time: %llu ns\n", hw_ns);
-}
-
-
 static void run_pv(int len)
 {
     int i;
@@ -143,7 +101,7 @@ int main(int argc, char **argv)
     token_t *acc_buf;
     native_t *sw_buf;
 
-    printf("\n====== %s ======\n\n", cfg_tf_add3[0].devname);
+    printf("\n====== START: %s ======\n\n", cfg_tf_add3[0].devname);
 
     int test_len = 1024;
 
@@ -163,7 +121,8 @@ int main(int argc, char **argv)
 	// hardware execution
 	printf("  Start accelerator execution\n");
     gettime(&t_hw_start);
-	esp_run_no_print(cfg_tf_add3, 1);
+	// esp_run_no_print(cfg_tf_add3, 1);
+	esp_run(cfg_tf_add3, 1);
     gettime(&t_hw_end);
 	printf("  Completed accelerator execution\n");
 
@@ -191,7 +150,7 @@ int main(int argc, char **argv)
     free(sw_buf);
     free_arrays();
 
-    printf("\n====== %s ======\n\n", cfg_000[0].devname);
+    printf("\n====== DONE! ======\n\n");
 
     return 0;
 }

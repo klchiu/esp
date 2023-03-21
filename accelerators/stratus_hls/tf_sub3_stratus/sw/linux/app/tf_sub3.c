@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "libesp.h"
-#include "cfg_tf_add3.h"
+#include "cfg_tf_sub3.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,23 +15,23 @@ static void init_parameters(int len)
     base_addr_1 = len;
     base_addr_2 = len*2;
 
-    struct tf_add3_stratus_access *tmp;
-    tmp = (struct tf_add3_stratus_access *)cfg_tf_add3[0].esp_desc;
+    struct tf_sub3_stratus_access *tmp;
+    tmp = (struct tf_sub3_stratus_access *)cfg_tf_sub3[0].esp_desc;
     tmp->tf_length = len;
     tmp->tf_src_dst_offset_0 = base_addr_0;
     tmp->tf_src_dst_offset_1 = base_addr_1;
     tmp->tf_src_dst_offset_2 = base_addr_2;
 
-    // tf_add3_cfg_000[0].tf_length = len;
-    // tf_add3_cfg_000[0].tf_src_dst_offset_0 = base_addr_0;
-	// tf_add3_cfg_000[0].tf_src_dst_offset_1 = base_addr_1;
-	// tf_add3_cfg_000[0].tf_src_dst_offset_2 = base_addr_2;
+    // tf_sub3_cfg_000[0].tf_length = len;
+    // tf_sub3_cfg_000[0].tf_src_dst_offset_0 = base_addr_0;
+	// tf_sub3_cfg_000[0].tf_src_dst_offset_1 = base_addr_1;
+	// tf_sub3_cfg_000[0].tf_src_dst_offset_2 = base_addr_2;
 
-    printf("  %s parameters\n", cfg_tf_add3[0].devname);
-    printf("    .length = %d\n", tf_add3_cfg_000[0].tf_length);
-    printf("    .src_dst_offset_0 = %d\n", tf_add3_cfg_000[0].tf_src_dst_offset_0);
-    printf("    .src_dst_offset_1 = %d\n", tf_add3_cfg_000[0].tf_src_dst_offset_1);
-    printf("    .src_dst_offset_2 = %d\n", tf_add3_cfg_000[0].tf_src_dst_offset_2);
+    printf("  %s parameters\n", cfg_tf_sub3[0].devname);
+    printf("    .length = %d\n", tf_sub3_cfg_000[0].tf_length);
+    printf("    .src_dst_offset_0 = %d\n", tf_sub3_cfg_000[0].tf_src_dst_offset_0);
+    printf("    .src_dst_offset_1 = %d\n", tf_sub3_cfg_000[0].tf_src_dst_offset_1);
+    printf("    .src_dst_offset_2 = %d\n", tf_sub3_cfg_000[0].tf_src_dst_offset_2);
 }
 
 static void malloc_arrays(int len)
@@ -138,7 +138,7 @@ static void run_sw(int len)
 
     int i;
     for (i = 0 ; i < len; i++){
-        gold_0[i] = input_1[i] + input_2[i];
+        gold_0[i] = input_1[i] - input_2[i];
     }
 }
 
@@ -153,7 +153,7 @@ int run_test(int test_len, unsigned long long *hw_ns, unsigned long long *sw_ns)
     
     int ret_validate;
 
-    printf("\n====== START: %s ======\n\n", cfg_tf_add3[0].devname);
+    printf("\n====== START: %s ======\n\n", cfg_tf_sub3[0].devname);
 
     // int test_len = 1024;
 
@@ -163,7 +163,7 @@ int run_test(int test_len, unsigned long long *hw_ns, unsigned long long *sw_ns)
     init_arrays(test_len);
 
     acc_buf = (token_t *) esp_alloc(MAX_LENGTH*3);
-    cfg_tf_add3[0].hw_buf = acc_buf;
+    cfg_tf_sub3[0].hw_buf = acc_buf;
     
 
 	printf("\n-------------------\n");
@@ -174,8 +174,8 @@ int run_test(int test_len, unsigned long long *hw_ns, unsigned long long *sw_ns)
 	// hardware execution
 	printf("  Start accelerator execution\n");
     gettime(&t_hw_start);
-	esp_run_no_print(cfg_tf_add3, 1);
-	// esp_run(cfg_tf_add3, 1);
+	esp_run_no_print(cfg_tf_sub3, 1);
+	// esp_run(cfg_tf_sub3, 1);
     gettime(&t_hw_end);
 	printf("  Completed accelerator execution\n");
 
@@ -210,7 +210,7 @@ int run_test(int test_len, unsigned long long *hw_ns, unsigned long long *sw_ns)
 
 int main(int argc, char **argv)
 {
-    FILE* log_0320 = fopen("log_0320_tf_add3.txt", "w");
+    FILE* log_0320 = fopen("log_0320_tf_sub3.txt", "w");
 
     int i, j, k;
     int len;

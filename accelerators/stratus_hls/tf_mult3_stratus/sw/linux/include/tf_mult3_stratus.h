@@ -1,7 +1,7 @@
 // Copyright (c) 2011-2023 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
-#ifndef _TF_ADD3_STRATUS_H_
-#define _TF_ADD3_STRATUS_H_
+#ifndef _TF_MULT3_STRATUS_H_
+#define _TF_MULT3_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -19,7 +19,7 @@
 
 
 
-struct tf_add3_stratus_access {
+struct tf_mult3_stratus_access {
 	struct esp_access esp;
 
 	unsigned int tf_length;
@@ -30,7 +30,7 @@ struct tf_add3_stratus_access {
 	unsigned int dst_offset;
 };
 
-#define TF_ADD3_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct tf_add3_stratus_access)
+#define TF_MULT3_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct tf_mult3_stratus_access)
 
 
 // Accelerator-specific data
@@ -46,4 +46,4 @@ float *gold_0;
 
 uint32_t MAX_LENGTH;
 
-#endif /* _TF_ADD3_STRATUS_H_ */
+#endif /* _TF_MULT3_STRATUS_H_ */

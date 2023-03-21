@@ -29,7 +29,7 @@ static struct of_device_id tf_mult3_device_ids[] = {
         .name = "SLD_TF_MULT3_STRATUS",
     },
     {
-        .name = "eb_07A",
+        .name = "eb_07C",
     },
     {
         .compatible = "sld,tf_mult3_stratus",

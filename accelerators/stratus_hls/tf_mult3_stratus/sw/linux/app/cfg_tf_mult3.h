@@ -1,10 +1,10 @@
 // Copyright (c) 2011-2023 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
-#ifndef __CFG_TF_ADD3_H__
-#define __CFG_TF_ADD3_H__
+#ifndef __CFG_TF_MULT3_H__
+#define __CFG_TF_MULT3_H__
 
 #include "libesp.h"
-#include "tf_add3_stratus.h"
+#include "tf_mult3_stratus.h"
 
 
 typedef uint64_t token_t;
@@ -16,7 +16,7 @@ typedef float native_t;
 
 
 
-struct tf_add3_stratus_access tf_add3_cfg_000[] = {
+struct tf_mult3_stratus_access tf_mult3_cfg_000[] = {
 	{
 		/* <<--descriptor-->> */
 		.tf_length = 1024,
@@ -32,13 +32,13 @@ struct tf_add3_stratus_access tf_add3_cfg_000[] = {
 	}
 };
 
-esp_thread_info_t cfg_tf_add3[] = {
+esp_thread_info_t cfg_tf_mult3[] = {
 	{
 		.run = true,
-		.devname = "tf_add3_stratus.0",
-		.ioctl_req = TF_ADD3_STRATUS_IOC_ACCESS,
-		.esp_desc = &(tf_add3_cfg_000[0].esp),
+		.devname = "tf_mult3_stratus.0",
+		.ioctl_req = TF_MULT3_STRATUS_IOC_ACCESS,
+		.esp_desc = &(tf_mult3_cfg_000[0].esp),
 	}
 };
 
-#endif /* __CFG_TF_ADD3_H__ */
+#endif /* __CFG_TF_MULT3_H__ */

@@ -4,53 +4,13 @@
 #include "libesp.h"
 #include "cfg_tf_add3.h"
 
-static void validate_buffer(token_t *acc_buf, native_t *sw_buf, unsigned len)
-{
-    int i;
-    native_t val;
-    unsigned errors = 0;
-
-    printf("\nPrint output\n");
-
-    for (i = 0; i < len; i++) {
-
-#ifdef __FIXED
-	val = fx2float(acc_buf[i], FX_IL);
-#else
-	val = acc_buf[i];
-#endif
-	if (sw_buf[i] != val) {
-	    errors++;
-	    if (errors <= MAX_PRINTED_ERRORS)
-		printf("index %d : output %d : expected %d <-- ERROR\n", i, (int) val, (int) sw_buf[i]);
-	}
-    }
-
-    if (!errors)
-	printf("\n  ** Test PASSED! **\n");
-    else
-	printf("\n  ** Test FAILED! **\n");
-}
-
-static void init_buffer(token_t *acc_buf, native_t *sw_buf, unsigned in_len)
-{
-    int i;
-
-    printf("  Initialize inputs\n");
-
-    for (i = 0; i < in_len; i++) {
-	native_t val = i % 17 - 8;
-#ifdef __FIXED
-        acc_buf[i] = float2fx(val, FX_IL);
-#else
-        acc_buf[i] = val;
-#endif
-	sw_buf[i] = val;
-    }
-}
+#include <stdio.h>
+#include <stdlib.h>
 
 static void init_parameters(int len)
 {
+    printf("-- init_parameters\n");
+
     base_addr_0 = 0;
     base_addr_1 = len;
     base_addr_2 = len*2;
@@ -68,89 +28,212 @@ static void init_parameters(int len)
     printf("    .src_dst_offset_2 = %d\n", tf_add3_cfg_000[0].tf_src_dst_offset_2);
 }
 
-
 static void malloc_arrays(int len)
 {
+    printf("-- malloc_arrays\n");
+
     output_0 = (float*)malloc(sizeof(float) * len);
     input_1 = (float*)malloc(sizeof(float) * len);
     input_2 = (float*)malloc(sizeof(float) * len);
     gold_0 = (float*)malloc(sizeof(float) * len);
 }
 
+static void init_arrays(int len)
+{
+    printf("-- init_arrays\n");
+
+    int i;
+
+    for (i = 0 ; i < len; i++){
+        // float val_1 = i *100 / 3.0 - 17;
+        // float val_2 = i *100 / 9.0 - 17;
+        float val_1 = rand() % 100 / 3.0 - 17;
+        float val_2 = rand() % 100 / 9.0 - 17;
+
+
+        input_1[i] = val_1;
+        input_2[i] = val_2;
+
+        if(i < 10){
+            printf("%d: val_1: %f\tval_2: %f\n", i, val_1, val_2);
+        }
+    }
+}
+
+static void load_buffer(token_t *acc_buf, unsigned in_len)
+{
+    printf("-- load_buffer\n");
+
+    int i;
+
+    // load input_1
+    for (i = 0; i < in_len; i++) {
+        acc_buf[base_addr_1 + i] = float2fx(input_1[i], FX_IL);
+    }
+    // load input_2
+    for (i = 0; i < in_len; i++) {
+        acc_buf[base_addr_2 + i] = float2fx(input_2[i], FX_IL);
+    }
+}
+
+
+
+
+
+static void store_buffer(token_t *acc_buf, unsigned len)
+{
+    printf("-- store_buffer\n");
+
+    int i;
+
+    for (i = 0; i < len; i++) {
+    	output_0[i] = fx2float(acc_buf[base_addr_0 + i], FX_IL);
+    }
+}
+
+static void validate_array(unsigned len)
+{
+    printf("-- validate_array\n");
+
+    int i;
+    unsigned errors = 0;
+
+    for (i = 0; i < len; i++) {
+        if (output_0[i] != gold_0[i]) {
+            errors++;
+            if (errors < 20)
+    		    printf("index: %d, output: %f, gold: %f <-- ERROR\n", 
+                    i, output_0[i], gold_0[i]);
+        }
+	}
+
+    if (!errors)
+	    printf("\n  ** Test PASSED! **\n");
+    else
+	    printf("\n  ** Test FAILED! ** Error counts: %d\n", errors);
+}
+
+
 static void free_arrays()
 {
+    printf("-- free_arrays\n");
+
     free(output_0);
     free(input_1);
     free(input_2);
     free(gold_0);
 }
 
-static void run_pv(int len)
+static void run_sw(int len)
 {
+    printf("-- run_sw\n");
+
     int i;
     for (i = 0 ; i < len; i++){
         gold_0[i] = input_1[i] + input_2[i];
     }
 }
 
-int main(int argc, char **argv)
+
+
+int run_test(int test_len, unsigned long long *hw_ns, unsigned long long *sw_ns)
 {
     struct timespec t_sw_start, t_sw_end;
     struct timespec t_hw_start, t_hw_end;
 
     token_t *acc_buf;
-    native_t *sw_buf;
 
     printf("\n====== START: %s ======\n\n", cfg_tf_add3[0].devname);
 
-    int test_len = 1024;
+    // int test_len = 1024;
 
     init_parameters(test_len);
     
     malloc_arrays(test_len);
+    init_arrays(test_len);
+
     acc_buf = (token_t *) esp_alloc(MAX_SIZE);
     cfg_tf_add3[0].hw_buf = acc_buf;
-    sw_buf = malloc(MAX_SIZE);
     
 
-	printf("\n\n-------------------\n");
+	printf("\n-------------------\n");
 
-	// initialize input data
-	init_buffer(acc_buf, sw_buf, test_len);
+	// load input data to acc
+	load_buffer(acc_buf, test_len);
 
 	// hardware execution
 	printf("  Start accelerator execution\n");
     gettime(&t_hw_start);
-	// esp_run_no_print(cfg_tf_add3, 1);
-	esp_run(cfg_tf_add3, 1);
+	esp_run_no_print(cfg_tf_add3, 1);
+	// esp_run(cfg_tf_add3, 1);
     gettime(&t_hw_end);
 	printf("  Completed accelerator execution\n");
 
 	// software execution
 	printf("  Start software execution\n");
     gettime(&t_sw_start);
-	run_pv(test_len);
+	run_sw(test_len);
     gettime(&t_sw_end);
     printf("  Completed software execution\n");
 
+  
+    store_buffer(acc_buf, test_len);
 
-    unsigned long long hw_ns = ts_subtract(&t_hw_start, &t_hw_end);
-    printf("    Hardware execution time: %llu ns\n", hw_ns);
-    unsigned long long sw_ns = ts_subtract(&t_sw_start, &t_sw_end);
-    printf("    Software execution time: %llu ns\n", sw_ns);
+	validate_array(test_len);
 
-	// validation
-	// errors = print_input(buf, gold);
-	validate_buffer(&acc_buf[test_len], &sw_buf[test_len], test_len);
+    *hw_ns = ts_subtract(&t_hw_start, &t_hw_end);
+    printf("    Hardware execution time: %llu ns\n", *hw_ns);
+    *sw_ns = ts_subtract(&t_sw_start, &t_sw_end);
+    printf("    Software execution time: %llu ns\n", *sw_ns);
 
-
+    printf(" HW/SW Speedup: %f\n", (float)(*sw_ns)/(float)(*hw_ns));
 
     // free
     esp_free(acc_buf);
-    free(sw_buf);
     free_arrays();
 
     printf("\n====== DONE! ======\n\n");
 
+    return 0;
+}
+
+
+int main(int argc, char **argv)
+{
+    FILE* log_0320 = fopen("log_0320.txt", "w");
+
+    int i, j;
+    int len;
+    // int tests[6] = {128, 256, 512, 1024, 2048, 4096};
+    unsigned long long hw_ns;
+    unsigned long long sw_ns;
+
+    unsigned long long hw_total;
+    unsigned long long sw_total;
+
+    unsigned long long hw_avg;
+    unsigned long long sw_avg;
+
+
+    for(i = 0 ; i < 20; i++){
+        hw_total = 0;
+        sw_total = 0;
+        // len = tests[i];
+        len = 2 << i;
+
+        for(j = 0 ; j < 20 ; j++){
+            
+            run_test(len, &hw_ns, &sw_ns);
+            // fprintf(log_0320, "len: %d, hw_ns: %llu, sw_ns: %llu\n", len, hw_ns, sw_ns);
+            hw_total += hw_ns;
+            sw_total += sw_ns;
+        }
+        hw_avg = hw_total / 20;
+        sw_avg = sw_total / 20;
+        fprintf(log_0320, "len: %d hw_ns: %llu sw_ns: %llu\n", len, hw_avg, sw_avg);
+    }
+
+    fclose(log_0320);
+    
     return 0;
 }

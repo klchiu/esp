@@ -17,15 +17,17 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
+
+
 struct tf_add3_stratus_access {
 	struct esp_access esp;
-	/* <<--regs-->> */
-	unsigned tf_length;
-	unsigned tf_src_dst_offset_0;	// output
-	unsigned tf_src_dst_offset_1;	// input 1
-	unsigned tf_src_dst_offset_2;	// input 2
-	unsigned src_offset;
-	unsigned dst_offset;
+
+	unsigned int tf_length;
+	unsigned int tf_src_dst_offset_0;	// output
+	unsigned int tf_src_dst_offset_1;	// input 1
+	unsigned int tf_src_dst_offset_2;	// input 2
+	unsigned int src_offset;
+	unsigned int dst_offset;
 };
 
 #define TF_ADD3_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct tf_add3_stratus_access)

@@ -6,66 +6,13 @@
 #include "libesp.h"
 #include "tf_add3_stratus.h"
 
-/* User defined */
 
-// Define data type (decomment the one needed)
-// #define __UINT
-// #define __INT
-#define __FIXED
-//#define __FLOAT
-
-// Define bit width (decomment the one needed)
-// #ifndef __riscv
-#define BITWIDTH 32
-// #define BITWIDTH 64
-// #else
-// #define BITWIDTH 32
-// #define BITWIDTH 64
-// #endif
-
-/* End of user defined */
-
-#ifdef __UINT
-#if (BITWIDTH == 32)
-typedef unsigned token_t;
-#elif (BITWIDTH == 64)
-typedef long long unsigned token_t;
-#endif
-#endif
-
-#ifdef __INT
-#if (BITWIDTH == 32)
-typedef int token_t;
-#elif (BITWIDTH == 64)
-typedef long long token_t;
-#endif
-#endif
-
-#ifdef __FIXED
-#if (BITWIDTH == 32)
-typedef int token_t;
-#define fx2float fixed32_to_float
-#define float2fx float_to_fixed32
-#define FX_IL 16
-#elif (BITWIDTH == 64)
-typedef long long token_t;
-#define fx2float fixed64_to_double
-#define float2fx double_to_fixed64
-#define FX_IL 32
-#endif
-#endif
-
-#ifdef __FLOAT
-#if (BITWIDTH == 32)
-typedef float token_t;
-#elif (BITWIDTH == 64)
-typedef double token_t;
-#endif
-#endif
-
+typedef uint64_t token_t;
 typedef float native_t;
 
-#define MAX_PRINTED_ERRORS 512
+#define fx2float             fixed64_to_double
+#define float2fx             double_to_fixed64
+#define FX_IL           34
 
 /* <<--params-def-->> */
 #define NACC 1

@@ -27,7 +27,7 @@ void tf_mult3::mult(uint32_t length)
     // printf("nCols = %d\n", nCols);
     for (i = 0; i < length; i++) {
             // uint32_t index = i * nCols + j;
-            HLS_UNROLL_LOOP(COMPLETE, 256, "unroll-add-func");
+            HLS_UNROLL_LOOP(COMPLETE, 64, "unroll-add-func");
 
             FPDATA_WORD tmp1 = A0_in1[i];
             FPDATA_WORD tmp2 = A0_in2[i];

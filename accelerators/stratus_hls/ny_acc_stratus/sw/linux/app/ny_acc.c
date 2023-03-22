@@ -126,26 +126,26 @@ void validate_buf(token_t *buf)
 }
 
 //--------------------------------------------------------------------------------------
-void run_synth3_0_mtm_a(void *ptr) { esp_run_no_print(cfg_ny_acc_0_mtm_a, 1); }
-void run_synth3_1_mtm_a(void *ptr) { esp_run_no_print(cfg_ny_acc_1_mtm_a, 1); }
-void run_synth3_2_mtm_a(void *ptr) { esp_run_no_print(cfg_ny_acc_2_mtm_a, 1); }
-void run_synth3_3_mtm_a(void *ptr) { esp_run_no_print(cfg_ny_acc_3_mtm_a, 1); }
-void run_synth3_4_mtm_a(void *ptr) { esp_run_no_print(cfg_ny_acc_4_mtm_a, 1); }
-void run_synth3_5_mtm_a(void *ptr) { esp_run_no_print(cfg_ny_acc_5_mtm_a, 1); }
+void run_synth3_0_mtm_a(void *ptr) { esp_run(cfg_ny_acc_0_mtm_a, 1); }
+void run_synth3_1_mtm_a(void *ptr) { esp_run(cfg_ny_acc_1_mtm_a, 1); }
+void run_synth3_2_mtm_a(void *ptr) { esp_run(cfg_ny_acc_2_mtm_a, 1); }
+void run_synth3_3_mtm_a(void *ptr) { esp_run(cfg_ny_acc_3_mtm_a, 1); }
+void run_synth3_4_mtm_a(void *ptr) { esp_run(cfg_ny_acc_4_mtm_a, 1); }
+void run_synth3_5_mtm_a(void *ptr) { esp_run(cfg_ny_acc_5_mtm_a, 1); }
 
-void run_synth3_0_mtm_b(void *ptr) { esp_run_no_print(cfg_ny_acc_0_mtm_b, 1); }
-void run_synth3_1_mtm_b(void *ptr) { esp_run_no_print(cfg_ny_acc_1_mtm_b, 1); }
-void run_synth3_2_mtm_b(void *ptr) { esp_run_no_print(cfg_ny_acc_2_mtm_b, 1); }
-void run_synth3_3_mtm_b(void *ptr) { esp_run_no_print(cfg_ny_acc_3_mtm_b, 1); }
-void run_synth3_4_mtm_b(void *ptr) { esp_run_no_print(cfg_ny_acc_4_mtm_b, 1); }
-void run_synth3_5_mtm_b(void *ptr) { esp_run_no_print(cfg_ny_acc_5_mtm_b, 1); }
+void run_synth3_0_mtm_b(void *ptr) { esp_run(cfg_ny_acc_0_mtm_b, 1); }
+void run_synth3_1_mtm_b(void *ptr) { esp_run(cfg_ny_acc_1_mtm_b, 1); }
+void run_synth3_2_mtm_b(void *ptr) { esp_run(cfg_ny_acc_2_mtm_b, 1); }
+void run_synth3_3_mtm_b(void *ptr) { esp_run(cfg_ny_acc_3_mtm_b, 1); }
+void run_synth3_4_mtm_b(void *ptr) { esp_run(cfg_ny_acc_4_mtm_b, 1); }
+void run_synth3_5_mtm_b(void *ptr) { esp_run(cfg_ny_acc_5_mtm_b, 1); }
 
-void run_synth3_0_mtm_c(void *ptr) { esp_run_no_print(cfg_ny_acc_0_mtm_c, 1); }
-void run_synth3_1_mtm_c(void *ptr) { esp_run_no_print(cfg_ny_acc_1_mtm_c, 1); }
-void run_synth3_2_mtm_c(void *ptr) { esp_run_no_print(cfg_ny_acc_2_mtm_c, 1); }
-void run_synth3_3_mtm_c(void *ptr) { esp_run_no_print(cfg_ny_acc_3_mtm_c, 1); }
-void run_synth3_4_mtm_c(void *ptr) { esp_run_no_print(cfg_ny_acc_4_mtm_c, 1); }
-void run_synth3_5_mtm_c(void *ptr) { esp_run_no_print(cfg_ny_acc_5_mtm_c, 1); }
+void run_synth3_0_mtm_c(void *ptr) { esp_run(cfg_ny_acc_0_mtm_c, 1); }
+void run_synth3_1_mtm_c(void *ptr) { esp_run(cfg_ny_acc_1_mtm_c, 1); }
+void run_synth3_2_mtm_c(void *ptr) { esp_run(cfg_ny_acc_2_mtm_c, 1); }
+void run_synth3_3_mtm_c(void *ptr) { esp_run(cfg_ny_acc_3_mtm_c, 1); }
+void run_synth3_4_mtm_c(void *ptr) { esp_run(cfg_ny_acc_4_mtm_c, 1); }
+void run_synth3_5_mtm_c(void *ptr) { esp_run(cfg_ny_acc_5_mtm_c, 1); }
 
 void test_mtm_a(token_t *buf, int num_col, int num_row, int delay, int test_batch)
 {
@@ -678,12 +678,12 @@ void test_stm_a(token_t *buf, int num_col, int num_row, int delay, int test_batc
 
     gettime(&t_test_1);
     for (i = 0; i < test_batch; i++) {
-        esp_run_no_print(cfg_ny_acc_0_stm_a, 1);
-        esp_run_no_print(cfg_ny_acc_1_stm_a, 1);
-        esp_run_no_print(cfg_ny_acc_2_stm_a, 1);
-        esp_run_no_print(cfg_ny_acc_3_stm_a, 1);
-        esp_run_no_print(cfg_ny_acc_4_stm_a, 1);
-        esp_run_no_print(cfg_ny_acc_5_stm_a, 1);
+        esp_run(cfg_ny_acc_0_stm_a, 1);
+        esp_run(cfg_ny_acc_1_stm_a, 1);
+        esp_run(cfg_ny_acc_2_stm_a, 1);
+        esp_run(cfg_ny_acc_3_stm_a, 1);
+        esp_run(cfg_ny_acc_4_stm_a, 1);
+        esp_run(cfg_ny_acc_5_stm_a, 1);
     }
     gettime(&t_test_2);
 
@@ -744,12 +744,12 @@ void test_stm_b(token_t *buf, int num_col, int num_row, int delay, int test_batc
 
     gettime(&t_test_1);
     for (i = 0; i < test_batch; i++) {
-        esp_run_no_print(cfg_ny_acc_0_stm_b, 1);
-        esp_run_no_print(cfg_ny_acc_1_stm_b, 1);
-        esp_run_no_print(cfg_ny_acc_2_stm_b, 1);
-        esp_run_no_print(cfg_ny_acc_3_stm_b, 1);
-        esp_run_no_print(cfg_ny_acc_4_stm_b, 1);
-        esp_run_no_print(cfg_ny_acc_5_stm_b, 1);
+        esp_run(cfg_ny_acc_0_stm_b, 1);
+        esp_run(cfg_ny_acc_1_stm_b, 1);
+        esp_run(cfg_ny_acc_2_stm_b, 1);
+        esp_run(cfg_ny_acc_3_stm_b, 1);
+        esp_run(cfg_ny_acc_4_stm_b, 1);
+        esp_run(cfg_ny_acc_5_stm_b, 1);
     }
     gettime(&t_test_2);
 
@@ -810,12 +810,12 @@ void test_stm_c(token_t *buf, int num_col, int num_row, int delay, int test_batc
 
     gettime(&t_test_1);
     for (i = 0; i < test_batch; i++) {
-        esp_run_no_print(cfg_ny_acc_0_stm_c, 1);
-        esp_run_no_print(cfg_ny_acc_1_stm_c, 1);
-        esp_run_no_print(cfg_ny_acc_2_stm_c, 1);
-        esp_run_no_print(cfg_ny_acc_3_stm_c, 1);
-        esp_run_no_print(cfg_ny_acc_4_stm_c, 1);
-        esp_run_no_print(cfg_ny_acc_5_stm_c, 1);
+        esp_run(cfg_ny_acc_0_stm_c, 1);
+        esp_run(cfg_ny_acc_1_stm_c, 1);
+        esp_run(cfg_ny_acc_2_stm_c, 1);
+        esp_run(cfg_ny_acc_3_stm_c, 1);
+        esp_run(cfg_ny_acc_4_stm_c, 1);
+        esp_run(cfg_ny_acc_5_stm_c, 1);
     }
     gettime(&t_test_2);
 
@@ -852,7 +852,7 @@ void test_p2p_a(token_t *buf, int num_col, int num_row, int delay, int test_batc
     // load_buf(buf);
 
     gettime(&t_test_1);
-    esp_run_no_print(cfg_ny_acc_p2p_a, 6);
+    esp_run(cfg_ny_acc_p2p_a, 6);
     gettime(&t_test_2);
 
     // validate_buf(buf);
@@ -911,7 +911,7 @@ void test_p2p_b(token_t *buf, int num_col, int num_row, int delay, int test_batc
     // load_buf(buf);
 
     gettime(&t_test_1);
-    esp_run_no_print(cfg_ny_acc_p2p_b, 6);
+    esp_run(cfg_ny_acc_p2p_b, 6);
     gettime(&t_test_2);
 
     // validate_buf(buf);
@@ -970,7 +970,7 @@ void test_p2p_c(token_t *buf, int num_col, int num_row, int delay, int test_batc
     // load_buf(buf);
 
     gettime(&t_test_1);
-    esp_run_no_print(cfg_ny_acc_p2p_c, 6);
+    esp_run(cfg_ny_acc_p2p_c, 6);
     gettime(&t_test_2);
 
     // validate_buf(buf);

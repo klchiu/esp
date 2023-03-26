@@ -35,8 +35,8 @@ FILE *log_file;
 
 #include "cfg_stm_a.h"
 #include "cfg_p2p_a.h"
-#include "cfg_stm_c.h"
-#include "cfg_p2p_c.h"
+#include "cfg_stm_b.h"
+#include "cfg_p2p_b.h"
 
 #include "monitors.h"
 
@@ -91,7 +91,7 @@ void validate_buf(token_t *buf)
 //--------------------------------------------------------------------------------------
 
 
-void test_stm_a(token_t *buf, int num_col, int num_row, int delay, int test_batch)
+unsigned long long test_stm_a(token_t *buf, int num_col, int num_row, int delay, int test_batch)
 {
     cfg_ny_acc_0_stm_a[0].hw_buf = buf;
     cfg_ny_acc_1_stm_a[0].hw_buf = buf;
@@ -122,33 +122,35 @@ void test_stm_a(token_t *buf, int num_col, int num_row, int delay, int test_batc
 
     time_s = ts_subtract(&t_test_1, &t_test_2);
 
-    printf("[stm_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
-           test_batch, time_s);
-    fprintf(log_file, "[stm_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
-            delay, test_batch, time_s);
+    // printf("[stm_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
+    //        test_batch, time_s);
+    // fprintf(log_file, "[stm_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
+    //         delay, test_batch, time_s);
+
+    return time_s;
 }
 
-void test_stm_c(token_t *buf, int num_col, int num_row, int delay, int test_batch)
+unsigned long long test_stm_b(token_t *buf, int num_col, int num_row, int delay, int test_batch)
 {
-    cfg_ny_acc_0_stm_c[0].hw_buf = buf;
-    cfg_ny_acc_1_stm_c[0].hw_buf = buf;
-    cfg_ny_acc_2_stm_c[0].hw_buf = buf;
-    cfg_ny_acc_3_stm_c[0].hw_buf = buf;
+    cfg_ny_acc_0_stm_b[0].hw_buf = buf;
+    cfg_ny_acc_1_stm_b[0].hw_buf = buf;
+    cfg_ny_acc_2_stm_b[0].hw_buf = buf;
+    cfg_ny_acc_3_stm_b[0].hw_buf = buf;
 
     struct ny_acc_stratus_access *tmp;
-    tmp = (struct ny_acc_stratus_access *)cfg_ny_acc_0_stm_c[0].esp_desc;
+    tmp = (struct ny_acc_stratus_access *)cfg_ny_acc_0_stm_b[0].esp_desc;
     tmp->wami_num_col = num_col;
     tmp->wami_num_row = num_row;
     tmp->wami_batch   = delay;
-    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_1_stm_c[0].esp_desc;
+    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_1_stm_b[0].esp_desc;
     tmp->wami_num_col = num_col;
     tmp->wami_num_row = num_row * 2;
     tmp->wami_batch   = delay;
-    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_2_stm_c[0].esp_desc;
+    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_2_stm_b[0].esp_desc;
     tmp->wami_num_col = num_col;
     tmp->wami_num_row = num_row;
     tmp->wami_batch   = delay;
-    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_3_stm_c[0].esp_desc;
+    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_3_stm_b[0].esp_desc;
     tmp->wami_num_col = num_col;
     tmp->wami_num_row = num_row;
     tmp->wami_batch   = delay;
@@ -159,10 +161,10 @@ void test_stm_c(token_t *buf, int num_col, int num_row, int delay, int test_batc
 
     gettime(&t_test_1);
     for (i = 0; i < test_batch; i++) {
-        esp_run(cfg_ny_acc_0_stm_c, 1);
-        esp_run(cfg_ny_acc_1_stm_c, 1);
-        esp_run(cfg_ny_acc_2_stm_c, 1);
-        esp_run(cfg_ny_acc_3_stm_c, 1);
+        esp_run(cfg_ny_acc_0_stm_b, 1);
+        esp_run(cfg_ny_acc_1_stm_b, 1);
+        esp_run(cfg_ny_acc_2_stm_b, 1);
+        esp_run(cfg_ny_acc_3_stm_b, 1);
     }
     gettime(&t_test_2);
 
@@ -170,13 +172,15 @@ void test_stm_c(token_t *buf, int num_col, int num_row, int delay, int test_batc
 
     time_s = ts_subtract(&t_test_1, &t_test_2);
 
-    printf("[stm_c] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
-           test_batch, time_s);
-    fprintf(log_file, "[stm_c] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
-            delay, test_batch, time_s);
+    // printf("[stm_b] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
+    //        test_batch, time_s);
+    // fprintf(log_file, "[stm_b] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
+    //         delay, test_batch, time_s);
+
+    return time_s;
 }
 
-void test_p2p_a(token_t *buf, int num_col, int num_row, int delay, int test_batch)
+unsigned long long test_p2p_a(token_t *buf, int num_col, int num_row, int delay, int test_batch)
 {
     cfg_ny_acc_p2p_a[0].hw_buf = buf;
     cfg_ny_acc_p2p_a[1].hw_buf = buf;
@@ -204,38 +208,40 @@ void test_p2p_a(token_t *buf, int num_col, int num_row, int delay, int test_batc
 
     time_s = ts_subtract(&t_test_1, &t_test_2);
 
-    printf("[p2p_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
-           test_batch, time_s);
-    fprintf(log_file, "[p2p_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
-            delay, test_batch, time_s);
+    // printf("[p2p_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
+    //        test_batch, time_s);
+    // fprintf(log_file, "[p2p_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
+    //         delay, test_batch, time_s);
+
+    return time_s;
 }
 
-void test_p2p_c(token_t *buf, int num_col, int num_row, int delay, int test_batch)
+unsigned long long test_p2p_b(token_t *buf, int num_col, int num_row, int delay, int test_batch)
 {
-    cfg_ny_acc_p2p_c[0].hw_buf = buf;
-    cfg_ny_acc_p2p_c[1].hw_buf = buf;
-    cfg_ny_acc_p2p_c[2].hw_buf = buf;
-    cfg_ny_acc_p2p_c[3].hw_buf = buf;
+    cfg_ny_acc_p2p_b[0].hw_buf = buf;
+    cfg_ny_acc_p2p_b[1].hw_buf = buf;
+    cfg_ny_acc_p2p_b[2].hw_buf = buf;
+    cfg_ny_acc_p2p_b[3].hw_buf = buf;
 
     struct ny_acc_stratus_access *tmp;
-    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_p2p_c[0].esp_desc;
+    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_p2p_b[0].esp_desc;
+    tmp->wami_num_img = test_batch;
+    tmp->wami_num_col = num_col;
+    tmp->wami_num_row = num_row * 2;
+    tmp->wami_batch   = delay;
+    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_p2p_b[1].esp_desc;
     tmp->wami_num_img = test_batch;
     tmp->wami_num_col = num_col;
     tmp->wami_num_row = num_row;
     tmp->wami_batch   = delay;
-    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_p2p_c[1].esp_desc;
+    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_p2p_b[2].esp_desc;
     tmp->wami_num_img = test_batch;
     tmp->wami_num_col = num_col;
-    tmp->wami_num_row = num_row * 2;
+    tmp->wami_num_row = num_row;
     tmp->wami_batch   = delay;
-    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_p2p_c[2].esp_desc;
+    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_p2p_b[3].esp_desc;
     tmp->wami_num_img = test_batch;
     tmp->wami_num_col = num_col * 2;
-    tmp->wami_num_row = num_row * 2;
-    tmp->wami_batch   = delay;
-    tmp               = (struct ny_acc_stratus_access *)cfg_ny_acc_p2p_c[3].esp_desc;
-    tmp->wami_num_img = test_batch;
-    tmp->wami_num_col = num_col;
     tmp->wami_num_row = num_row;
     tmp->wami_batch   = delay;
 
@@ -244,17 +250,19 @@ void test_p2p_c(token_t *buf, int num_col, int num_row, int delay, int test_batc
     // load_buf(buf);
 
     gettime(&t_test_1);
-    esp_run(cfg_ny_acc_p2p_c, 4);
+    esp_run(cfg_ny_acc_p2p_b, 4);
     gettime(&t_test_2);
 
     // validate_buf(buf);
 
     time_s = ts_subtract(&t_test_1, &t_test_2);
 
-    printf("[p2p_c] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
-           test_batch, time_s);
-    fprintf(log_file, "[p2p_c] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
-            delay, test_batch, time_s);
+    // printf("[p2p_b] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
+    //        test_batch, time_s);
+    // fprintf(log_file, "[p2p_b] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
+    //         delay, test_batch, time_s);
+
+    return time_s;
 }
 
 int main(int argc, char **argv)
@@ -265,31 +273,45 @@ int main(int argc, char **argv)
 
     log_file = fopen("log.txt", "w");
 
+    unsigned long long time_stm;
+    unsigned long long time_p2p;
+
     token_t *buf;
     buf = (token_t *)esp_alloc(5000000);
 
    
-    test_stm_a(buf, 128, 128, 16384, 10);
-    test_p2p_a(buf, 128, 128, 16384, 10);
+    time_stm = test_stm_a(buf, 128, 128, 16384, 10);
+    time_p2p = test_p2p_a(buf, 128, 128, 16384, 10);
+    fprintf(log_file, "load: %d, store: %d, compute: %d, p2p/stm speedup: %.2f\n", 128, 128, 16384, (float)time_stm/time_p2p);
 
-    test_stm_a(buf, 128, 128, 1048576, 10);
-    test_p2p_a(buf, 128, 128, 1048576, 10);
+    time_stm = test_stm_a(buf, 128, 128, 1048576, 10);
+    time_p2p = test_p2p_a(buf, 128, 128, 1048576, 10);
+    fprintf(log_file, "load: %d, store: %d, compute: %d, p2p/stm speedup: %.2f\n", 128, 128, 1048576, (float)time_stm/time_p2p);
 
-    test_stm_a(buf, 8192, 8192, 16384, 10);
-    test_p2p_a(buf, 8192, 8192, 16384, 10);
+    time_stm = test_stm_a(buf, 8192, 8192, 16384, 10);
+    time_p2p = test_p2p_a(buf, 8192, 8192, 16384, 10);
+    fprintf(log_file, "load: %d, store: %d, compute: %d, p2p/stm speedup: %.2f\n", 8192, 8192, 16384, (float)time_stm/time_p2p);
 
     printf("------ a batch = 10 done\n");
 
-    test_stm_a(buf, 128, 128, 16384, 100);
-    test_p2p_a(buf, 128, 128, 16384, 100);
 
-    test_stm_a(buf, 128, 128, 1048576, 100);
-    test_p2p_a(buf, 128, 128, 1048576, 100);
 
-    test_stm_a(buf, 8192, 8192, 16384, 100);
-    test_p2p_a(buf, 8192, 8192, 16384, 100);
 
-    printf("------ a batch = 100 done\n");
+    time_stm = test_stm_b(buf, 128, 128, 16384, 10);
+    time_p2p = test_p2p_a(buf, 128, 128, 8192, 10);
+    fprintf(log_file, "load: %d, store: %d, compute: %d, p2p/stm speedup: %.2f\n", 128, 128, 16384, (float)time_stm/time_p2p);
+
+
+    time_stm = test_stm_b(buf, 128, 128, 1048576, 10);
+    time_p2p = test_p2p_a(buf, 128, 128, 8192, 10);
+    fprintf(log_file, "load: %d, store: %d, compute: %d, p2p/stm speedup: %.2f\n", 128, 128, 1048576, (float)time_stm/time_p2p);
+
+
+    time_stm = test_stm_b(buf, 8192, 8192, 16384, 10);
+    time_p2p = test_p2p_a(buf, 8192, 8192, 8192, 10);
+    fprintf(log_file, "load: %d, store: %d, compute: %d, p2p/stm speedup: %.2f\n", 8192, 8192, 16384, (float)time_stm/time_p2p);
+
+    printf("------ b batch = 10 done\n");
 
  
 

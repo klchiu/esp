@@ -1,10 +1,12 @@
-#ifndef _WAMI_CONFIG_TB_H_
-#define _WAMI_CONFIG_TB_H_
+#ifndef _WAMI_CONFIG_TB_HPP_
+#define _WAMI_CONFIG_TB_HPP_
 
-#include "wami_config.h"
+#include "wami_config.hpp"
 
-#define INPUT_SIZE_TINY    0
-#define INPUT_SIZE_132_17  1
+// #define INPUT_SIZE_TINY    0
+// #define INPUT_SIZE_132_17  1
+#define INPUT_SIZE_TINY    1 // [humu]: swap the id for now, should fix this later
+#define INPUT_SIZE_132_17  0 // [humu]: swap the id for now, should fix this later
 #define INPUT_SIZE_SMALL   2
 #define INPUT_SIZE_516_17  3
 #define INPUT_SIZE_516_33  4
@@ -23,13 +25,14 @@
     #define INPUT_IMG_NUM_ROWS 16
     #define INPUT_IMG_NUM_COLS 16
     #define INPUT_NUM_IMGS     4
-// static const char *input_filename = "./inout/tiny_app_input.bin";
+static const char *input_filename = "./inout/tiny_app_input.bin";
 
 #elif INPUT_SIZE == INPUT_SIZE_132_17
     #define INPUT_IMG_NUM_ROWS 132
     #define INPUT_IMG_NUM_COLS 132
-    #define INPUT_NUM_IMGS     17
-static const char *input_filename = "./inout/fish_132_17.bin";
+    // #define INPUT_NUM_IMGS     17
+    #define INPUT_NUM_IMGS     1 // [humu]: test 1 image for now
+static const char *input_filename = "../../../wami_common/fish_132_17.bin";
 
 #elif INPUT_SIZE == INPUT_SIZE_SMALL
     #define INPUT_IMG_NUM_ROWS 512
@@ -226,4 +229,4 @@ static const char *input_filename = "./inout/large_app_input.bin";
     #define ADD_MAX_ERROR 0.001
 #endif
 
-#endif /* _WAMI_CONFIG_TB_H_ */
+#endif /* _WAMI_CONFIG_TB_HPP_ */

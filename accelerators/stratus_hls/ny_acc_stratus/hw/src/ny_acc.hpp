@@ -22,9 +22,6 @@ class ny_acc : public esp_accelerator_3P<DMA_WIDTH>
   public:
     // Output <-> Input
     handshake_t accel_ready;
-    // handshake_t input_ready2;  // Handshake INPUT vs. COMPUTATION
-    // handshake_t output_ready2; // Handshake COMPUTATION vs. OUTPUT
-    // handshake_t next_image;    // Handshake INPUT vs. OUTPUT
 
     // Constructor
     SC_HAS_PROCESS(ny_acc);
@@ -32,9 +29,6 @@ class ny_acc : public esp_accelerator_3P<DMA_WIDTH>
         : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
         , accel_ready("accel_ready")
-    // , input_ready2("input_ready2")
-    // , output_ready2("output_ready2")
-    // , next_image("next_image")
     {
         // SC_CTHREAD(config_kernel, clk.pos());
         // reset_signal_is(rst, false);
@@ -42,9 +36,6 @@ class ny_acc : public esp_accelerator_3P<DMA_WIDTH>
         // Signal binding
         cfg.bind_with(*this);
         accel_ready.bind_with(*this);
-        // input_ready2.bind_with(*this);
-        // output_ready2.bind_with(*this);
-        // next_image.bind_with(*this);
 
         // Clock binding for memories
         HLS_MAP_A0B0_synth_in;

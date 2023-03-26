@@ -19,13 +19,9 @@ void ny_acc::synth(uint32_t delay)
     for (x = 0; x < 16; x++) {
         FPDATA_WORD temp    = A0B0_synth_in[x];
         FPDATA      fp_temp = int2fp<FPDATA, FPDATA_WL>(temp);
-        // fprintf(stderr, "compute func debug 2\n");
         fp_temp = fp_temp + FPDATA(1.0);
-        // fprintf(stderr, "compute func debug 3\n");
         FPDATA_WORD temp2 = fp2bv<FPDATA, FPDATA_WL>(fp_temp);
-        // fprintf(stderr, "compute func debug 4\n");
         A0B0_synth_out[x] = temp2;
-        // fprintf(stderr, "compute func debug 5\n");
         wait();
     }
 

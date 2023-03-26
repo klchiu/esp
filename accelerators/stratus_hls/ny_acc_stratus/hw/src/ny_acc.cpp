@@ -64,9 +64,6 @@ void ny_acc::load_input()
             pixel_fp = pixel_bv.range(63, 0).to_int64();
 
             A0B0_synth_in[0] = pixel_fp;
-            // A0B0_synth_in[j] = pixel_fp;
-            // j++;
-            // if(j == 16) j = 0;
 
             wait();
         }

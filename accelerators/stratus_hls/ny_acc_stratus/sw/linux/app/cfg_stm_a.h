@@ -6,7 +6,6 @@
 #include "libesp.h"
 #include "ny_acc_stratus.h"
 
-// typedef int32_t token_t;
 typedef uint64_t token_t;
 
 struct ny_acc_stratus_access ny_acc_cfg_stm_a[] = {
@@ -58,20 +57,6 @@ esp_thread_info_t cfg_ny_acc_2_stm_a[] = {{
 esp_thread_info_t cfg_ny_acc_3_stm_a[] = {{
     .run       = true,
     .devname   = "ny_acc_stratus.3",
-    .ioctl_req = NY_ACC_STRATUS_IOC_ACCESS,
-    .esp_desc  = &(ny_acc_cfg_stm_a[0].esp),
-}};
-
-esp_thread_info_t cfg_ny_acc_4_stm_a[] = {{
-    .run       = true,
-    .devname   = "ny_acc_stratus.4",
-    .ioctl_req = NY_ACC_STRATUS_IOC_ACCESS,
-    .esp_desc  = &(ny_acc_cfg_stm_a[0].esp),
-}};
-
-esp_thread_info_t cfg_ny_acc_5_stm_a[] = {{
-    .run       = true,
-    .devname   = "ny_acc_stratus.5",
     .ioctl_req = NY_ACC_STRATUS_IOC_ACCESS,
     .esp_desc  = &(ny_acc_cfg_stm_a[0].esp),
 }};

@@ -30,6 +30,8 @@
 
 
 FILE *log_file;
+FILE *log_monitor;
+
 
 //--------------------------------------------------------------------------------------
 
@@ -43,33 +45,24 @@ FILE *log_file;
 void load_buf(token_t *buf)
 {
     int x, y;
-
-    printf("------- load_buf, start, size = %d\n", 128);
-
     for (x = 0; x < 128 * 128; x++) {
         y      = 128 * 128 + x;
         buf[y] = x;
     }
-    printf("------- load_buf, finish\n");
 }
 
 void reset_buf_to_zero(token_t *buf)
 {
     int x;
-    printf("------- reset_buf_to_zero, size = %d\n", 128);
-
     for (x = 0; x < 128 * 128 * 2; x++) {
         // printf("x = %d\n", x);
         buf[x] = 0;
     }
-    printf("------- reset_buf_to_zero, finish\n");
 }
 
 void validate_buf(token_t *buf)
 {
     int x, y;
-    printf("------- validate_buf, size = %d\n", 128);
-
     int error_count = 0;
     for (x = 0; x < 128 * 128; x++) {
         y = 0 + x;
@@ -85,7 +78,6 @@ void validate_buf(token_t *buf)
     } else {
         printf("ny_acc: Correct!!!\n");
     }
-    printf("------- validate_buf, finish\n");
 }
 
 //--------------------------------------------------------------------------------------
@@ -105,7 +97,6 @@ unsigned long long test_stm_a(token_t *buf, int num_col, int num_row, int delay,
     tmp->wami_num_row = num_row;
     tmp->wami_batch   = delay;
 
-    // -- load inputs to the memory
     // reset_buf_to_zero(buf);
     // load_buf(buf);
 
@@ -122,10 +113,6 @@ unsigned long long test_stm_a(token_t *buf, int num_col, int num_row, int delay,
 
     time_s = ts_subtract(&t_test_1, &t_test_2);
 
-    // printf("[stm_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, delay,
-    //        test_batch, time_s);
-    // fprintf(log_file, "[stm_a] col_load: %d\trow_store: %d\tdelay: %d\tbatch: %d\ttime: %llu\n", num_col, num_row,
-    //         delay, test_batch, time_s);
 
     return time_s;
 }
@@ -155,7 +142,6 @@ unsigned long long test_stm_b(token_t *buf, int num_col, int num_row, int delay,
     tmp->wami_num_row = num_row;
     tmp->wami_batch   = delay;
 
-    // -- load inputs to the memory
     // reset_buf_to_zero(buf);
     // load_buf(buf);
 
@@ -272,6 +258,8 @@ int main(int argc, char **argv)
     printf("-------------------------------------------------------\n");
 
     log_file = fopen("log.txt", "w");
+    log_monitor = fopen("log_monitor.txt", "w");
+
 
     unsigned long long time_stm;
     unsigned long long time_p2p;
@@ -313,11 +301,26 @@ int main(int argc, char **argv)
 
     printf("------ b batch = 10 done\n");
 
+
+
+    // demonstrate monitor
+    esp_monitor_args_t mon_args;
+    esp_monitor_vals_t vals_start, vals_end, vals_diff;
+
+    mon_args.read_mode  = ESP_MON_READ_ALL;
+
+    esp_monitor(mon_args, &vals_start);
+    esp_run(cfg_ny_acc_0_stm_a, 1);
+    esp_monitor(mon_args, &vals_end);
+    vals_diff = esp_monitor_diff(vals_start, vals_end);
+    esp_monitor_print(mon_args, vals_diff, log_monitor);
+
  
 
     esp_free(buf);
 
     fclose(log_file);
+    fclose(log_monitor);
 
     printf("-------------------------------------------------------\n");
     printf("-- FINISH\n");

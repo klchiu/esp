@@ -16,7 +16,7 @@
 
 #include "esp_templates.hpp"
 
-#define DATA_WIDTH 64
+//#define DATA_WIDTH 64
 #define MEM_SIZE   5000000 // TODO: [humu] right now it's oversized
 
 #include "core/systems/esp_system.hpp"

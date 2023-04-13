@@ -6,13 +6,22 @@
 #include "libesp.h"
 #include "tf_add3_stratus.h"
 
-
+#define DATA_WIDTH 32
+#if (DATA_WIDTH == 64)
 typedef uint64_t token_t;
-typedef float native_t;
+typedef double native_t;
 
 #define fx2float             fixed64_to_double
 #define float2fx             double_to_fixed64
 #define FX_IL           34
+#elif (DATA_WIDTH == 32)
+typedef uint32_t token_t;
+typedef float native_t;
+
+#define fx2float             fixed32_to_float
+#define float2fx             float_to_fixed32
+#define FX_IL           16
+#endif
 
 
 

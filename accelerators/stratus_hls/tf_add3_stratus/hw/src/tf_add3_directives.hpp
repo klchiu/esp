@@ -13,9 +13,9 @@ typedef sc_uint<16> pixel_t;
 
 #if defined(STRATUS_HLS)
 
-    #define HLS_MAP_A0_in_full(x) HLS_MAP_TO_MEMORY(x, "plm_a_full")
+    #define HLS_MAP_A0_in_full(x) HLS_MAP_TO_MEMORY(x, PLM_A_IN_NAME)
     #define HLS_MAP_A0_in_chunk(x) HLS_MAP_TO_MEMORY(x, "plm_a_chunk")
-    #define HLS_MAP_B0_out_full(x) HLS_MAP_TO_MEMORY(x, "plm_b_full")
+    #define HLS_MAP_B0_out_full(x) HLS_MAP_TO_MEMORY(x, PLM_B_OUT_NAME)
     #define HLS_MAP_B0_out_chunk(x) HLS_MAP_TO_MEMORY(x, "plm_b_chunk")
 
     #define HLS_PROTO(_s) HLS_DEFINE_PROTOCOL(_s)

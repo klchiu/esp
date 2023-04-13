@@ -59,6 +59,7 @@ void tf_add3::load_input()
         ESP_REPORT_TIME(load_begin_time, "LOAD BEGIN - tf_add3");
 #endif
 
+        mem_length = round_up(mem_length, DMA_WORD_PER_BEAT);
         uint32_t remainder = mem_length;
 
         for(uint32_t c = 0; c < mem_length; c+=chunk_size){
@@ -71,16 +72,20 @@ void tf_add3::load_input()
 
             // remainder = remainder < CHUNK_SIZE ? 0 : remainder - CHUNK_SIZE;
 
-            dma_info_t dma_info_1(index, length, SIZE_WORD);
+            dma_info_t dma_info_1(index >> LOG_DMA_WORD_PER_BEAT, length >> LOG_DMA_WORD_PER_BEAT, SIZE_WORD);
             this->dma_read_ctrl.put(dma_info_1);
 
-            for (unsigned i = 0; i < length; i++) {
+            for (unsigned i = 0; i < length; i+=DMA_WORD_PER_BEAT) {
+
+#if (PLM_USED == 1)
+                HLS_BREAK_DEP(A0_in1_ping);
+                HLS_BREAK_DEP(A0_in1_pong);
+#endif
+
                 sc_dt::sc_bv<DMA_WIDTH> pixel_bv = this->dma_read_chnl.get();
                 wait();
 
-                // HLS_BREAK_DEP(A0_in1_ping);
-                // HLS_BREAK_DEP(A0_in1_pong);
-
+#if (DATA_WIDTH == 64)
                 FPDATA_WORD pixel_fp;
                 pixel_fp = pixel_bv.range(63, 0).to_int64();
 
@@ -89,6 +94,20 @@ void tf_add3::load_input()
                 else
                     A0_in1_pong[i] = pixel_fp;
                 wait();
+#elif (DATA_WIDTH == 32)
+                for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++)
+                {
+                    HLS_UNROLL_SIMPLE;
+                    FPDATA_WORD pixel_fp;
+                    pixel_fp = pixel_bv.range((k+1)*DATA_WIDTH-1, k*DATA_WIDTH).to_int();
+
+                    if(pingpong == true)
+                        A0_in1_ping[i+k] = pixel_fp;
+                    else
+                        A0_in1_pong[i+k] = pixel_fp;
+                }
+                wait();
+#endif
             }
 
             // == BURST (read second input) ==
@@ -96,16 +115,20 @@ void tf_add3::load_input()
             length = remainder < chunk_size ? remainder : chunk_size;
 
             remainder = remainder < chunk_size ? 0 : remainder - chunk_size;
-            dma_info_t dma_info_2(index, length, SIZE_WORD);
+            dma_info_t dma_info_2(index >> LOG_DMA_WORD_PER_BEAT, length >> LOG_DMA_WORD_PER_BEAT, SIZE_WORD);
             this->dma_read_ctrl.put(dma_info_2);
 
-            for (unsigned i = 0; i < length; i++) {
+            for (unsigned i = 0; i < length; i+=DMA_WORD_PER_BEAT) {
+
+#if (PLM_USED == 1)
+                HLS_BREAK_DEP(A0_in2_ping);
+                HLS_BREAK_DEP(A0_in2_pong);
+#endif
+
                 sc_dt::sc_bv<DMA_WIDTH> pixel_bv = this->dma_read_chnl.get();
                 wait();
 
-                // HLS_BREAK_DEP(A0_in2_ping);
-                // HLS_BREAK_DEP(A0_in2_pong);
-
+#if (DATA_WIDTH == 64)
                 FPDATA_WORD pixel_fp;
                 pixel_fp = pixel_bv.to_int64();
 
@@ -114,6 +137,20 @@ void tf_add3::load_input()
                 else
                     A0_in2_pong[i] = pixel_fp;
                 wait();
+#elif (DATA_WIDTH == 32)
+                for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++)
+                {
+                    HLS_UNROLL_SIMPLE;
+                    FPDATA_WORD pixel_fp;
+                    pixel_fp = pixel_bv.range((k+1)*DATA_WIDTH-1, k*DATA_WIDTH).to_int();
+
+                    if(pingpong == true)
+                        A0_in2_ping[i+k] = pixel_fp;
+                    else
+                        A0_in2_pong[i+k] = pixel_fp;
+                }
+                wait();
+#endif
             }
 
             pingpong = !pingpong;
@@ -181,6 +218,7 @@ void tf_add3::store_output()
         ESP_REPORT_TIME(store_begin_time, "STORE BEGIN - tf_add3");
 #endif
 
+        mem_length = round_up(mem_length, DMA_WORD_PER_BEAT);
         uint32_t remainder = mem_length;
 
         for(uint32_t c = 0; c < mem_length; c+=chunk_size){
@@ -194,16 +232,19 @@ void tf_add3::store_output()
 
             remainder = remainder < chunk_size ? 0 : remainder - chunk_size;
 
-            dma_info_t dma_info(index, length, SIZE_WORD);
+            dma_info_t dma_info(index >> LOG_DMA_WORD_PER_BEAT, length >> LOG_DMA_WORD_PER_BEAT, SIZE_WORD);
             this->dma_write_ctrl.put(dma_info);
 
+#if (DATA_WIDTH == 64)
             for (unsigned i = 0; i < length; i++) {
 
-                // HLS_BREAK_DEP(B0_out_ping);
-                // HLS_BREAK_DEP(B0_out_pong);
+#if (PLM_USED == 1)
+                HLS_BREAK_DEP(B0_out_ping);
+                HLS_BREAK_DEP(B0_out_pong);
+#endif
 
                 FPDATA_WORD pixel_fp;
-                sc_dt::sc_bv<WORD_SIZE> pixel_bv;
+                sc_dt::sc_bv<DMA_WIDTH> pixel_bv;
 
                 wait();
 
@@ -218,6 +259,36 @@ void tf_add3::store_output()
                 wait();
                 this->dma_write_chnl.put(pixel_bv);
             }
+
+#elif (DATA_WIDTH == 32)
+            for (unsigned i = 0; i < length; i+=DMA_WORD_PER_BEAT) {
+
+#if (PLM_USED == 1)
+                HLS_BREAK_DEP(B0_out_ping);
+                HLS_BREAK_DEP(B0_out_pong);
+#endif
+
+                sc_dt::sc_bv<DMA_WIDTH> pixel_bv;
+
+                wait();
+
+                for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++)
+                {
+                    HLS_UNROLL_SIMPLE;
+                    FPDATA_WORD pixel_fp;
+                    if(pingpong == true)
+                        pixel_fp = B0_out_ping[i+k];
+                    else
+                        pixel_fp = B0_out_pong[i+k];
+
+                // pixel_bv = fp2bv<FPDATA, WORD_SIZE>(pixel_fp);
+                    pixel_bv.range((k+1)*DATA_WIDTH-1, k*DATA_WIDTH) = pixel_fp;
+                }
+
+                wait();
+                this->dma_write_chnl.put(pixel_bv);
+            }
+#endif
 
             pingpong = !pingpong;
 

@@ -11,10 +11,18 @@
 
 // ------- Config -----------
 #define FIXED_POINT
+#define DATA_WIDTH 32
+#if (DATA_WIDTH == 64)
 const unsigned int WORD_SIZE = 64;
 const unsigned int FPDATA_WL = 64;
 const unsigned int FPDATA_IL = 34;
 const unsigned int FPDATA_PL = (FPDATA_WL - FPDATA_IL);
+#else
+const unsigned int WORD_SIZE = 32;
+const unsigned int FPDATA_WL = 32;
+const unsigned int FPDATA_IL = 16;
+const unsigned int FPDATA_PL = (FPDATA_WL - FPDATA_IL);
+#endif
 // --------------------------
 
 #if defined(FIXED_POINT)

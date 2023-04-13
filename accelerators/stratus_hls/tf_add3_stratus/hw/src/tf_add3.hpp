@@ -23,6 +23,23 @@
 #define IN_MAX 16384
 #define OUT_MAX 16384
 
+//Data defines
+#define DATA_WIDTH 32
+#if (DATA_WIDTH == 32)
+#define DMA_BEAT_PER_WORD 1
+#define DMA_WORD_PER_BEAT 2
+#define LOG_DMA_WORD_PER_BEAT 1
+#define PLM_A_IN_NAME "plm_a_full32"
+#define PLM_B_OUT_NAME "plm_b_full32"
+#elif (DATA_WIDTH == 64)
+#define DMA_BEAT_PER_WORD 1
+#define DMA_WORD_PER_BEAT 1
+#define LOG_DMA_WORD_PER_BEAT 0
+#define PLM_A_IN_NAME "plm_a_full"
+#define PLM_B_OUT_NAME "plm_b_full"
+#endif
+
+//Compute defines
 #if (PLM_ONLY == 0)
 #define UNROLL_IN 32
 #define UNROLL_PLM 16

@@ -1,1 +1,4 @@
-plm_a0b0_16384 16384 64 2w:0r 0w:2r
+plm_a_full 16384 64 1w:0r 0w:16r
+plm_a_chunk 64 64 1w:0r 0w:16r
+plm_b_full 16384 64 16w:0r 0w:1r
+plm_b_chunk 64 64 16w:0r 0w:1r

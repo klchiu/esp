@@ -17,6 +17,7 @@
 #define TF_SRC_DST_OFFSET_0_REG 0x44
 #define TF_SRC_DST_OFFSET_1_REG 0x48
 #define TF_SRC_DST_OFFSET_2_REG 0x4C
+#define TF_CHUNK_SIZE_REG 0x50
 
 struct tf_add3_stratus_device {
     struct esp_device esp;
@@ -52,7 +53,8 @@ static void tf_add3_prep_xfer(struct esp_device *esp, void *arg)
     iowrite32be(a->tf_src_dst_offset_0, esp->iomem + TF_SRC_DST_OFFSET_0_REG);
     iowrite32be(a->tf_src_dst_offset_1, esp->iomem + TF_SRC_DST_OFFSET_1_REG);
     iowrite32be(a->tf_src_dst_offset_2, esp->iomem + TF_SRC_DST_OFFSET_2_REG);
-    
+    iowrite32be(a->chunk_size, esp->iomem + TF_CHUNK_SIZE_REG);
+
     iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
     iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 }

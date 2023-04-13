@@ -13,9 +13,10 @@ typedef sc_uint<16> pixel_t;
 
 #if defined(STRATUS_HLS)
 
-    #define HLS_MAP_A0_in1 HLS_MAP_TO_MEMORY(A0_in1, "plm_a0b0_16384")
-    #define HLS_MAP_A0_in2 HLS_MAP_TO_MEMORY(A0_in2, "plm_a0b0_16384")
-    #define HLS_MAP_B0_out HLS_MAP_TO_MEMORY(B0_out, "plm_a0b0_16384")
+    #define HLS_MAP_A0_in_full(x) HLS_MAP_TO_MEMORY(x, "plm_a_full")
+    #define HLS_MAP_A0_in_chunk(x) HLS_MAP_TO_MEMORY(x, "plm_a_chunk")
+    #define HLS_MAP_B0_out_full(x) HLS_MAP_TO_MEMORY(x, "plm_b_full")
+    #define HLS_MAP_B0_out_chunk(x) HLS_MAP_TO_MEMORY(x, "plm_b_chunk")
 
     #define HLS_PROTO(_s) HLS_DEFINE_PROTOCOL(_s)
 
@@ -49,9 +50,10 @@ typedef sc_uint<16> pixel_t;
 
 #else /* !STRATUS_HLS */
 
-    #define HLS_MAP_A0_in1
-    #define HLS_MAP_A0_in2
-    #define HLS_MAP_B0_out
+    #define HLS_MAP_A0_in_full(x)
+    #define HLS_MAP_A0_in_chunk(x)
+    #define HLS_MAP_B0_out_full(x)
+    #define HLS_MAP_B0_out_chunk(x)
 
     #define HLS_PROTO(_s)
     #define HLS_FLAT(_a)

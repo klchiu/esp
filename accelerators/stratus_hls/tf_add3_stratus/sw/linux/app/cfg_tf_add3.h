@@ -23,6 +23,7 @@ struct tf_add3_stratus_access tf_add3_cfg_000[] = {
 		.tf_src_dst_offset_0 = 0,
 		.tf_src_dst_offset_1 = 1024,
 		.tf_src_dst_offset_2 = 2048,
+		.chunk_size = 64,
 		.src_offset = 0,
 		.dst_offset = 0,
 		.esp.coherence = ACC_COH_NONE,

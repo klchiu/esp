@@ -29,6 +29,14 @@ typedef cynw_fixed<FPDATA_WL, FPDATA_IL, SC_RND> FPDATA;
 
 // Helper functions
 
+// // cynw_interpret going to a bit vector
+// inline void cynw_interpret(const FPDATA& in, FPDATA_WORD& out)
+// { out.range(FPDATA_WL-1,0) = in.range(FPDATA_WL-1,0); }
+
+// // cynw_interpret going from a bit vector
+// inline void cynw_interpret(const FPDATA_WORD& in, FPDATA& out)
+// { out.range(FPDATA_WL-1,0) = in.range(FPDATA_WL-1,0); }
+
 template <typename T, size_t N> T bv2fp(sc_dt::sc_bv<N> data_in)
 {
     T data_out;

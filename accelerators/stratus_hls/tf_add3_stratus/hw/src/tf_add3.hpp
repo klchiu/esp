@@ -4,16 +4,41 @@
 #ifndef __TF_ADD3_HPP__
 #define __TF_ADD3_HPP__
 
-#include "fpdata.hpp"
-
 
 #include "tf_add3_conf_info.hpp"
 #include "tf_add3_debug_info.hpp"
+#include "fpdata.hpp"
 #include "tf_add3_directives.hpp"
 
 #include "esp_templates.hpp"
 
 #include "utils/esp_handshake.hpp"
+
+#define __round_mask(x, y) ((y)-1)
+#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+
+#define PLM_ONLY 1 //is this a PLM only implementaion
+#define PLM_USED 1 //if it is not PLM only then this indicates if PLM is used at all
+
+#define IN_MAX 16384
+#define OUT_MAX 16384
+
+#if (PLM_ONLY == 0)
+#define UNROLL_IN 32
+#define UNROLL_PLM 16
+#endif
+#if (PLM_ONLY == 1)
+#define UNROLL_IN 16
+#define UNROLL_PLM_LOG 4
+#endif
+
+#if (PLM_USED == 0)
+#define MAX_CHUNK_SIZE UNROLL_IN
+#endif
+#if (PLM_USED == 1)
+#define MAX_CHUNK_SIZE IN_MAX
+#endif
+
 
 class tf_add3 : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -36,9 +61,37 @@ class tf_add3 : public esp_accelerator_3P<DMA_WIDTH>
         accel_ready.bind_with(*this);
 
         // Clock binding for memories
-        HLS_MAP_A0_in1;
-        HLS_MAP_A0_in2;
-        HLS_MAP_B0_out;
+        // HLS_MAP_A0_in_chunk(A0_in1_ping);
+        // HLS_MAP_A0_in_chunk(A0_in1_pong);
+        // HLS_MAP_A0_in_chunk(A0_in2_ping);
+        // HLS_MAP_A0_in_chunk(A0_in2_pong);
+        // HLS_MAP_B0_out_chunk(B0_out_ping);
+        // HLS_MAP_B0_out_chunk(B0_out_pong);
+
+#if (PLM_USED == 1)
+        HLS_MAP_A0_in_full(A0_in1_ping);
+        HLS_MAP_A0_in_full(A0_in1_pong);
+        HLS_MAP_A0_in_full(A0_in2_ping);
+        HLS_MAP_A0_in_full(A0_in2_pong);
+        HLS_MAP_B0_out_full(B0_out_ping);
+        HLS_MAP_B0_out_full(B0_out_pong);
+#endif
+
+#if (PLM_ONLY == 0)
+#if (PLM_USED == 0) //checking if this is just a registers implementation
+        HLS_FLAT(A0_in1_ping);
+        HLS_FLAT(A0_in1_pong);
+        HLS_FLAT(A0_in2_ping);
+        HLS_FLAT(A0_in2_pong);
+        HLS_FLAT(B0_out_ping);
+        HLS_FLAT(B0_out_pong);
+#endif
+#if (PLM_USED == 1) //checking it's not just a registers implementation
+        HLS_FLAT(A0_inter_in1);
+        HLS_FLAT(A0_inter_in2);
+        HLS_FLAT(B0_inter_out);
+#endif
+#endif
     }
 
     // Processes
@@ -60,14 +113,24 @@ class tf_add3 : public esp_accelerator_3P<DMA_WIDTH>
     esp_config_proc cfg;
 
     // Functions
-    void add(uint32_t length);
+    void add(uint32_t length, bool pingpong);
 
     // -- Private local memories
     // B0_out = A0_in1 + A0_in2
-    FPDATA_WORD A0_in1[16384];
-    FPDATA_WORD A0_in2[16384];
-    FPDATA_WORD B0_out[16384];
+    FPDATA_WORD A0_in1_ping[MAX_CHUNK_SIZE];
+    FPDATA_WORD A0_in2_ping[MAX_CHUNK_SIZE];
+    FPDATA_WORD A0_in1_pong[MAX_CHUNK_SIZE];
+    FPDATA_WORD A0_in2_pong[MAX_CHUNK_SIZE];
+    FPDATA_WORD B0_out_ping[MAX_CHUNK_SIZE];
+    FPDATA_WORD B0_out_pong[MAX_CHUNK_SIZE];
 
+#if (PLM_ONLY == 0)
+#if (PLM_USED == 1) //checking it's not just a registers implementation
+    FPDATA_WORD A0_inter_in1[UNROLL_IN];
+    FPDATA_WORD A0_inter_in2[UNROLL_IN];
+    FPDATA_WORD B0_inter_out[UNROLL_IN];
+#endif
+#endif
     // -- Private state variables
 };
 

@@ -206,7 +206,7 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
         esp_thread_info_t *cfg_ptrs[1];
         cfg_ptrs[0] = cfg;
 
-        esp_run_parallel(cfg_ptrs, 1, &nacc, false);
+        esp_run_parallel(cfg_ptrs, 1, &nacc);
     } else {
         esp_thread_info_t **cfg_ptrs = malloc(sizeof(esp_thread_info_t *) * nacc);
         unsigned *          nacc_arr = malloc(sizeof(unsigned) * nacc);
@@ -215,13 +215,13 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
             nacc_arr[i] = 1;
             cfg_ptrs[i] = &cfg[i];
         }
-        esp_run_parallel(cfg_ptrs, nacc, nacc_arr, false);
+        esp_run_parallel(cfg_ptrs, nacc, nacc_arr);
         free(nacc_arr);
         free(cfg_ptrs);
     }
 }
 
-unsigned long long esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nacc, bool no_print)
+unsigned long long esp_run_parallel_no_print(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nacc)
 {
     int                i, j;
     unsigned long long acc_time;
@@ -289,14 +289,83 @@ unsigned long long esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads,
     gettime(&th_end);
     free(thread);
 
-    if (no_print) {
-        acc_time = cfg[0]->hw_ns;
-    } else {
-        print_time_info(cfg, ts_subtract(&th_start, &th_end), nthreads, nacc);
-        // free(thread);
-        acc_time = 0;
-    }
+    acc_time = cfg[0]->hw_ns;
+    //print_time_info(cfg, ts_subtract(&th_start, &th_end), nthreads, nacc);
+
     return acc_time;
+}
+
+void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nacc)
+{
+    int                i, j;
+    //unsigned long long acc_time;
+    struct timespec    th_start;
+    struct timespec    th_end;
+    pthread_t *        thread = malloc(nthreads * sizeof(pthread_t));
+    int                rc     = 0;
+    esp_config(cfg, nthreads, nacc);
+    for (i = 0; i < nthreads; i++) {
+        unsigned len = nacc[i];
+        for (j = 0; j < len; j++) {
+            esp_thread_info_t *info   = cfg[i] + j;
+            const char *       prefix = "/dev/";
+            char               path[70];
+
+            if (strlen(info->devname) > 64) {
+                contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
+                contig_free(*handle);
+                die("Error: device name %s exceeds maximum length of 64 characters\n", info->devname);
+            }
+
+            sprintf(path, "%s%s", prefix, info->devname);
+
+            info->fd = open(path, O_RDWR, 0);
+            if (info->fd < 0) {
+                contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
+                contig_free(*handle);
+                die_errno("fopen failed\n");
+            }
+        }
+    }
+
+    gettime(&th_start);
+    for (i = 0; i < nthreads; i++) {
+        struct thread_args *args = malloc(sizeof(struct thread_args));
+        ;
+        args->info = cfg[i];
+        args->nacc = nacc[i];
+
+        if (thread_is_p2p(cfg[i])) {
+            if (nthreads == 1) // [humu]: no need to create a new thread
+                accelerator_thread_p2p((void *)args);
+            else
+                rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p, (void *)args);
+        } else {
+            if (nthreads == 1) // [humu]: no need to create a new thread
+                accelerator_thread_serial((void *)args);
+            else
+                rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void *)args);
+        }
+        if (rc != 0) {
+            perror("pthread_create");
+        }
+    }
+
+    for (i = 0; i < nthreads; i++) {
+        if (nthreads > 1) // [humu]: no need to join the thread if nthreads == 1
+            rc = pthread_join(thread[i], NULL);
+
+        if (rc != 0) {
+            perror("pthread_join");
+        }
+    }
+
+    gettime(&th_end);
+    free(thread);
+
+    print_time_info(cfg, ts_subtract(&th_start, &th_end), nthreads, nacc);
+
+    return;
 }
 
 void esp_run_1_no_thread(esp_thread_info_t cfg[], unsigned nacc)
@@ -357,7 +426,7 @@ unsigned long long esp_run_no_print(esp_thread_info_t cfg[], unsigned nacc)
         esp_thread_info_t *cfg_ptrs[1];
         cfg_ptrs[0] = cfg;
 
-        acc_time = esp_run_parallel(cfg_ptrs, 1, &nacc, true);
+        acc_time = esp_run_parallel_no_print(cfg_ptrs, 1, &nacc);
     } else {
         esp_thread_info_t **cfg_ptrs = malloc(sizeof(esp_thread_info_t *) * nacc);
         unsigned *          nacc_arr = malloc(sizeof(unsigned) * nacc);
@@ -366,7 +435,7 @@ unsigned long long esp_run_no_print(esp_thread_info_t cfg[], unsigned nacc)
             nacc_arr[i] = 1;
             cfg_ptrs[i] = &cfg[i];
         }
-        acc_time = esp_run_parallel(cfg_ptrs, nacc, nacc_arr, true);
+        acc_time = esp_run_parallel_no_print(cfg_ptrs, nacc, nacc_arr);
         free(nacc_arr);
         free(cfg_ptrs);
     }

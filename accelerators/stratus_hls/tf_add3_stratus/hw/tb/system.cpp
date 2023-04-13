@@ -69,7 +69,7 @@ void system_t::config_proc()
     ESP_REPORT_INFO("reset done");
 
 
-    length = 1024;
+    length = 2 << 15;
 
     malloc_arrays(length);
 
@@ -83,14 +83,16 @@ void system_t::config_proc()
         base_addr_0  = 0;
         base_addr_1  = length;
         base_addr_2  = length + length;
-        
-        conf_info_t config(length, base_addr_0, base_addr_1, base_addr_2);
+        chunk_size = 64;
+
+        conf_info_t config(length, base_addr_0, base_addr_1, base_addr_2, chunk_size);
 
         ESP_REPORT_INFO("[config]: length = %d", config.length);
         ESP_REPORT_INFO("[config]: base_addr_0 = %d", config.src_dst_offset_0);
         ESP_REPORT_INFO("[config]: base_addr_1 = %d", config.src_dst_offset_1);
         ESP_REPORT_INFO("[config]: base_addr_2 = %d", config.src_dst_offset_2);
-        
+        ESP_REPORT_INFO("[config]: chunk_size = %d", config.chunk_size);
+
         wait();
         conf_info.write(config);
         conf_done.write(true);

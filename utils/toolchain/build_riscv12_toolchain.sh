@@ -115,16 +115,16 @@ cd $TMP
 # git config --global url.https://anongit.freedesktop.org/git/.insteadOf git://anongit.freedesktop.org/
 
 # Python
-echo "*** Python ... ***"
-if [ $(noyes "Do you want to enable Python") == "y" ]; then
-    python_en=1
-    RISCV_GNU_TOOLCHAIN_SHA=$RISCV_GNU_TOOLCHAIN_SHA_PYTHON
-    BUILDROOT_SHA=$BUILDROOT_SHA_PYTHON
-else
-    python_en=0
-    RISCV_GNU_TOOLCHAIN_SHA=$RISCV_GNU_TOOLCHAIN_SHA_DEFAULT
-    BUILDROOT_SHA=$BUILDROOT_SHA_DEFAULT
-fi
+# echo "*** Python ... ***"
+# if [ $(noyes "Do you want to enable Python") == "y" ]; then
+#     python_en=1
+#     RISCV_GNU_TOOLCHAIN_SHA=$RISCV_GNU_TOOLCHAIN_SHA_PYTHON
+#     BUILDROOT_SHA=$BUILDROOT_SHA_PYTHON
+# else
+#     python_en=0
+#     RISCV_GNU_TOOLCHAIN_SHA=$RISCV_GNU_TOOLCHAIN_SHA_DEFAULT
+#     BUILDROOT_SHA=$BUILDROOT_SHA_DEFAULT
+# fi
 cd $TMP
 
 
@@ -138,7 +138,8 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
 	git checkout .
     else
 	#git clone https://github.com/riscv/riscv-gnu-toolchain.git
-    git clone git@github.com:riscv-collab/riscv-gnu-toolchain.git
+    #git clone git@github.com:riscv-collab/riscv-gnu-toolchain.git
+    git clone https://github.com/riscv-collab/riscv-gnu-toolchain.git
 	cd $src
     fi
 
@@ -160,7 +161,8 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
 	git checkout .
     else
 	#git clone https://github.com/riscv/riscv-gnu-toolchain.git
-    git clone git@github.com:riscv-collab/riscv-gnu-toolchain.git
+    # git clone git@github.com:riscv-collab/riscv-gnu-toolchain.git
+    git clone https://github.com/riscv-collab/riscv-gnu-toolchain.git
 	cd $src
     fi
 

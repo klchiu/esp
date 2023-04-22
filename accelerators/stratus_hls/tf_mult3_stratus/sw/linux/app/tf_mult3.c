@@ -12,15 +12,19 @@ static void init_parameters(int len)
     printf("-- init_parameters\n");
 
     base_addr_0 = 0;
-    base_addr_1 = len;
-    base_addr_2 = len*2;
+    base_addr_1 = round_up(len, DMA_WORD_PER_BEAT(sizeof(token_t)));
+    base_addr_2 = base_addr_1 + round_up(len, DMA_WORD_PER_BEAT(sizeof(token_t)));
+    //chunk_size = 64;
+
+    int round_len = round_up(len, DMA_WORD_PER_BEAT(sizeof(token_t)));
 
     struct tf_mult3_stratus_access *tmp;
     tmp = (struct tf_mult3_stratus_access *)cfg_tf_mult3[0].esp_desc;
-    tmp->tf_length = len;
+    tmp->tf_length = round_len;
     tmp->tf_src_dst_offset_0 = base_addr_0;
     tmp->tf_src_dst_offset_1 = base_addr_1;
     tmp->tf_src_dst_offset_2 = base_addr_2;
+    tmp->chunk_size = chunk_size;
 
     // tf_mult3_cfg_000[0].tf_length = len;
     // tf_mult3_cfg_000[0].tf_src_dst_offset_0 = base_addr_0;
@@ -32,16 +36,17 @@ static void init_parameters(int len)
     printf("    .src_dst_offset_0 = %d\n", tf_mult3_cfg_000[0].tf_src_dst_offset_0);
     printf("    .src_dst_offset_1 = %d\n", tf_mult3_cfg_000[0].tf_src_dst_offset_1);
     printf("    .src_dst_offset_2 = %d\n", tf_mult3_cfg_000[0].tf_src_dst_offset_2);
+    printf("    .chunk_size = %d\n", tf_mult3_cfg_000[0].chunk_size);
 }
 
 static void malloc_arrays(int len)
 {
     printf("-- malloc_arrays\n");
 
-    output_0 = (float*)malloc(sizeof(float) * len);
-    input_1 = (float*)malloc(sizeof(float) * len);
-    input_2 = (float*)malloc(sizeof(float) * len);
-    gold_0 = (float*)malloc(sizeof(float) * len);
+    output_0 = (native_t*)malloc(sizeof(native_t) * len);
+    input_1 = (native_t*)malloc(sizeof(native_t) * len);
+    input_2 = (native_t*)malloc(sizeof(native_t) * len);
+    gold_0 = (native_t*)malloc(sizeof(native_t) * len);
 }
 
 static void init_arrays(int len)
@@ -53,8 +58,8 @@ static void init_arrays(int len)
     for (i = 0 ; i < len; i++){
         // float val_1 = i *100 / 3.0 - 17;
         // float val_2 = i *100 / 9.0 - 17;
-        float val_1 = rand() % 100 / 3.0 - 17;
-        float val_2 = rand() % 100 / 9.0 - 17;
+        native_t val_1 = rand() % 100 / 3.0 - 17;
+        native_t val_2 = rand() % 100 / 9.0 - 17;
 
 
         input_1[i] = val_1;
@@ -105,7 +110,7 @@ static int validate_array(unsigned len)
     unsigned errors = 0;
 
     for (i = 0; i < len; i++) {
-        if (output_0[i] != gold_0[i]) {
+        if (abs(gold_0[i] - output_0[i]) > 0.001){
             errors++;
             if (errors < 20)
     		    printf("index: %d, output: %f, gold: %f <-- ERROR\n", 
@@ -162,7 +167,9 @@ int run_test(int test_len, unsigned long long *hw_ns, unsigned long long *sw_ns)
     malloc_arrays(test_len);
     init_arrays(test_len);
 
-    acc_buf = (token_t *) esp_alloc(MAX_LENGTH*3);
+    int round_len = round_up(test_len, DMA_WORD_PER_BEAT(sizeof(token_t)));
+    //acc_buf = (token_t *) esp_alloc(MAX_LENGTH*3);
+    acc_buf = (token_t *) esp_alloc(round_len*3);
     cfg_tf_mult3[0].hw_buf = acc_buf;
     
 
@@ -223,50 +230,54 @@ int main(int argc, char **argv)
 
     unsigned long long hw_avg;
     unsigned long long sw_avg;
+    float speedup;
 
-    MAX_LENGTH = 16384; // acc limitation, PLM size
+    MAX_LENGTH = 2 << 17; // acc limitation, PLM size
 
-    int TEST_NO_AVG = 2;
+    int TEST_NO_AVG = 10;
     int no_error = 0;
     // int no_tests = 0;
 
-    for(i = 0 ; i < 20; i++){
-    // for(i = 12 ; i < 15; i++){
-        hw_total = 0;
-        sw_total = 0;
-        no_error = 0;
-        // no_tests = 0;
-        // len = tests[i];
-        len = 2 << i;
- 
-        for(j = 0 ; j < TEST_NO_AVG ; j++){
-            int iter = len / MAX_LENGTH;
-            // printf("============================ len: %d, MAX_LENGTH: %d, iter: %d, TEST_NO_AVG: %d\n", len, MAX_LENGTH, iter, TEST_NO_AVG);
+    for(k = 0; k < 18; k++){
+	    for(i = 0 ; i < 11; i++){
+		    // for(i = 12 ; i < 15; i++){
+		    hw_total = 0;
+		    sw_total = 0;
+		    no_error = 0;
+		    // no_tests = 0;
+		    // len = tests[i];
+		    len = 2 << k;//MAX_LENGTH;
+		    chunk_size = (2 << 3) << i;
 
-            if(len > MAX_LENGTH){   // when len is too big
-                // int iter = (len%MAX_LENGTH) ? (len / MAX_LENGTH) + 1 : (len / MAX_LENGTH);  // round up                
-                // printf("============================ len: %d, MAX_LENGTH: %d, iter: %d\n", len, MAX_LENGTH, iter);
+		    for(j = 0 ; j < TEST_NO_AVG ; j++){
 
-                for(k = 0 ; k < iter ; k++){
-                   no_error += run_test(MAX_LENGTH, &hw_ns, &sw_ns);
-                    // fprintf(log_0320, "len: %d, hw_ns: %llu, sw_ns: %llu\n", len, hw_ns, sw_ns);
-                    hw_total += hw_ns;
-                    sw_total += sw_ns;
-                    // no_tests++;
-                }
-            }
-            else{                   // when len is within the limit
-                no_error += run_test(len, &hw_ns, &sw_ns);
-                // fprintf(log_0320, "len: %d, hw_ns: %llu, sw_ns: %llu\n", len, hw_ns, sw_ns);
-                hw_total += hw_ns;
-                sw_total += sw_ns;
-                // no_tests++;
-            }
-            
-        }
-        hw_avg = hw_total / TEST_NO_AVG;
-        sw_avg = sw_total / TEST_NO_AVG;
-        fprintf(log_0320, "len: %d hw_ns: %llu sw_ns: %llu no_error: %d\n", len, hw_avg, sw_avg, no_error);
+			    if(len > MAX_LENGTH){   // when len is too big split into acc runs
+				    int remainder = len;
+				    for(k = 0 ; k < len ; k+=MAX_LENGTH){
+					    int run_len = remainder > MAX_LENGTH ? MAX_LENGTH : remainder;
+					    remainder = remainder > MAX_LENGTH ? (remainder - MAX_LENGTH) : 0;
+					    no_error += run_test(run_len, &hw_ns, &sw_ns);
+					    // fprintf(log_0320, "len: %d, hw_ns: %llu, sw_ns: %llu\n", len, hw_ns, sw_ns);
+					    hw_total += hw_ns;
+					    sw_total += sw_ns;
+					    // no_tests++;
+				    }
+			    }
+			    else{                   // when len is within the limit
+			    no_error += run_test(len, &hw_ns, &sw_ns);
+			    hw_total += hw_ns;
+			    sw_total += sw_ns;
+			    }
+
+
+		    }
+
+		    hw_avg = hw_total / TEST_NO_AVG;
+		    sw_avg = sw_total / TEST_NO_AVG;
+		    speedup = (float)sw_avg/(float)hw_avg;
+
+		    fprintf(log_0320, "len: %d hw_ns: %llu sw_ns: %llu chunk_size = %d speedup: %f no_error: %d\n", len, hw_avg, sw_avg, chunk_size, speedup, no_error);
+	    }
     }
 
     fclose(log_0320);

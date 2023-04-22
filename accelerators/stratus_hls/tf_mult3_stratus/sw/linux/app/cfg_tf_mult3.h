@@ -6,13 +6,22 @@
 #include "libesp.h"
 #include "tf_mult3_stratus.h"
 
-
+#define DATA_WIDTH 32
+#if (DATA_WIDTH == 64)
 typedef uint64_t token_t;
-typedef float native_t;
+typedef double native_t;
 
 #define fx2float             fixed64_to_double
 #define float2fx             double_to_fixed64
 #define FX_IL           34
+#elif (DATA_WIDTH == 32)
+typedef uint32_t token_t;
+typedef float native_t;
+
+#define fx2float             fixed32_to_float
+#define float2fx             float_to_fixed32
+#define FX_IL           16
+#endif
 
 
 
@@ -23,6 +32,7 @@ struct tf_mult3_stratus_access tf_mult3_cfg_000[] = {
 		.tf_src_dst_offset_0 = 0,
 		.tf_src_dst_offset_1 = 1024,
 		.tf_src_dst_offset_2 = 2048,
+		.chunk_size = 64,
 		.src_offset = 0,
 		.dst_offset = 0,
 		.esp.coherence = ACC_COH_NONE,

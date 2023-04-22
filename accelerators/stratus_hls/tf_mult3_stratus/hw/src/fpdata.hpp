@@ -11,10 +11,18 @@
 
 // ------- Config -----------
 #define FIXED_POINT
+#define DATA_WIDTH 32
+#if (DATA_WIDTH == 64)
 const unsigned int WORD_SIZE = 64;
 const unsigned int FPDATA_WL = 64;
 const unsigned int FPDATA_IL = 34;
 const unsigned int FPDATA_PL = (FPDATA_WL - FPDATA_IL);
+#else
+const unsigned int WORD_SIZE = 32;
+const unsigned int FPDATA_WL = 32;
+const unsigned int FPDATA_IL = 16;
+const unsigned int FPDATA_PL = (FPDATA_WL - FPDATA_IL);
+#endif
 // --------------------------
 
 #if defined(FIXED_POINT)
@@ -28,6 +36,14 @@ typedef sc_dt::sc_int<WORD_SIZE> FPDATA_WORD;
 typedef cynw_fixed<FPDATA_WL, FPDATA_IL, SC_RND> FPDATA;
 
 // Helper functions
+
+// // cynw_interpret going to a bit vector
+// inline void cynw_interpret(const FPDATA& in, FPDATA_WORD& out)
+// { out.range(FPDATA_WL-1,0) = in.range(FPDATA_WL-1,0); }
+
+// // cynw_interpret going from a bit vector
+// inline void cynw_interpret(const FPDATA_WORD& in, FPDATA& out)
+// { out.range(FPDATA_WL-1,0) = in.range(FPDATA_WL-1,0); }
 
 template <typename T, size_t N> T bv2fp(sc_dt::sc_bv<N> data_in)
 {

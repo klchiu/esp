@@ -11,6 +11,8 @@
 
 void tf_add3::add(uint32_t length, bool pingpong)
 {
+    //HLS_SCHEDULE_REGION(REGION_DEFAULT, 1,"add_region");
+    //HLS_DPOPT_REGION(DPOPT_DEFAULT, "add_region");
     // B0_out = A0_in1 - A0_in2
     //uint32_t i;
 
@@ -28,6 +30,11 @@ void tf_add3::add(uint32_t length, bool pingpong)
     for (uint32_t i = 0; i < length; i+=UNROLL_IN) {
 #if (PLM_ONLY == 1)
         HLS_PIPELINE_LOOP(SOFT_STALL, 1, "pipeline-add-loop");
+#endif
+#if (PLM_ONLY == 0)
+#if (PLM_USED == 0)
+        HLS_PIPELINE_LOOP(SOFT_STALL, 1, "pipeline-add-loop");
+#endif
 #endif
 
         // uint32_t round_length = round_up(length, UNROLL_IN);
@@ -71,13 +78,15 @@ void tf_add3::add(uint32_t length, bool pingpong)
         for(uint16_t k = 0; k < UNROLL_IN; k++){
             // uint32_t index = i * nCols + j;
             HLS_UNROLL_LOOP(AGGRESSIVE, UNROLL_IN, "unroll-add-loop");
+
+#if (PLM_ONLY == 1)
             // HLS_BREAK_DEP(A0_in1_ping);
             // HLS_BREAK_DEP(A0_in1_pong);
             // HLS_BREAK_DEP(A0_in2_ping);
             // HLS_BREAK_DEP(A0_in2_pong);
             // HLS_BREAK_DEP(B0_out_ping);
             // HLS_BREAK_DEP(B0_out_pong);
-
+#endif
             // if((k + i) >= length){}
             // else{
 

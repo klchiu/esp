@@ -26,6 +26,7 @@ struct tf_mult3_stratus_access {
 	unsigned int tf_src_dst_offset_0;	// output
 	unsigned int tf_src_dst_offset_1;	// input 1
 	unsigned int tf_src_dst_offset_2;	// input 2
+	unsigned int chunk_size;
 	unsigned int src_offset;
 	unsigned int dst_offset;
 };
@@ -38,6 +39,7 @@ uint32_t length;
 uint32_t base_addr_0;
 uint32_t base_addr_1;
 uint32_t base_addr_2;
+uint32_t chunk_size;
 
 float *output_0;
 float *input_1;

@@ -8,6 +8,7 @@
 #include <string>
 
 
+#include "tf_sub3_conf_info.hpp"
 #include "tf_sub3_debug_info.hpp"
 #include "tf_sub3.hpp"
 #include "tf_sub3_directives.hpp"
@@ -15,7 +16,7 @@
 
 #include "esp_templates.hpp"
 
-#define DATA_WIDTH 64
+//#define DATA_WIDTH 64
 #define MEM_SIZE   5000000 // TODO: [humu] right now it's oversized
 
 #include "core/systems/esp_system.hpp"
@@ -89,6 +90,7 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
     uint32_t base_addr_0;
     uint32_t base_addr_1;
     uint32_t base_addr_2;
+    uint32_t chunk_size;
 
     float *output_0;
     float *input_1;

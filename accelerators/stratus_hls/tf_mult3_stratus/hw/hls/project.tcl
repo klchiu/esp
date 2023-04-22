@@ -78,6 +78,10 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 
 
 set_attr split_multiply 32
+#set_attr split_multiply 16
+#set_attr split_add 32
+#set_attr dpopt_auto all
+#set_attr dpopt_with_enable on
 
 
 ######################################################################

@@ -35,8 +35,8 @@ void system_t::init_arrays(int len)
     int i;
 
     for (i = 0 ; i < len; i++){
-        float val_1 = i *100 / 3.0 - 17;
-        float val_2 = i *100 / 9.0 - 17;
+        float val_1 = (i%(2 << (FPDATA_IL-14))) *100 / 3.0 - 17;
+        float val_2 = (i%(2 << (FPDATA_IL-14))) *100 / 9.0 - 17;
 
         input_1[i] = val_1;
         input_2[i] = val_2;
@@ -69,7 +69,8 @@ void system_t::config_proc()
     ESP_REPORT_INFO("reset done");
 
 
-    length = 1024;
+    length = 2 << 15;
+    length = round_up(length, DMA_WORD_PER_BEAT);
 
     malloc_arrays(length);
 
@@ -82,15 +83,17 @@ void system_t::config_proc()
         // length = 1024;
         base_addr_0  = 0;
         base_addr_1  = length;
-        base_addr_2  = length + length;
-        
-        conf_info_t config(length, base_addr_0, base_addr_1, base_addr_2);
+        base_addr_2  = base_addr_1 + length;
+        chunk_size = 64;
+
+        conf_info_t config(length, base_addr_0, base_addr_1, base_addr_2, chunk_size);
 
         ESP_REPORT_INFO("[config]: length = %d", config.length);
         ESP_REPORT_INFO("[config]: base_addr_0 = %d", config.src_dst_offset_0);
         ESP_REPORT_INFO("[config]: base_addr_1 = %d", config.src_dst_offset_1);
         ESP_REPORT_INFO("[config]: base_addr_2 = %d", config.src_dst_offset_2);
-        
+        ESP_REPORT_INFO("[config]: chunk_size = %d", config.chunk_size);
+
         wait();
         conf_info.write(config);
         conf_done.write(true);
@@ -148,33 +151,37 @@ void system_t::load_memory()
     uint32_t mem_base_addr = 0;
 
     // Load first input
-    mem_base_addr = base_addr_1;
+    mem_base_addr = base_addr_1 / DMA_WORD_PER_BEAT;
     ESP_REPORT_INFO("[load_memory]: mem_base_addr: %d", mem_base_addr);
-    for (uint32_t index = 0; index < length; index++) {
-        sc_dt::sc_bv<FPDATA_WL> data_bv;
+    for (uint32_t index = 0; index < length; index+=DMA_WORD_PER_BEAT) {
+        sc_dt::sc_bv<DMA_WIDTH> data_bv;
         FPDATA                  data_fp;
 
-        // convert float to fx
-        data_fp = FPDATA(input_1[index]);
-        // convert fx to bv
-        data_bv.range(63, 0) = fp2bv<FPDATA, FPDATA_WL>(data_fp);
+        for (int k = 0; k < DMA_WORD_PER_BEAT; k++){
+            // convert float to fx
+            data_fp = FPDATA(input_1[index+k]);
+            // convert fx to bv
+            data_bv.range((k+1)*DATA_WIDTH-1, k*DATA_WIDTH) = fp2bv<FPDATA, FPDATA_WL>(data_fp);
+        }
 
-        mem[mem_base_addr + index].range(63, 0) = data_bv;
+        mem[mem_base_addr + index/DMA_WORD_PER_BEAT].range(63, 0) = data_bv;
     }
 
     // Load second input
-    mem_base_addr = base_addr_2;
+    mem_base_addr = base_addr_2 / DMA_WORD_PER_BEAT;
     ESP_REPORT_INFO("[load_memory]: mem_base_addr: %d", mem_base_addr);
-    for (uint32_t index = 0; index < length; index++) {
-        sc_dt::sc_bv<FPDATA_WL> data_bv;
+    for (uint32_t index = 0; index < length; index+=DMA_WORD_PER_BEAT) {
+        sc_dt::sc_bv<DMA_WIDTH> data_bv;
         FPDATA                  data_fp;
 
-        // convert float to fx
-        data_fp = FPDATA(input_2[index]);
-        // convert fx to bv
-        data_bv = fp2bv<FPDATA, FPDATA_WL>(data_fp);
+        for (int k = 0; k < DMA_WORD_PER_BEAT; k++){
+            // convert float to fx
+            data_fp = FPDATA(input_2[index+k]);
+            // convert fx to bv
+            data_bv.range((k+1)*DATA_WIDTH-1, k*DATA_WIDTH) = fp2bv<FPDATA, FPDATA_WL>(data_fp);
+        }
 
-        mem[mem_base_addr + index].range(63, 0) = data_bv;
+        mem[mem_base_addr + index/DMA_WORD_PER_BEAT].range(63, 0) = data_bv;
     }
 
     ESP_REPORT_INFO("load memory completed");
@@ -184,18 +191,24 @@ void system_t::dump_memory()
 {
     uint32_t mem_base_addr = 0;
 
-    mem_base_addr = base_addr_0;
-    ESP_REPORT_INFO("[dump_memory]: mem_base_addr: %d", mem_base_addr);
-    for (uint32_t index = 0; index < length; index++) {
-        sc_dt::sc_bv<FPDATA_WL> data_bv;
+    mem_base_addr = base_addr_0 / DMA_WORD_PER_BEAT;
+    // ESP_REPORT_INFO("[dump_memory]: mem_base_addr: %d", mem_base_addr);
+    for (uint32_t index = 0; index < length; index+=DMA_WORD_PER_BEAT) {
+        sc_dt::sc_bv<DMA_WIDTH> data_bv;
+        sc_dt::sc_bv<FPDATA_WL> data_bv_word;
         FPDATA                  data_fp;
 
-        data_bv = mem[mem_base_addr + index];
-        // convert bv to fp
-        data_fp = bv2fp<FPDATA, FPDATA_WL>(data_bv);
-        // conver fp to float
-        output_0[index] = (float)data_fp;
-        // printf("[dump] : %d\t%f\n", index, sub[i]);
+        data_bv = mem[mem_base_addr + index/DMA_WORD_PER_BEAT];
+        // printf("[dump mem] : %d\n", index/DMA_WORD_PER_BEAT);
+
+        for (int k = 0; k < DMA_WORD_PER_BEAT; k++){
+            // convert bv to fp
+            data_bv_word = data_bv.range((k+1)*DATA_WIDTH-1, k*DATA_WIDTH);
+            data_fp = bv2fp<FPDATA, FPDATA_WL>(data_bv_word);
+            // conver fp to float
+            output_0[index+k] = (float)data_fp;
+            // printf("[dump] : %d\n", index+k);
+        }
     }
 
     ESP_REPORT_INFO("dump memory completed");
@@ -209,15 +222,18 @@ int system_t::validate()
     int total       = 0;
 
     for (uint32_t i = 0; i < length; i++) {
-        if (abs(gold_0[i] - output_0[i]) > 0.001) {
+        if (abs(gold_0[i] - output_0[i]) > 0.01) {
             error_count++;
             if (error_count < 5) {
                 ESP_REPORT_INFO("%d: out: %f\tgold: %f", i, output_0[i], gold_0[i]);
             }
         }
-                    if (total < 5) {
-                ESP_REPORT_INFO("%d: out: %f\tgold: %f", i, output_0[i], gold_0[i]);
-            }
+        if (total < 5) {
+            ESP_REPORT_INFO("%d: out: %f\tgold: %f", i, output_0[i], gold_0[i]);
+        }
+        // if(i == 739){
+        //     ESP_REPORT_INFO("%d: out: %f\tgold: %f", i, output_0[i], gold_0[i]);
+        // }
 
         total++;
     }

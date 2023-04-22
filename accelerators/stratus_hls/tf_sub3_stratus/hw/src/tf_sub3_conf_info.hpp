@@ -5,6 +5,7 @@
 #define __TF_SUB3_CONF_INFO_HPP__
 
 #include <systemc.h>
+#include "fpdata.hpp"
 
 //
 // Configuration parameters for the accelerator.
@@ -18,21 +19,23 @@ class conf_info_t
         , src_dst_offset_0(0)
         , src_dst_offset_1(0)
         , src_dst_offset_2(0)
+        , chunk_size(64)
     {
     }
 
-    conf_info_t(uint32_t len, uint32_t ba0, uint32_t ba1, uint32_t ba2 = 0)
+    conf_info_t(uint32_t len, uint32_t ba0, uint32_t ba1, uint32_t ba2, uint32_t ba3)
         : length(len)
         , src_dst_offset_0(ba0)
         , src_dst_offset_1(ba1)
         , src_dst_offset_2(ba2)
+        , chunk_size(ba3)
     {
     }
 
     bool operator==(const conf_info_t &rhs) const
     {
         return (rhs.length == length) && (rhs.src_dst_offset_0 == src_dst_offset_0) &&
-               (rhs.src_dst_offset_1 == src_dst_offset_1) && (rhs.src_dst_offset_2 == src_dst_offset_2);
+        (rhs.src_dst_offset_1 == src_dst_offset_1) && (rhs.src_dst_offset_2 == src_dst_offset_2) && (rhs.chunk_size == chunk_size);
     }
 
     friend void sc_trace(sc_trace_file *tf, const conf_info_t &v,
@@ -50,6 +53,7 @@ class conf_info_t
            << conf_info.src_dst_offset_1 << ")"
            << ", src_dst_offset_2 = 0x" << std::hex << conf_info.src_dst_offset_2 << std::dec << " ("
            << conf_info.src_dst_offset_2 << ")"
+           << ", chunk_size = " << conf_info.chunk_size << " "
            << "}";
         return os;
     }
@@ -58,6 +62,7 @@ class conf_info_t
     uint32_t src_dst_offset_0;
     uint32_t src_dst_offset_1;
     uint32_t src_dst_offset_2;
+    uint32_t chunk_size;
 };
 
 #endif // __TF_SUB3_CONF_INFO_HPP__

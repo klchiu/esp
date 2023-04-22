@@ -1,6 +1,8 @@
 plm_a_full 16384 64 1w:0r 0w:16r
-plm_a_chunk 64 64 1w:0r 0w:16r
+plm_a_chunk 256 64 1w:0r 0w:16r
 plm_b_full 16384 64 16w:0r 0w:1r
-plm_b_chunk 64 64 16w:0r 0w:1r
+plm_b_chunk 256 64 16w:0r 0w:1r
 plm_a_full32 16384 32 2w:0r 0w:16r
 plm_b_full32 16384 32 16w:0r 0w:2r
+plm_a_chunk32 256 32 1w:0r 0w:16r
+plm_b_chunk32 256 32 16w:0r 0w:1r

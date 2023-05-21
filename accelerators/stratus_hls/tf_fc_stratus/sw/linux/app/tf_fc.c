@@ -6,10 +6,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+
+#define NACC 1
 
 static float ActivationFunctionWithMinMax(float total, int output_activation_min, int output_activation_max)
 {
     // [humu]: why just return total?
+    // This is a TODO
     return total;
 }
 
@@ -23,10 +27,11 @@ static void init_array(float *array, int size)
 
 static void init_array_0(float *array, int size)
 {
-    srand(time(NULL));
-    for (int i = 0; i < size; i++) {
-        array[i] = 0.0;
-    }
+    //srand(time(NULL));
+    /* for (int i = 0; i < size; i++) { */
+    /*     array[i] = 0.0; */
+    /* } */
+    memset(array, 0, sizeof(float)*size);
 }
 
 static void load_buffer(token_t *acc_buf, uint32_t base_addr_1, float *input_1, uint32_t base_addr_2, float *input_2,
@@ -66,8 +71,11 @@ int main(int argc, char **argv)
 {
     int      mult_len;
     int      add_len;
+    int      total_len;
     token_t *acc_buf_4;
     token_t *acc_buf;
+    token_t *mult_acc_buf;
+    token_t *add_acc_buf;
 
     fprintf(stderr, "[humu]: ================== doFineGrainedFC: \n");
 
@@ -101,6 +109,11 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "[humu]: fine-grained #1 original\n");
 
+    struct timespec t_orig_start, t_orig_end;
+    unsigned long long orig_ns;
+
+    gettime(&t_orig_start);
+
     for (int b = 0; b < batches; ++b) {
         for (int out_c = 0; out_c < output_depth; ++out_c) {
             float total = 0.f;
@@ -123,102 +136,161 @@ int main(int argc, char **argv)
         }
     }
 
+    gettime(&t_orig_end);
+
+    orig_ns = ts_subtract(&t_orig_start, &t_orig_end);
+    printf("Original execution time: %llu ns\n", orig_ns);
+
     // 2 - basic accumulation level
 
     fprintf(stderr, "[humu]: fine-grained #2 basic accumulation level\n");
 
-    float mult[accum_depth];
-    float total_2[batches * output_depth];
-    init_array_0(total_2, batches * output_depth);
-    for (int b = 0; b < batches; ++b) {
-        for (int out_c = 0; out_c < output_depth; ++out_c) {
-            float total = 0.f;
+    struct timespec t_basic_start, t_basic_end;
+    struct timespec t_init_start, t_init_end;
+    unsigned long long basic_ns, init_ns;
+    int basic_hw = 1;
 
-            // Run with mult accelerator - sending input_data[0:accum_depth] and weights_data[0:accum_depth]
-            for (int d = 0; d < accum_depth; ++d) {
-                mult[d] = input_data[b * accum_depth + d] * weights_data[out_c * accum_depth + d];
-            }
-            // acc_buf = (token_t*)esp_alloc(accum_depth * 3);
-            // cfg_tf_mult3[0].hw_buf = acc_buf;
+    gettime(&t_init_start);
 
-            // tf_mult3_cfg_000[0].tf_length = accum_depth;
-            // tf_mult3_cfg_000[0].tf_src_dst_offset_0 = 0;
-            // tf_mult3_cfg_000[0].tf_src_dst_offset_1 = accum_depth;
-            // tf_mult3_cfg_000[0].tf_src_dst_offset_2 = accum_depth + accum_depth;
-            // tf_mult3_cfg_000[0].chunk_size = 4096;
+    mult_acc_buf = (token_t*)esp_alloc(accum_depth * 3);
+    cfg_tf_mult3[0].hw_buf = mult_acc_buf;
 
-            // // print_tf_mult3_cfg(&cfg_tf_mult3[0], &tf_mult3_cfg_000[0]);
+    tf_mult3_cfg_000[0].tf_length = accum_depth;
+    tf_mult3_cfg_000[0].tf_src_dst_offset_0 = 0;
+    tf_mult3_cfg_000[0].tf_src_dst_offset_1 = accum_depth;
+    tf_mult3_cfg_000[0].tf_src_dst_offset_2 = accum_depth + accum_depth;
+    tf_mult3_cfg_000[0].chunk_size = 4096;
 
-            // load_buffer(acc_buf, b * accum_depth, input_data, out_c * accum_depth, weights_data, accum_depth);
+    //printf("Configured mult\n");
 
-            // esp_run_no_print(cfg_tf_mult3, NACC);
+    add_acc_buf = (token_t*)esp_alloc(output_depth * 3);
+    cfg_tf_add3[0].hw_buf = add_acc_buf;
 
-            // store_buffer(acc_buf, 0, mult, accum_depth);
+    tf_add3_cfg_000[0].tf_length = output_depth;
+    tf_add3_cfg_000[0].tf_src_dst_offset_0 = 0;
+    tf_add3_cfg_000[0].tf_src_dst_offset_1 = output_depth;
+    tf_add3_cfg_000[0].tf_src_dst_offset_2 = output_depth + output_depth;
+    tf_add3_cfg_000[0].chunk_size = 4096;
 
-            // esp_free(acc_buf);
+    //printf("Configured add\n");
 
-            // Accumulate
-            for (int d = 0; d < accum_depth; ++d) {
-                total_2[out_c + output_depth * b] += mult[d];
-            }
-        }
-        if (bias_data) {
-            // Run with Add accelerator
-            for (int out_c = 0; out_c < output_depth; ++out_c) {
-                total_2[out_c + output_depth * b] += bias_data[out_c];
-            }
-            // acc_buf = (token_t*)esp_alloc(output_depth * 3);
-            // cfg_tf_add3[0].hw_buf = acc_buf;
+    gettime(&t_init_end);
 
-            // tf_add3_cfg_000[0].tf_length = output_depth;
-            // tf_add3_cfg_000[0].tf_src_dst_offset_0 = 0;
-            // tf_add3_cfg_000[0].tf_src_dst_offset_1 = output_depth;
-            // tf_add3_cfg_000[0].tf_src_dst_offset_2 = output_depth + output_depth;
-            // tf_add3_cfg_000[0].chunk_size = 4096;
+    /* for(int t = 0; t < 2; t++){ */
 
-            // // print_tf_add3_cfg(&cfg_tf_add3[0], &tf_add3_cfg_000[0]);
+	    gettime(&t_basic_start);
 
-            // load_buffer(acc_buf, output_depth * b, total_2, 0, bias_data, output_depth);
+	    float mult[accum_depth];
+	    float total_2[batches * output_depth];
+	    init_array_0(total_2, batches * output_depth);
 
-            // esp_run_no_print(cfg_tf_add3, NACC);
+	    //printf("Starting loop buffer\n");
 
-            // store_buffer(acc_buf, output_depth * b, total_2, output_depth);
+	    for (int b = 0; b < batches; ++b) {
+		    for (int out_c = 0; out_c < output_depth; ++out_c) {
+			    //float total = 0.f;
 
-            // esp_free(acc_buf);
-        }
+			    if(basic_hw == 0){
+				    // Run with mult accelerator - sending input_data[0:accum_depth] and weights_data[0:accum_depth]
+				    for (int d = 0; d < accum_depth; ++d) {
+					    mult[d] = input_data[b * accum_depth + d] * weights_data[out_c * accum_depth + d];
+				    }
+			    }
+			    else{
+				    // print_tf_mult3_cfg(&cfg_tf_mult3[0], &tf_mult3_cfg_000[0]);
 
-        // Activation
-        for (int out_c = 0; out_c < output_depth; ++out_c) {
-            int temp = out_c + output_depth * b;
+				    //printf("Loading buffer\n");
+				    load_buffer(mult_acc_buf, b * accum_depth, input_data, out_c * accum_depth, weights_data, accum_depth);
 
-            output_data_2[out_c + output_depth * b] = ActivationFunctionWithMinMax(
-                total_2[out_c + output_depth * b], output_activation_min, output_activation_max);
+				    //printf("Running mult\n");
+				    esp_run_no_print(cfg_tf_mult3, NACC);
 
-            if (print_all)
-                fprintf(stderr, "total_2 is: %f batch: %d out_c: %d\n", output_data_2[out_c + output_depth * b], b,
-                        out_c);
+				    //printf("Storing buffer\n");
+				    store_buffer(mult_acc_buf, 0, mult, accum_depth);
 
-            // debugging
-            total_2[temp] = output_data_2[temp];
-            if (abs(total_2[temp] - total_1[temp]) / total_1[temp] > 0.01) {
-                // if (errors < 20) {
-                //   fprintf(stderr, "mismatch: total_1[%d] = %f, total_2[%d] = %f\n", temp, total_1[temp], temp,
-                //   total_2[temp]);
-                // }
-                errors++;
-            }
-        }
-    }
+			    }
+
+			    // Accumulate
+			    for (int d = 0; d < accum_depth; ++d) {
+				    total_2[out_c + output_depth * b] += mult[d];
+			    }
+		    }
+		    if (bias_data) {
+
+			    if(basic_hw == 0){
+				    // Run with Add accelerator
+				    for (int out_c = 0; out_c < output_depth; ++out_c) {
+					    total_2[out_c + output_depth * b] += bias_data[out_c];
+				    }
+			    }
+			    else{
+				    // print_tf_add3_cfg(&cfg_tf_add3[0], &tf_add3_cfg_000[0]);
+
+				    load_buffer(add_acc_buf, output_depth * b, total_2, 0, bias_data, output_depth);
+
+				    esp_run_no_print(cfg_tf_add3, NACC);
+
+				    store_buffer(add_acc_buf, output_depth * b, total_2, output_depth);
+
+			    }
+		    }
+
+		    // Activation
+		    for (int out_c = 0; out_c < output_depth; ++out_c) {
+			    int temp = out_c + output_depth * b;
+
+			    output_data_2[out_c + output_depth * b] = ActivationFunctionWithMinMax(
+				    total_2[out_c + output_depth * b], output_activation_min, output_activation_max);
+
+			    if (print_all)
+				    fprintf(stderr, "total_2 is: %f batch: %d out_c: %d\n", output_data_2[out_c + output_depth * b], b,
+					    out_c);
+
+			    // debugging
+			    total_2[temp] = output_data_2[temp];
+			    if (abs(total_2[temp] - total_1[temp]) / total_1[temp] > 0.01) {
+				    // if (errors < 20) {
+				    fprintf(stderr, "mismatch: total_1[%d] = %f, total_2[%d] = %f\n", temp, total_1[temp], temp,
+					    total_2[temp]);
+				    // }
+				    errors++;
+			    }
+		    }
+	    }
+
+	    if(basic_hw == 1){
+		    esp_free(mult_acc_buf);
+		    esp_free(add_acc_buf);
+	    }
+
+	    gettime(&t_basic_end);
+
+	    basic_ns = ts_subtract(&t_basic_start, &t_basic_end);
+	    init_ns = ts_subtract(&t_init_start, &t_init_end);
+	    if(basic_hw == 0)
+		    printf("SW: Basic accumulation level execution time: %llu ns\n", basic_ns);
+	    else{
+		    printf("HW: Initialization execution time: %llu ns\n", init_ns);
+		    printf("HW: Basic accumulation level execution time: %llu ns\n", basic_ns);
+	    }
+    /* } */
 
     // 3 - output level
 
     fprintf(stderr, "[humu]: fine-grained #3 output level\n");
+
+    struct timespec t_output_start, t_output_end;
+    unsigned long long output_ns;
+
+    gettime(&t_output_start);
+
     mult_len = output_depth * accum_depth;
     add_len  = output_depth;
+    total_len = batches * output_depth;
 
-    float mult_batch[accum_depth * output_depth];
-    float total_3[batches * output_depth];
-    init_array_0(total_3, batches * output_depth);
+    float mult_batch[mult_len];
+    float total_3[total_len];
+    init_array_0(total_3, total_len);
 
     for (int b = 0; b < batches; ++b) {
         // Initialize vector for inputs
@@ -304,8 +376,19 @@ int main(int argc, char **argv)
         }
     }
 
+    gettime(&t_output_end);
+
+    output_ns = ts_subtract(&t_output_start, &t_output_end);
+    printf("Output level execution time: %llu ns\n", output_ns);
+
     // 4 - batch level
     fprintf(stderr, "[humu]: fine-grained #4 batch level\n");
+
+    struct timespec t_batch_start, t_batch_end;
+    unsigned long long batch_ns;
+
+    gettime(&t_batch_start);
+
     mult_len = batches * accum_depth * output_depth;
     add_len  = batches * output_depth;
 
@@ -384,9 +467,9 @@ int main(int argc, char **argv)
             }
         }
         // Run with Add accelerator
-        // for (int i = 0; i < add_len; ++i) {
-        //   total_4[i] += above_batch_bias_data[i];
-        // }
+        for (int i = 0; i < add_len; ++i) {
+          total_4[i] += above_batch_bias_data[i];
+        }
 
         // print_tf_add3_cfg(&cfg_tf_add3[0], &tf_add3_cfg_000[0]);
 
@@ -422,6 +505,11 @@ int main(int argc, char **argv)
 
     esp_free(acc_buf_4);
     // esp_free(acc_mult_buf);
+
+    gettime(&t_batch_end);
+
+    batch_ns = ts_subtract(&t_batch_start, &t_batch_end);
+    printf("Batch level execution time: %llu ns\n", batch_ns);
 
     fprintf(stderr, "Number of errors: %d \n", errors);
 

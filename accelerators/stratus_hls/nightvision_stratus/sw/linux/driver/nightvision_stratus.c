@@ -1,6 +1,5 @@
 // Copyright (c) 2011-2023 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
-#include <linux/log2.h>
 #include <linux/mm.h>
 #include <linux/of_device.h>
 
@@ -8,6 +7,8 @@
 
 #include <esp.h>
 #include <esp_accelerator.h>
+
+#include <linux/log2.h>
 
 #include "nightvision_stratus.h"
 
@@ -127,14 +128,19 @@ static struct esp_driver nightvision_driver = {
     .arg_size      = sizeof(struct nightvision_stratus_access),
 };
 
-static int __init nightvision_init(void) { return esp_driver_register(&nightvision_driver); }
+static int __init nightvision_init(void)
+{
+    printk(KERN_ALERT "Hello world nightvision!!\n");
+    return esp_driver_register(&nightvision_driver);
+}
 
 static void __exit nightvision_exit(void) { esp_driver_unregister(&nightvision_driver); }
 
-module_init(nightvision_init) module_exit(nightvision_exit)
+module_init(nightvision_init);
+module_exit(nightvision_exit);
 
-    MODULE_DEVICE_TABLE(of, nightvision_device_ids);
+MODULE_DEVICE_TABLE(of, nightvision_device_ids);
 
-MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
+MODULE_AUTHOR("SLD Group");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("nightvision_stratus driver");

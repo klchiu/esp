@@ -9,7 +9,7 @@
 // Optional application-specific helper functions
 #define MIN(A, B) (A < B) ? A : B
 #define MAX(A, B) (A > B) ? A : B
-
+/*
 void nightHistEq::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
 {
     // printf("======= Start kernel_nf =======\n");
@@ -88,7 +88,7 @@ void nightHistEq::kernel_hist(uint32_t n_Rows, uint32_t n_Cols)
 
     // printf("======= Finish kernel_hist =======\n");
 }
-
+*/
 void nightHistEq::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
 {
     // hard code nInBpp as 16 here (data type is 16 bits)
@@ -147,7 +147,7 @@ void nightHistEq::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
 
     // printf("======= Finish kernel_histEq =======\n");
 }
-
+/*
 void nightHistEq::kernel_dwt(uint32_t n_Rows, uint32_t n_Cols)
 {
     // printf("======= Start kernel_dwt =======\n");
@@ -284,5 +284,5 @@ void nightHistEq::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t bu
 
     // printf("------- Finsih dwt_row_transpose -------\n");
 }
-
+*/
 #endif // __NIGHTHISTEQ_FUNCTIONS_HPP__

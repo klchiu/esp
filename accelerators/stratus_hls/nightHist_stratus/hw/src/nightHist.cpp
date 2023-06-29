@@ -51,30 +51,19 @@ void nightHist::load_input()
 
         this->load_store_handshake();
 
-        uint32_t plm_addr = 0;
+              // Configure DMA transaction
+        uint32_t   index  = 0;
+        uint32_t   length = n_Rows*n_Cols;
+        dma_info_t dma_info_1(index, length, SIZE_WORD);
+        this->dma_read_ctrl.put(dma_info_1);
 
-        for (uint16_t b = 0; b < n_Rows; b++) {
+        for (uint32_t i = 0; i < length; i++) {
+            sc_dt::sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
+            HLS_BREAK_DEP(mem_buff_2);
+            wait();
 
-            // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
-            this->dma_read_ctrl.put(dma_info);
-
-            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA) {
-                sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
-                HLS_BREAK_DEP(mem_buff_1);
-                HLS_BREAK_DEP(mem_buff_2);
-                wait();
-
-                for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
-                    HLS_UNROLL_SIMPLE;
-                    // Write to PLM
-                    mem_buff_1[i + k] =
-                        data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_uint();
-                    mem_buff_2[i + k] = 0;
-                }
-            }
-            dma_addr += n_Cols / WORDS_PER_DMA;
-            plm_addr += n_Cols;
+            // Write to PLM
+            mem_buff_2[i] = data.to_uint();
         }
 
         this->load_compute_handshake();
@@ -121,7 +110,7 @@ void nightHist::store_output()
         n_Cols   = config.n_Cols;
     }
 
-    // Store
+   // Store
     uint32_t dma_addr = 0;
     for (uint16_t a = 0; a < n_Images; a++) {
         HLS_PROTO("store-dma");
@@ -129,28 +118,21 @@ void nightHist::store_output()
         this->store_load_handshake();
         this->store_compute_handshake();
 
-        uint32_t plm_addr = 0;
-        for (uint16_t b = 0; b < n_Rows; b++) {
-            // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
+        // Configure DMA write
+        uint32_t   index  = 0;
+        uint32_t   length = 65536;
+        dma_info_t dma_info(index, length, SIZE_WORD);
+        this->dma_write_ctrl.put(dma_info);
+        wait();
 
-            this->dma_write_ctrl.put(dma_info);
+        for (uint32_t i = 0; i < length; i++) {
+            sc_dt::sc_bv<DMA_WIDTH> data;
 
-            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA) {
-                sc_bv<DMA_WIDTH> data;
+            wait();
 
-                wait();
-                for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
-                    HLS_UNROLL_SIMPLE;
-                    // Read from PLM
-                    data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG) =
-                        sc_bv<MAX_PXL_WIDTH>(mem_buff_1[i + k]);
-                }
+            data.range(63, 0) = sc_bv<MAX_PXL_WIDTH>(mem_hist_1[i]);
 
-                this->dma_write_chnl.put(data);
-            }
-            dma_addr += n_Cols / WORDS_PER_DMA;
-            plm_addr += n_Cols;
+            this->dma_write_chnl.put(data);
         }
     }
 
@@ -206,11 +188,11 @@ void nightHist::compute_kernel()
         this->compute_load_handshake();
 
         // Computing phase implementation
-        kernel_nf(n_Rows, n_Cols);
+        // kernel_nf(n_Rows, n_Cols);
         kernel_hist(n_Rows, n_Cols);
-        kernel_histEq(n_Rows, n_Cols);
-        if (do_dwt)
-            kernel_dwt(n_Rows, n_Cols);
+        // kernel_histEq(n_Rows, n_Cols);
+        // if (do_dwt)
+            // kernel_dwt(n_Rows, n_Cols);
 
         this->compute_store_handshake();
     }

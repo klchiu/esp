@@ -9,7 +9,7 @@
 // Optional application-specific helper functions
 #define MIN(A, B) (A < B) ? A : B
 #define MAX(A, B) (A > B) ? A : B
-
+/*
 void nightDwt::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
 {
     // printf("======= Start kernel_nf =======\n");
@@ -147,7 +147,7 @@ void nightDwt::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
 
     // printf("======= Finish kernel_histEq =======\n");
 }
-
+*/
 void nightDwt::kernel_dwt(uint32_t n_Rows, uint32_t n_Cols)
 {
     // printf("======= Start kernel_dwt =======\n");

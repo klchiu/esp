@@ -57,7 +57,7 @@ void nightNF::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
 
     // printf("======= Finish kernel_nf =======\n");
 }
-
+/*
 void nightNF::kernel_hist(uint32_t n_Rows, uint32_t n_Cols)
 {
     // printf("======= Start kernel_hist =======\n");
@@ -284,5 +284,5 @@ void nightNF::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buff1[
 
     // printf("------- Finsih dwt_row_transpose -------\n");
 }
-
+*/
 #endif // __NIGHTNF_FUNCTIONS_HPP__

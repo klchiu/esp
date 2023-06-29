@@ -51,30 +51,23 @@ void nightNF::load_input()
 
         this->load_store_handshake();
 
-        uint32_t plm_addr = 0;
+        // Configure DMA transaction
+        uint32_t   index  = 0;
+        uint32_t   length = n_Rows * n_Cols;
+        dma_info_t dma_info_1(index, length, SIZE_WORD);
+        this->dma_read_ctrl.put(dma_info_1);
 
-        for (uint16_t b = 0; b < n_Rows; b++) {
+        for (uint32_t i = 0; i < length; i++) {
+            sc_dt::sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
+            HLS_BREAK_DEP(mem_buff_1);
+            HLS_BREAK_DEP(mem_buff_2);
+            wait();
 
-            // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
-            this->dma_read_ctrl.put(dma_info);
+            // Write to PLM
+            mem_buff_1[i] = data.to_uint();
+            mem_buff_2[i] = 0;
 
-            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA) {
-                sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
-                HLS_BREAK_DEP(mem_buff_1);
-                HLS_BREAK_DEP(mem_buff_2);
-                wait();
-
-                for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
-                    HLS_UNROLL_SIMPLE;
-                    // Write to PLM
-                    mem_buff_1[i + k] =
-                        data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_uint();
-                    mem_buff_2[i + k] = 0;
-                }
-            }
-            dma_addr += n_Cols / WORDS_PER_DMA;
-            plm_addr += n_Cols;
+            // printf("mem_buff_1[%d]: %d\n", i, mem_buff_1[i]);
         }
 
         this->load_compute_handshake();
@@ -92,6 +85,8 @@ void nightNF::store_output()
     uint32_t n_Images;
     uint32_t n_Rows;
     uint32_t n_Cols;
+    uint32_t is_p2p;
+    uint32_t num_output_copy;
 
     // Reset
     {
@@ -101,9 +96,11 @@ void nightNF::store_output()
         accel_ready.req.reset_req();
 
         // User-defined reset code
-        n_Images = 0;
-        n_Rows   = 0;
-        n_Cols   = 0;
+        n_Images        = 0;
+        n_Rows          = 0;
+        n_Cols          = 0;
+        is_p2p          = 0;
+        num_output_copy = 0;
 
         wait();
     }
@@ -116,9 +113,11 @@ void nightNF::store_output()
         conf_info_t config = this->conf_info.read();
 
         // User-defined config code
-        n_Images = config.n_Images;
-        n_Rows   = config.n_Rows;
-        n_Cols   = config.n_Cols;
+        n_Images        = config.n_Images;
+        n_Rows          = config.n_Rows;
+        n_Cols          = config.n_Cols;
+        is_p2p          = config.is_p2p;
+        num_output_copy = config.p2p_config_0;
     }
 
     // Store
@@ -129,28 +128,43 @@ void nightNF::store_output()
         this->store_load_handshake();
         this->store_compute_handshake();
 
-        uint32_t plm_addr = 0;
-        for (uint16_t b = 0; b < n_Rows; b++) {
-            // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
-
+        if (is_p2p == 0) { // normal shared memory version
+            // Configure DMA write
+            uint32_t   index  = 0;
+            uint32_t   length = n_Rows * n_Cols;
+            dma_info_t dma_info(index, length, SIZE_WORD);
             this->dma_write_ctrl.put(dma_info);
+            wait();
 
-            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA) {
-                sc_bv<DMA_WIDTH> data;
+            for (uint32_t i = 0; i < length; i++) {
+                sc_dt::sc_bv<DMA_WIDTH> data;
 
                 wait();
-                for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
-                    HLS_UNROLL_SIMPLE;
-                    // Read from PLM
-                    data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG) =
-                        sc_bv<MAX_PXL_WIDTH>(mem_buff_1[i + k]);
-                }
+
+                data.range(63, 0) = sc_bv<MAX_PXL_WIDTH>(mem_buff_2[i]);
 
                 this->dma_write_chnl.put(data);
             }
-            dma_addr += n_Cols / WORDS_PER_DMA;
-            plm_addr += n_Cols;
+
+        } else { // p2p version
+            for (uint32_t x = 0; x < num_output_copy; x++) {
+                // Configure DMA write
+                uint32_t   index  = 0;
+                uint32_t   length = n_Rows * n_Cols;
+                dma_info_t dma_info(index, length, SIZE_WORD);
+                this->dma_write_ctrl.put(dma_info);
+                wait();
+
+                for (uint32_t i = 0; i < length; i++) {
+                    sc_dt::sc_bv<DMA_WIDTH> data;
+
+                    wait();
+
+                    data.range(63, 0) = sc_bv<MAX_PXL_WIDTH>(mem_buff_2[i]);
+
+                    this->dma_write_chnl.put(data);
+                }
+            }
         }
     }
 
@@ -207,10 +221,10 @@ void nightNF::compute_kernel()
 
         // Computing phase implementation
         kernel_nf(n_Rows, n_Cols);
-        kernel_hist(n_Rows, n_Cols);
-        kernel_histEq(n_Rows, n_Cols);
-        if (do_dwt)
-            kernel_dwt(n_Rows, n_Cols);
+        // kernel_hist(n_Rows, n_Cols);
+        // kernel_histEq(n_Rows, n_Cols);
+        // if (do_dwt)
+        //     kernel_dwt(n_Rows, n_Cols);
 
         this->compute_store_handshake();
     }

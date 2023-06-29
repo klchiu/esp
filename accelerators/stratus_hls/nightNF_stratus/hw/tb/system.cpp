@@ -27,7 +27,7 @@ void system_t::config_proc()
 
     // Config
     {
-        conf_info_t config(n_Images, n_Rows, n_Cols, do_dwt);
+        conf_info_t config(n_Images, n_Rows, n_Cols, do_dwt, is_p2p, p2p_config_0);
         wait();
         conf_info.write(config);
         conf_done.write(true);
@@ -128,7 +128,7 @@ void system_t::load_memory()
     for (i = 0; i < n_Images; i++) {
         for (j = 0; j < n_Pixels; j += WORDS_PER_DMA) {
             for (k = 0; k < WORDS_PER_DMA; k++) {
-                mem[mem_i].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG) =
+                mem[mem_i].range(63, 0) =
                     sc_bv<MAX_PXL_WIDTH>(imgA[j + k]);
             }
             mem_i++;
@@ -221,7 +221,9 @@ int system_t::validate()
     for (j = 0; j < n_Images; j++) {
         for (i = 0; i < n_Pixels; i++) {
             if (imgOut[i] != imgGold[i]) {
-                //                ESP_REPORT_INFO("Error: i = %d\tOut = %d\tGold = %d\n", i, imgOut[i], imgGold[i]);
+                // if (errors < 10) {
+                //     ESP_REPORT_INFO("Error: i = %d\tOut = %d\tGold = %d\n", i, imgOut[i], imgGold[i]);
+                // }
                 errors++;
             }
         }

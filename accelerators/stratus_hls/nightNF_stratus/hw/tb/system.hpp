@@ -47,6 +47,8 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
         , n_Cols(n_Cols)
         , do_validation(do_validation)
         , do_dwt(do_dwt)
+        , is_p2p(is_p2p)
+        , p2p_config_0(p2p_config_0)
     {
         // ACC
 #ifdef CADENCE
@@ -91,6 +93,8 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
     uint32_t n_Rows;        // number of rows
     uint32_t n_Cols;        // number of columns
     uint32_t n_Invocations; // number of accelerator invocations
+    uint32_t is_p2p;
+    uint32_t p2p_config_0;
 
     // Path for the input images
     std::string image_A_path;

@@ -5,5 +5,7 @@
     <param name="n_Rows" desc="number of rows of input image"/>
     <param name="n_Cols" desc="number of columns of input image"/>
     <param name="do_dwt" desc="enable/disable the DWT stage"/>
+    <param name="is_p2p" desc="enable/disable p2p"/>
+    <param name="p2p_config_0" desc="config of p2p"/>
   </accelerator>
 </sld>

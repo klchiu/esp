@@ -12,6 +12,10 @@
 #include <test/test.h>
 #include <test/time.h>
 
+#include "cfg_stm.h"
+#include "cfg_p2p.h"
+
+
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
@@ -43,16 +47,15 @@
 #define DEFAULT_INFILE_IS_RAW 0
 #define DEFAULT_NBPP_IN       16
 #define DEFAULT_NBPP_OUT      10
-typedef short pixel_t;
 
 #define IMAGE_SRC_DIR "."
 #define IMAGE_DST_DIR "."
 #define MEDIAN_NELEM  (3 * 3)
 #define USE_SHIFT
 
-typedef float          fltPixel_t;
-typedef unsigned short senPixel_t;
-typedef int            algPixel_t;
+// typedef float          fltPixel_t;
+// typedef unsigned short senPixel_t;
+// typedef int            algPixel_t;
 
 #define ODD(A)    ((A)&0x01)
 #define EVEN(A)   (!ODD(A))
@@ -62,7 +65,7 @@ typedef int            algPixel_t;
 
 #define DBGMSG(MSG)                                         \
     {                                                       \
-        printf("%s, line %d: %s", __FILE__, __LINE__, MSG); \
+        fprintf(stderr, "%s, line %d: %s", __FILE__, __LINE__, MSG); \
     }
 
 #define CLIP_INRANGE(LOW, VAL, HIGH) ((VAL) < (LOW) ? (LOW) : ((VAL) > (HIGH) ? (HIGH) : (VAL)))
@@ -339,7 +342,7 @@ int readFrame(FILE *fp, void *image, int nPxls, int nBytesPerPxl, bool bSwap)
 
     if (bSwap) {
         for (i = 0; i < nPxlsRead; i++) {
-            /* printf("[%d]: raw-noswap=%hu\n", */
+            /* fprintf(stderr, "[%d]: raw-noswap=%hu\n", */
             /*        i, *p16); */
 
             if (nBytesPerPxl == sizeof(unsigned short)) {
@@ -544,46 +547,22 @@ static const char usage_str[] = "usage: ./nightp2p_stratus.exe coherence infile 
                                 "  The ordering of the argument is important. For now nimages, nrows\n"
                                 "  and ncols should either be all present or not at all.\n";
 
-struct nightp2p_test {
-    struct test_info               info;
-    struct nightp2p_stratus_access desc;
-    char *                         infile;
-    bool                           infile_is_raw;
-    unsigned                       nimages;
-    unsigned                       rows;
-    unsigned                       cols;
-    unsigned                       nbytespp;
-    unsigned                       swapbytes;
-    unsigned                       do_dwt;
-    unsigned                       nbpp_in;
-    unsigned                       nbpp_out;
-    pixel_t *                      hbuf;
-    int *                          sbuf_in;
-    int *                          sbuf_out;
-    bool                           verbose;
-};
+// static int check_gold(int *gold, pixel_t *array, unsigned len, bool verbose)
+// {
+//     int i;
+//     int rtn = 0;
+//     for (i = 0; i < len; i++) {
+//         if (((int)array[i]) != gold[i]) {
+//             if (verbose)
+//                 fprintf(stderr, "A[%d]: array=%d; gold=%d\n", i, (int)array[i], gold[i]);
+//             rtn++;
+//         }
+//     }
 
-static inline struct nightp2p_test *to_nightp2p(struct test_info *info)
-{
-    return container_of(info, struct nightp2p_test, info);
-}
+//     return rtn;
+// }
 
-static int check_gold(int *gold, pixel_t *array, unsigned len, bool verbose)
-{
-    int i;
-    int rtn = 0;
-    for (i = 0; i < len; i++) {
-        if (((int)array[i]) != gold[i]) {
-            if (verbose)
-                printf("A[%d]: array=%d; gold=%d\n", i, (int)array[i], gold[i]);
-            rtn++;
-        }
-    }
-
-    return rtn;
-}
-
-static void init_buf(struct nightp2p_test *t)
+static void init_buf()
 {
     // TODO load raw and repeat image in buffer as many times as nimages
 
@@ -591,7 +570,7 @@ static void init_buf(struct nightp2p_test *t)
     //  |  in/out image (int)  |  | img_size (in bytes)
     //  ========================  v
 
-    printf("init buffers\n");
+    fprintf(stderr, "init buffers\n");
 
     int             i = 0, j = 0, hbuf_i = 0;
     unsigned        nPxls;
@@ -599,32 +578,32 @@ static void init_buf(struct nightp2p_test *t)
     unsigned short *rawBuf;
 
     // open input file
-    if (t->infile_is_raw) {
-        if ((fd = fopen(t->infile, "rb")) == (FILE *)NULL) {
-            printf("[ERROR] Could not open %s\n", t->infile);
+    if (test_infile_is_raw) {
+        if ((fd = fopen(test_infile, "rb")) == (FILE *)NULL) {
+            fprintf(stderr, "[ERROR] Could not open %s\n", test_infile);
             exit(1);
         }
     } else {
-        if ((fd = fopen(t->infile, "r")) == (FILE *)NULL) {
-            printf("[ERROR] Could not open %s\n", t->infile);
+        if ((fd = fopen(test_infile, "r")) == (FILE *)NULL) {
+            fprintf(stderr, "[ERROR] Could not open %s\n", test_infile);
             exit(1);
         }
     }
 
     // allocate buffers
-    nPxls  = t->rows * t->cols;
+    nPxls  = test_rows * test_cols;
     rawBuf = (unsigned short *)calloc(nPxls, sizeof(unsigned short));
 
     if (!rawBuf) {
         free(rawBuf);
-        printf("[ERROR] Could not allocate buffer (in init_buf())\n");
+        fprintf(stderr, "[ERROR] Could not allocate buffer (in init_buf())\n");
         exit(1);
     }
 
-    if (t->infile_is_raw) {
+    if (test_infile_is_raw) {
         // read raw image file
-        if (readFrame(fd, rawBuf, nPxls, t->nbytespp, t->swapbytes) != nPxls) {
-            printf("[ERROR] readFrame returns wrong number of pixels\n");
+        if (readFrame(fd, rawBuf, nPxls, test_nbytespp, test_swapbytes) != nPxls) {
+            fprintf(stderr, "[ERROR] readFrame returns wrong number of pixels\n");
             exit(1);
         }
     } else {
@@ -644,10 +623,10 @@ static void init_buf(struct nightp2p_test *t)
     // store image in accelerator buffer
     // repeat image according to nimages parameter
     hbuf_i = 0;
-    for (i = 0; i < t->nimages; i++) {
+    for (i = 0; i < test_nimages; i++) {
         for (j = 0; j < nPxls; j++) {
-            t->hbuf[hbuf_i]    = (pixel_t)rawBuf[j];
-            t->sbuf_in[hbuf_i] = (int)rawBuf[j];
+            test_hbuf[hbuf_i]    = (pixel_t)rawBuf[j];
+            test_sbuf_in[hbuf_i] = (int)rawBuf[j];
             hbuf_i++;
         }
     }
@@ -656,181 +635,97 @@ static void init_buf(struct nightp2p_test *t)
     fclose(fd);
 }
 
-static inline size_t nightp2p_size(struct nightp2p_test *t) { return t->rows * t->cols * t->nimages * sizeof(int); }
-
-static inline size_t nightp2p_size_opt(struct nightp2p_test *t)
-{
-    return t->rows * t->cols * t->nimages * sizeof(short);
-}
-
-static void nightp2p_alloc_buf(struct test_info *info)
-{
-    struct nightp2p_test *t = to_nightp2p(info);
-
-    t->hbuf = malloc0_check(nightp2p_size_opt(t));
-    if (!strcmp(info->cmd, "test")) {
-        t->sbuf_in  = malloc0_check(nightp2p_size(t));
-        t->sbuf_out = malloc0_check(nightp2p_size(t));
-    }
-}
-
-static void nightp2p_alloc_contig(struct test_info *info)
-{
-    struct nightp2p_test *t = to_nightp2p(info);
-
-    printf("HW buf size: %zu B\n", nightp2p_size(t));
-    if (contig_alloc(nightp2p_size(t), &info->contig) == NULL)
-        die_errno(__func__);
-}
-
-static void nightp2p_init_bufs(struct test_info *info)
-{
-    struct nightp2p_test *t = to_nightp2p(info);
-
-    init_buf(t);
-    contig_copy_to(info->contig, 0, t->hbuf, nightp2p_size_opt(t));
-}
-
-static void nightp2p_set_access(struct test_info *info)
-{
-    struct nightp2p_test *t = to_nightp2p(info);
-
-    t->desc.nimages    = t->nimages;
-    t->desc.rows       = t->rows;
-    t->desc.cols       = t->cols;
-    t->desc.do_dwt     = t->do_dwt;
-    t->desc.src_offset = 0;
-    t->desc.dst_offset = 0;
-}
-
-static void nightp2p_comp(struct test_info *info)
-{
-    struct nightp2p_test *t      = to_nightp2p(info);
-    int                   i      = 0;
-    int                   algErr = 0, numOut = 0;
-
-    int *buf_in  = NULL;
-    int *buf_out = NULL;
-
-    printf("nightp2p_comp\n");
-
-    for (i = 0; i < t->nimages; i++) {
-        buf_in  = &(t->sbuf_in[i * t->cols * t->rows]);
-        buf_out = &(t->sbuf_out[i * t->cols * t->rows]);
-        algErr |= ensemble_1(buf_in, buf_out, t->rows, t->cols, t->nbpp_in, t->nbpp_out);
-        assert(algErr == 0);
-    }
-
-    if (t->infile_is_raw) {
-        // save raw output image
-        numOut = saveFrame(buf_out, ".", "ensemble1", t->rows, t->cols, 0, sizeof(int), false);
-        assert(numOut == t->rows * t->cols * sizeof(int));
-    } else {
-        // save txt output image
-
-        FILE *fileOut = NULL;
-        if ((fileOut = fopen("out.txt", "w")) == (FILE *)NULL) {
-            printf("[ERROR] Could not open out.txt\n");
-            fclose(fileOut);
-        }
-
-        // store output file
-        int npixels = t->nimages * t->rows * t->cols;
-
-        for (i = 0; i < npixels; i++) {
-            fprintf(fileOut, "%d\n", (int)t->hbuf[i]);
-        }
-
-        fclose(fileOut);
-    }
-
-    // -- Read gold output
-    /* printf("read gold output start\n"); */
-
-    /* int i = 0; */
-    /* int val = 0; */
-    /* FILE *fd = NULL; */
-
-    /* if((fd = fopen("./gold_output.txt", "r")) == (FILE*)NULL) */
-    /* { */
-    /*         printf("[Err] could not open ./gold_output.txt\n"); */
-    /*         fclose(fd); */
-    /* } */
-
-    /* fscanf(fd, "%d", &val); */
-    /* while(!feof(fd)) */
-    /* { */
-    /*         t->sbuf_in[i++] = val; */
-    /*         fscanf(fd, "%d", &val); */
-    /* } */
-
-    /* fclose(fd); */
-
-    /* printf("read gold output finish\n"); */
-}
-
-static bool nightp2p_diff_ok(struct test_info *info)
-{
-    struct nightp2p_test *t         = to_nightp2p(info);
-    int                   total_err = 0;
-    int                   i;
-
-    contig_copy_from(t->hbuf, info->contig, 0, nightp2p_size_opt(t));
-
-    int err;
-
-    err = check_gold(t->sbuf_out, t->hbuf, t->rows * t->cols * t->nimages, t->verbose);
-
-    FILE *fileSBUF = fopen("SBUF.txt", "w");
-    for (i = 0; i < t->rows * t->cols; i++) {
-        fprintf(fileSBUF, "%d\n", t->sbuf_out[i]);
-    }
-    fclose(fileSBUF);
-
-    FILE *fileHBUF = fopen("HBUF.txt", "w");
-    for (i = 0; i < t->rows * t->cols; i++) {
-        fprintf(fileHBUF, "%d\n", t->hbuf[i]);
-    }
-    fclose(fileHBUF);
-
-    if (err)
-        printf("%d mismatches\n", err);
-
-    total_err += err;
-
-    /*
-    if (t->verbose) {
-        for (i = 0; i < t->rows * t->cols * t->nimages; i++) {
-            printf("      \t%d : %d\n", i, t->hbuf[i]);
-        }
-        printf("\n");
-    }
-    */
-    if (total_err)
-        printf("%d mismatches in total\n", total_err);
-    return !total_err;
-}
-
-static struct nightp2p_test nightp2p_test = {
-    .info =
-        {
-            .name         = NAME,
-            .devname      = DEVNAME,
-            .alloc_buf    = nightp2p_alloc_buf,
-            .alloc_contig = nightp2p_alloc_contig,
-            .init_bufs    = nightp2p_init_bufs,
-            .set_access   = nightp2p_set_access,
-            .comp         = nightp2p_comp,
-            .diff_ok      = nightp2p_diff_ok,
-            .esp          = &nightp2p_test.desc.esp,
-            .cm           = NIGHTP2P_STRATUS_IOC_ACCESS,
-        },
-};
-
 static void NORETURN usage(void)
 {
     fprintf(stderr, "%s", usage_str);
     exit(1);
+}
+
+void test_sw() { ensemble_1(inputA, output, test_rows, test_cols, 16, 10); }
+
+void test_stm(token_t *buf, int num_col, int num_row, int test_batch)
+{
+    cfg_nightNF_stm[0].hw_buf     = buf;
+    cfg_nightHist_stm[0].hw_buf   = buf;
+    cfg_nightHistEq_stm[0].hw_buf = buf;
+    cfg_nightDwt_stm[0].hw_buf    = buf;
+
+    struct nightNF_stratus_access *    tmp1;
+    struct nightvision_stratus_access *tmp2;
+    tmp1               = (struct nightNF_stratus_access *)cfg_nightNF_stm[0].esp_desc;
+    tmp1->cols         = num_col;
+    tmp1->rows         = num_row;
+    tmp1->nimages      = test_batch;
+    tmp1->is_p2p       = 0;
+    tmp1->p2p_config_0 = 1;
+    tmp2               = (struct nightvision_stratus_access *)cfg_nightHist_stm[0].esp_desc;
+    tmp2->cols         = num_col;
+    tmp2->rows         = num_row;
+    tmp2->nimages      = test_batch;
+    tmp2               = (struct nightvision_stratus_access *)cfg_nightHistEq_stm[0].esp_desc;
+    tmp2->cols         = num_col;
+    tmp2->rows         = num_row;
+    tmp2->nimages      = test_batch;
+    tmp2               = (struct nightvision_stratus_access *)cfg_nightDwt_stm[0].esp_desc;
+    tmp2->cols         = num_col;
+    tmp2->rows         = num_row;
+    tmp2->nimages      = test_batch;
+
+    gettime(&t_test_1);
+    for (i = 0; i < test_batch; i++) {
+        esp_run(cfg_nightNF_stm, 1);
+        esp_run(cfg_nightHist_stm, 1);
+        esp_run(cfg_nightHistEq_stm, 1);
+        esp_run(cfg_nightDwt_stm, 1);
+    }
+    gettime(&t_test_2);
+
+    time_s = ts_subtract(&t_test_1, &t_test_2);
+
+    fprintf(stderr, "[stm] cols: %d\trows: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, test_batch, time_s);
+}
+
+void test_mtm(token_t *buf, int num_col, int num_row, int test_batch) {}
+
+void test_p2p(token_t *buf, int num_col, int num_row, int test_batch) {
+    cfg_night_p2p[0].hw_buf     = buf;
+    cfg_night_p2p[1].hw_buf     = buf;
+    // cfg_night_p2p[2].hw_buf     = buf;
+    // cfg_night_p2p[3].hw_buf     = buf;
+    fprintf(stderr, "-- test_p2p -- \n");
+    
+    struct nightNF_stratus_access *    tmp1;
+    struct nightvision_stratus_access *tmp2;
+    // tmp1               = (struct nightNF_stratus_access *)cfg_night_p2p[0].esp_desc;
+    // tmp1->cols         = num_col;
+    // tmp1->rows         = num_row;
+    // tmp1->nimages      = test_batch;
+    // tmp1->is_p2p       = 1;
+    // tmp1->p2p_config_0 = 2;
+    // tmp2               = (struct nightvision_stratus_access *)cfg_night_p2p[1].esp_desc;
+    // tmp2->cols         = num_col;
+    // tmp2->rows         = num_row;
+    // tmp2->nimages      = test_batch;
+    tmp2               = (struct nightvision_stratus_access *)cfg_night_p2p[0].esp_desc;
+    tmp2->cols         = num_col;
+    tmp2->rows         = num_row;
+    tmp2->nimages      = test_batch;
+    tmp2               = (struct nightvision_stratus_access *)cfg_night_p2p[1].esp_desc;
+    tmp2->cols         = num_col;
+    tmp2->rows         = num_row;
+    tmp2->nimages      = test_batch;
+
+    gettime(&t_test_1);
+    for (i = 0; i < test_batch; i++) {
+        fprintf(stderr, "-- test_p2p -- debug 1\n");
+        esp_run(cfg_night_p2p, 2);
+        fprintf(stderr, "-- test_p2p -- debug 2\n");
+    }
+    gettime(&t_test_2);
+
+    time_s = ts_subtract(&t_test_1, &t_test_2);
+
+    fprintf(stderr, "[p2p] cols: %d\trows: %d\tbatch: %d\ttime: %llu\n", num_col, num_row, test_batch, time_s);
 }
 
 /*
@@ -843,46 +738,66 @@ static void NORETURN usage(void)
  */
 int main(int argc, char *argv[])
 {
-    printf("=== Helloo from nightp2p\n");
+    fprintf(stderr, "=== Helloo from nightp2p\n");
     if (argc < 3 || argc == 5 || argc > 7) {
         usage();
 
     } else {
-        printf("\nCommand line arguments received:\n");
-        printf("\tcoherence: %s\n", argv[1]);
+        fprintf(stderr, "\nCommand line arguments received:\n");
+        fprintf(stderr, "\tcoherence: %s\n", argv[1]);
 
-        nightp2p_test.infile = argv[2];
-        printf("\tinfile: %s\n", nightp2p_test.infile);
+        test_infile = argv[2];
+        fprintf(stderr, "\tinfile: %s\n", test_infile);
 
         if (argc == 6 || argc == 7) {
-            nightp2p_test.nimages = strtol(argv[3], NULL, 10);
-            nightp2p_test.cols    = strtol(argv[4], NULL, 10);
-            nightp2p_test.rows    = strtol(argv[5], NULL, 10);
-            printf("\tnimages: %u\n", nightp2p_test.nimages);
-            printf("\tncols: %u\n", nightp2p_test.cols);
-            printf("\tnrows: %u\n", nightp2p_test.rows);
+            test_nimages = strtol(argv[3], NULL, 10);
+            test_cols    = strtol(argv[4], NULL, 10);
+            test_rows    = strtol(argv[5], NULL, 10);
+            fprintf(stderr, "\tnimages: %u\n", test_nimages);
+            fprintf(stderr, "\tncols: %u\n", test_cols);
+            fprintf(stderr, "\tnrows: %u\n", test_rows);
         } else {
-            nightp2p_test.nimages = DEFAULT_NIMAGES;
-            nightp2p_test.rows    = DEFAULT_NROWS;
-            nightp2p_test.cols    = DEFAULT_NCOLS;
+            test_nimages = DEFAULT_NIMAGES;
+            test_rows    = DEFAULT_NROWS;
+            test_cols    = DEFAULT_NCOLS;
         }
 
         if (argc == 4 || argc == 7) {
             if ((strcmp(argv[3], "-v") && argc == 4) || (strcmp(argv[6], "-v") && argc == 7)) {
                 usage();
             } else {
-                nightp2p_test.verbose = true;
-                printf("\tverbose enabled\n");
+                test_verbose = true;
+                fprintf(stderr, "\tverbose enabled\n");
             }
         }
-        nightp2p_test.nbytespp      = DEFAULT_NBYTESPP;
-        nightp2p_test.swapbytes     = DEFAULT_SWAPBYTES;
-        nightp2p_test.do_dwt        = DEFAULT_DO_DWT;
-        nightp2p_test.infile_is_raw = DEFAULT_INFILE_IS_RAW;
-        nightp2p_test.nbpp_in       = DEFAULT_NBPP_IN;
-        nightp2p_test.nbpp_out      = DEFAULT_NBPP_OUT;
-        printf("\n");
+        test_nbytespp      = DEFAULT_NBYTESPP;
+        test_swapbytes     = DEFAULT_SWAPBYTES;
+        test_do_dwt        = DEFAULT_DO_DWT;
+        test_infile_is_raw = DEFAULT_INFILE_IS_RAW;
+        test_nbpp_in       = DEFAULT_NBPP_IN;
+        test_nbpp_out      = DEFAULT_NBPP_OUT;
+        fprintf(stderr, "\n");
     }
 
-    return test_main(&nightp2p_test.info, argv[1], "test");
+    // return test_main(&test_info, argv[1], "test");
+
+    inputA = (algPixel_t *)calloc(test_rows * test_cols, sizeof(algPixel_t));
+    output = (algPixel_t *)calloc(test_rows * test_cols, sizeof(algPixel_t));
+
+    token_t *buf;
+    buf = (token_t *)esp_alloc(5000000); // MEM_ONE_IMAGE_SIZE
+
+    // init_buf();
+
+    // test_sw();
+    //test_stm(buf, test_cols, test_rows, 1);
+    test_mtm(buf, test_cols, test_rows, 1);
+    test_p2p(buf, test_cols, test_rows, 1);
+
+
+    esp_free(buf);
+    free(inputA);
+    free(output);
+
+    return 0;
 }

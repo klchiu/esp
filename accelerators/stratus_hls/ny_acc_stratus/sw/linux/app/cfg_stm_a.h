@@ -11,26 +11,21 @@ typedef uint64_t token_t;
 struct ny_acc_stratus_access ny_acc_cfg_stm_a[] = {
     /* <<--descriptor-->> */
     {
-        .src_offset            = 0,
-        .dst_offset            = 0,
-        .wami_num_img          = 1,
-        .wami_num_col          = 128,
-        .wami_num_row          = 128,
-        .wami_pad              = 0,
-        .wami_kern_id          = SYNTH_KERN_ID,
-        .wami_batch            = 16384,
-        .wami_src_dst_offset_0 = 0,
-        .wami_src_dst_offset_1 = 16384, // 128*128
-        .wami_src_dst_offset_2 = 0,
-        .wami_src_dst_offset_3 = 0,
-        .wami_src_dst_offset_4 = 0,
-        .wami_is_p2p           = 0,
-        .wami_p2p_config_0     = 0,
-        .wami_p2p_config_1     = 0,
-        .esp.coherence         = ACC_COH_NONE,
-        .esp.p2p_store         = 0,
-        .esp.p2p_nsrcs         = 0,
-        .esp.p2p_srcs          = {"", "", "", ""},
+        .src_offset       = 0,
+        .dst_offset       = 0,
+        .batch            = 1,
+        .num_load         = 128,
+        .num_store        = 128,
+        .delay            = 16384,
+        .src_dst_offset_0 = 0,
+        .src_dst_offset_1 = 16384, // 128*128
+        .src_dst_offset_2 = 0,
+        .src_dst_offset_3 = 0,
+        .src_dst_offset_4 = 0,
+        .esp.coherence    = ACC_COH_NONE,
+        .esp.p2p_store    = 0,
+        .esp.p2p_nsrcs    = 0,
+        .esp.p2p_srcs     = {"", "", "", ""},
     }};
 
 esp_thread_info_t cfg_ny_acc_0_stm_a[] = {{

@@ -317,6 +317,7 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
                 die("Error: device name %s exceeds maximum length of 64 characters\n", info->devname);
             }
 
+            // [humu]: we can try to check the available accelerators here
             sprintf(path, "%s%s", prefix, info->devname);
 
             info->fd = open(path, O_RDWR, 0);

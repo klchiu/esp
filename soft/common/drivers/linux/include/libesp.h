@@ -34,6 +34,7 @@ unsigned DMA_WORD_PER_BEAT(unsigned _st);
 typedef struct esp_accelerator_thread_info {
 	bool run;
 	char *devname;
+	char *puffinname;
 	void *hw_buf;
 	int ioctl_req;
 	/* Partially Filled-in by ESPLIB */

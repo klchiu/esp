@@ -72,6 +72,7 @@ void *accelerator_thread(void *ptr)
     int                rc = 0;
 
     gettime(&th_start);
+    printf("[humu]: accelerator_thread: before ioctl, devname: %s\n", info->devname);
     rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
     gettime(&th_end);
     if (rc < 0) {
@@ -133,7 +134,10 @@ void *accelerator_thread_serial(void *ptr)
             continue;
 
         gettime(&th_start);
+        printf("[humu]: accelerator_thread_serial: before ioctl, ------- devname: %s\n", info->puffinname);
         rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
+        printf("[humu]: accelerator_thread_serial: after ioctl, ------- devname: %s\n", info->puffinname);
+
         gettime(&th_end);
         if (rc < 0) {
             perror("ioctl");
@@ -187,7 +191,8 @@ static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
 {
     int i, j;
 
-    printf("  > Test time: %llu ns\n", hw_ns);
+    printf("[humu]: print_time_info\n");
+    printf("  > Test timey: %llu ns\n", hw_ns);
     for (i = 0; i < nthreads; i++) {
         unsigned len = nacc[i];
         for (j = 0; j < len; j++) {
@@ -202,19 +207,47 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 {
     int i;
 
+
+    // Check the available resources
+	for(int8_t i = 1; i < 4; i++){
+		char acc[3][11];
+		sprintf(acc[i-1], "/dev/svd.%d", i);
+
+		if(access(acc[i-1], F_OK) == 0){
+
+			printf("\nAdditional accelerator: %s\n\n", acc[i-1]);
+
+			cfg_000[i].hw_buf = buf;
+			esp_run(&cfg_000[i], 1);
+
+			errors = validate_buffer(&buf[out_offset], gold);
+
+			if (!errors)
+				printf("+ Test PASSED for %s\n", acc[i-1]);
+			else
+				printf("+ Test FAILED for %s\n", acc[i-1]);
+		}
+	}
+
+
+
+
     if (thread_is_p2p(&cfg[0])) {
         esp_thread_info_t *cfg_ptrs[1];
         cfg_ptrs[0] = cfg;
 
         esp_run_parallel(cfg_ptrs, 1, &nacc);
     } else {
+        // fprintf(stderr, "[humu]: esp_run, before malloc 1\n");
         esp_thread_info_t **cfg_ptrs = malloc(sizeof(esp_thread_info_t *) * nacc);
+        // fprintf(stderr, "[humu]: esp_run, before malloc 2\n");
         unsigned *          nacc_arr = malloc(sizeof(unsigned) * nacc);
 
         for (i = 0; i < nacc; i++) {
             nacc_arr[i] = 1;
             cfg_ptrs[i] = &cfg[i];
         }
+        // fprintf(stderr, "[humu]: esp_run, before esp_run_parallel\n");
         esp_run_parallel(cfg_ptrs, nacc, nacc_arr);
         free(nacc_arr);
         free(cfg_ptrs);
@@ -290,19 +323,22 @@ unsigned long long esp_run_parallel_no_print(esp_thread_info_t *cfg[], unsigned 
     free(thread);
 
     acc_time = cfg[0]->hw_ns;
-    //print_time_info(cfg, ts_subtract(&th_start, &th_end), nthreads, nacc);
+    // print_time_info(cfg, ts_subtract(&th_start, &th_end), nthreads, nacc);
 
     return acc_time;
 }
 
 void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nacc)
 {
-    int                i, j;
-    //unsigned long long acc_time;
-    struct timespec    th_start;
-    struct timespec    th_end;
-    pthread_t *        thread = malloc(nthreads * sizeof(pthread_t));
-    int                rc     = 0;
+    int i, j;
+    // unsigned long long acc_time;
+    struct timespec th_start;
+    struct timespec th_end;
+    pthread_t *     thread = malloc(nthreads * sizeof(pthread_t));
+    int             rc     = 0;
+
+    printf("[humu]: esp_run_parallel()\n");
+
     esp_config(cfg, nthreads, nacc);
     for (i = 0; i < nthreads; i++) {
         unsigned len = nacc[i];
@@ -343,9 +379,13 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
                 rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p, (void *)args);
         } else {
             if (nthreads == 1) // [humu]: no need to create a new thread
+            {
+                printf("[humu]: esp_run_parallel(), nthreads = %d, devname = %s\n", nthreads, args->info->devname);
                 accelerator_thread_serial((void *)args);
-            else
+            } else {
+                printf("[humu]: esp_run_parallel(), nthreads = %d, devname = %s\n", nthreads, args->info->devname);
                 rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void *)args);
+            }
         }
         if (rc != 0) {
             perror("pthread_create");
@@ -364,6 +404,7 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
     gettime(&th_end);
     free(thread);
 
+    printf("[humu]: esp_run_parallel, before calling print_time_info\n");
     print_time_info(cfg, ts_subtract(&th_start, &th_end), nthreads, nacc);
 
     return;

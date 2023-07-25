@@ -668,9 +668,9 @@ static int __init esp_init(void)
 static void __exit esp_exit(void)
 { }
 
-module_init(esp_init)
-	module_exit(esp_exit)
+module_init(esp_init);
+module_exit(esp_exit);
 
-	MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
+MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("esp driver");

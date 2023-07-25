@@ -7,6 +7,102 @@
 
 buf2handle_node *head = NULL;
 
+int lock_a_device(char *devname_noid)
+{
+    FILE * pFile;
+    char   acc[3][30];
+    char   acc_lock[3][30];
+    int8_t i = 0;
+    // int8_t dev_id      = -1;
+    int8_t acc_num_max = 4; // assume maximum number of accelerator is 4 at the beginning
+    int    ret_flock;
+
+    // Check the available resources
+    // for (int8_t i = 0; i < 4; i++) {
+
+    while (true) {
+        i = i % 4;
+
+        sprintf(acc[i], "/dev/%s.%d", devname_noid, i);
+        sprintf(acc_lock[i], "/lock/%s.%d", devname_noid, i);
+
+        if (access(acc[i], F_OK) == 0) { // device exists
+            fprintf(stderr, "Found --> %s\n", acc[i]);
+
+            if (access(acc_lock[i], F_OK) == 0) { // lock exists
+                fprintf(stderr, "Lock exists --> %s\n", acc_lock[i]);
+
+            } else { // lock not exists
+                fprintf(stderr, "Lock NOT exists --> %s\n", acc_lock[i]);
+
+                pFile = fopen(acc_lock[i], "w");
+                if (pFile != NULL) {
+                    fputs("This file serves as a lock for accelerator.\n", pFile);
+                    fclose(pFile);
+                }
+                fprintf(stderr, "Create lock file --> %s\n", acc_lock[i]);
+            }
+
+            // if acc_lock file is unlocked:
+            // [humu]: lock the acc_lock file.   flock(acc_lock[i], LOCK_EX);
+            // else if acc_lock file is locked:
+            // [humu]: check the next available one
+
+            pFile = fopen(acc_lock[i], "r");
+
+            ret_flock = flock(fileno(pFile), LOCK_EX | LOCK_NB);
+            if (ret_flock == -1) { // fail to lock it
+                if (errno == EWOULDBLOCK) {
+                    printf("lock file was locked, keep finding the next available accelerator\n");
+                    i++;
+                    i = i % acc_num_max;
+                    continue;
+                } else {
+                    fprintf(stderr, "other lock error --> errno = %d\n", errno);
+                    return -1;
+                }
+            } else { // successfully lock it
+                flock(fileno(pFile), LOCK_EX);
+                fprintf(stderr, "lock file was unlocked, lock it: %s\n", acc_lock[i]);
+                return i;
+            }
+            fclose(pFile);
+
+        } else { // device not exists
+            fprintf(stderr, "No found --> %s\n", acc[i]);
+        }
+
+        i++;
+        i = i % acc_num_max;
+    }
+
+    return -1;
+}
+
+int unlock_a_device(char *devname_noid, int dev_id)
+{
+    FILE *pFile;
+    char  acc_lock[30];
+        int    ret_flock;
+
+
+    sprintf(acc_lock, "/lock/%s.%d", devname_noid, dev_id);
+    pFile = fopen(acc_lock, "r");
+
+    fprintf(stderr, "unlock this: %s\n", acc_lock);
+    // unlock the acc_lock file
+ret_flock =  flock(fileno(pFile), LOCK_UN);
+    fprintf(stderr, "ret_flock: %d\n", ret_flock);
+
+    
+    fclose(pFile);
+
+    fprintf(stderr, "Let's just remove the lock file: %s\n", acc_lock);
+    remove(acc_lock);
+
+    return -1;
+}
+
 void insert_buf(void *buf, contig_handle_t *handle, enum contig_alloc_policy policy)
 {
     buf2handle_node *new = malloc(sizeof(buf2handle_node));
@@ -122,7 +218,9 @@ void *accelerator_thread_serial(void *ptr)
     struct thread_args *args   = (struct thread_args *)ptr;
     esp_thread_info_t * thread = args->info;
     unsigned            nacc   = args->nacc;
-    int                 i;
+    int                 i, j;
+    int                 dev_id = -1;
+
     for (i = 0; i < nacc; i++) {
 
         struct timespec    th_start;
@@ -133,15 +231,33 @@ void *accelerator_thread_serial(void *ptr)
         if (!info->run)
             continue;
 
+        printf("[humu]: accelerator_thread_serial: dev_id = %d\n", dev_id);
+        printf("[humu]: accelerator_thread_serial: strlen(info->devname) = %ld\n", strlen(info->devname));
+
+        // [humu]: there should be a better way of changing the dev number in devname c string
+        char *temp_name = malloc(sizeof(char) * strlen(info->devname) + 1);
+        for (j = 0; j < strlen(info->devname) + 1; j++) {
+            // printf("[humu]: info->devname[%d] = %c\n", j, info->devname[j]);
+            temp_name[j] = info->devname[j];
+        }
+        // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
+
+        dev_id = lock_a_device(info->devname_noid);
+
+        temp_name[strlen(info->devname) - 1] = '0' + dev_id;
+        info->devname                        = temp_name;
+
         gettime(&th_start);
-        printf("[humu]: accelerator_thread_serial: before ioctl, ------- devname: %s\n", info->puffinname);
+        printf("[humu]: accelerator_thread_serial: before ioctl, ------- devname: %s\n", info->devname);
         rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
-        printf("[humu]: accelerator_thread_serial: after ioctl, ------- devname: %s\n", info->puffinname);
+        printf("[humu]: accelerator_thread_serial: after ioctl, ------- puffinname: %s\n", info->puffinname);
 
         gettime(&th_end);
         if (rc < 0) {
             perror("ioctl");
         }
+
+        unlock_a_device(info->devname_noid, dev_id);
 
         info->hw_ns = ts_subtract(&th_start, &th_end);
         close(info->fd);
@@ -207,31 +323,6 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 {
     int i;
 
-
-    // Check the available resources
-	for(int8_t i = 1; i < 4; i++){
-		char acc[3][11];
-		sprintf(acc[i-1], "/dev/svd.%d", i);
-
-		if(access(acc[i-1], F_OK) == 0){
-
-			printf("\nAdditional accelerator: %s\n\n", acc[i-1]);
-
-			cfg_000[i].hw_buf = buf;
-			esp_run(&cfg_000[i], 1);
-
-			errors = validate_buffer(&buf[out_offset], gold);
-
-			if (!errors)
-				printf("+ Test PASSED for %s\n", acc[i-1]);
-			else
-				printf("+ Test FAILED for %s\n", acc[i-1]);
-		}
-	}
-
-
-
-
     if (thread_is_p2p(&cfg[0])) {
         esp_thread_info_t *cfg_ptrs[1];
         cfg_ptrs[0] = cfg;
@@ -241,7 +332,7 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
         // fprintf(stderr, "[humu]: esp_run, before malloc 1\n");
         esp_thread_info_t **cfg_ptrs = malloc(sizeof(esp_thread_info_t *) * nacc);
         // fprintf(stderr, "[humu]: esp_run, before malloc 2\n");
-        unsigned *          nacc_arr = malloc(sizeof(unsigned) * nacc);
+        unsigned *nacc_arr = malloc(sizeof(unsigned) * nacc);
 
         for (i = 0; i < nacc; i++) {
             nacc_arr[i] = 1;

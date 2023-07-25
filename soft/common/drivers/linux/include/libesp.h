@@ -13,11 +13,13 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/file.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "my_stringify.h"
 #include "fixed_point.h"
@@ -34,6 +36,7 @@ unsigned DMA_WORD_PER_BEAT(unsigned _st);
 typedef struct esp_accelerator_thread_info {
 	bool run;
 	char *devname;
+	char *devname_noid;
 	char *puffinname;
 	void *hw_buf;
 	int ioctl_req;

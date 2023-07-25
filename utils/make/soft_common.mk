@@ -56,6 +56,7 @@ sysroot-update: $(SOFT_BUILD)/linux-build/vmlinux $(ESP_CFG_BUILD)/socmap.vhd so
 	@mkdir -p $(BUILD_DRIVERS)/dvi/linux/app
 	@CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) BUILD_PATH=$(BUILD_DRIVERS)/dvi/linux/app DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(DRV_LINUX)/dvi/app
 	@mkdir -p $(SOFT_BUILD)/sysroot/applications/dvi; cp $(BUILD_DRIVERS)/dvi/linux/app/*.exe $(SOFT_BUILD)/sysroot/applications/dvi
+	@mkdir -p $(SOFT_BUILD)/sysroot/lock;
 	@$(MAKE) acc-driver
 	@$(MAKE) acc-app
 	@touch $(SOFT_BUILD)/sysroot

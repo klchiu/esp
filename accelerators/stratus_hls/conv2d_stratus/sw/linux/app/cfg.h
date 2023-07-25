@@ -108,6 +108,8 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "conv2d_stratus.0",
+		.devname_noid = "conv2d_stratus",
+		.puffinname = "red",
 		.ioctl_req = CONV2D_STRATUS_IOC_ACCESS,
 		.esp_desc = &(conv2d_cfg_000[0].esp),
 	}

@@ -99,14 +99,14 @@ if {$TECH_IS_XILINX == 1} {
 #
 # DSE configuration
 #
-set DMA_WIDTH "32 64"
+# set DMA_WIDTH "32 64"
 set DMA_CHUNK "2048" 
 set WORD_SIZE "32"
 set PARALLELISM "8"
-# set DMA_WIDTH "64"
+set DMA_WIDTH "64"
 # set DMA_CHUNK "8 16 32 64 128 512 2048 4096 8192" 
 # set WORD_SIZE "32"
-# set PARALLELISM "1 2 4 8 16"
+# set PARALLELISM "4 8 16"
 
 set_attr split_multiply 32
 set_attr split_add 32

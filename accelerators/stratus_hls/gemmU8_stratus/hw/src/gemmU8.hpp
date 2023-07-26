@@ -71,31 +71,30 @@ public:
 
     // Calculate the number of chunks and remaining cols
     inline void calculate_config(uint24_t ninputs,
-				 uint24_t matrix_d1,
-				 uint24_t matrix_d2,
-				 uint24_t matrix_d3,
-				 bool transpose,
-				 uint32_t& size_matrix1,
-				 uint32_t& size_matrix2,
-				 uint32_t& size_matrix_out,
-				 uint24_t& matrix_chk_in,
-				 uint16_t& matrix_rem_in1,
-				 uint16_t& matrix_rem_in2,
-				 uint24_t& matrix_chk_out,
-				 uint16_t& matrix_rem_out,
-				 uint8_t& load_cfg,
-				 uint16_t& loadable_rows,
-				 uint16_t& loadable_chunk,
-				 uint16_t& index_d1_incr,
-				 uint16_t& m2_loop_iters,
-				 uint16_t& m2_plm_incr);
-    inline void calculate_chunks(uint24_t &matrix_chk, uint16_t &matrix_rem,
-				 uint32_t matrix_d2, bool in_or_out);
+				                 uint24_t matrix_d1,
+				                 uint24_t matrix_d2,
+				                 uint24_t matrix_d3,
+				                 bool transpose,
+				                 uint32_t& size_matrix1,
+				                 uint32_t& size_matrix2,
+				                 uint32_t& size_matrix_out,
+				                 uint24_t& matrix_chk_in,
+				                 uint16_t& matrix_rem_in1,
+				                 uint16_t& matrix_rem_in2,
+				                 uint24_t& matrix_chk_out,
+				                 uint16_t& matrix_rem_out,
+				                 uint8_t& load_cfg,
+				                 uint16_t& loadable_rows,
+				                 uint16_t& loadable_chunk,
+				                 uint16_t& index_d1_incr,
+				                 uint16_t& m2_loop_iters,
+				                 uint16_t& m2_plm_incr);
+    inline void calculate_chunks(uint24_t &matrix_chk, uint16_t &matrix_rem, uint32_t matrix_d2, bool in_or_out);
 
     // Synchronize compute_kernel and store_output processes
     inline void sync_compute_store(uint16_t &count, uint16_t loaded_rows,
-				   uint8_t load_cfg, uint16_t loadable_rows,
-				   bool &pingpong);
+				                   uint8_t load_cfg, uint16_t loadable_rows,
+				                   bool &pingpong);
 
     // Handshake callable from compute_kernel
     inline void compute_store_2_handshake();
@@ -130,7 +129,7 @@ public:
     sc_signal<uint16_t> matrix_rem_in2_sig;
     sc_signal<uint24_t> matrix_chk_out_sig;
     sc_signal<uint16_t> matrix_rem_out_sig;
-    sc_signal<uint8_t> load_cfg_sig;
+    sc_signal<uint8_t>  load_cfg_sig;
     sc_signal<uint16_t> loadable_rows_sig;
     sc_signal<uint16_t> loadable_chunk_sig;
     sc_signal<uint16_t> index_d1_incr_sig;

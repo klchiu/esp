@@ -16,8 +16,10 @@
 #if defined(FIXED_POINT)
 
 const unsigned int FPDATA_WL = WORD_SIZE;
-const unsigned int FPDATA_IL = WORD_SIZE / 2;
-const unsigned int FPDATA_FL = WORD_SIZE - FPDATA_IL;
+// const unsigned int FPDATA_IL = WORD_SIZE / 2;
+// const unsigned int FPDATA_FL = WORD_SIZE - FPDATA_IL;
+const unsigned int FPDATA_IL = WORD_SIZE;
+const unsigned int FPDATA_FL = 0; 
 typedef sc_dt::sc_int<WORD_SIZE> PLM_WORD;
 
 #elif defined(FLOAT_POINT)
@@ -35,6 +37,7 @@ typedef sc_dt::sc_uint<WORD_SIZE> PLM_WORD;
 #endif
 
 // Custom SC data types
+// [humu]: why using custom datatypes?
 typedef sc_dt::sc_uint<20> uint20_t;
 typedef sc_dt::sc_uint<24> uint24_t;
 typedef sc_dt::sc_uint<28> uint28_t;

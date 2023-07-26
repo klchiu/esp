@@ -53,7 +53,7 @@
 #endif /* STRATUS_HLS */
 
 // floating/fixed point conversions
-#define INT2FP(x) int2fp<FPDATA, WORD_SIZE>(x)
-#define FP2INT(x) fp2int<FPDATA, WORD_SIZE>(x)
+// #define INT2FP(x) int2fp<FPDATA, WORD_SIZE>(x)
+// #define FP2INT(x) fp2int<FPDATA, WORD_SIZE>(x)
 
 #endif /* __CONV2DU8_DIRECTIVES_HPP_ */

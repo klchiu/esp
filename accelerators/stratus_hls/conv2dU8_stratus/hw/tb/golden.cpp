@@ -4,7 +4,7 @@
 #include "golden.hpp"
 #include <stdio.h>
 
-inline float max_of_4(float a, float b, float c, float d)
+inline int8_t max_of_4(int8_t a, int8_t b, int8_t c, int8_t d)
 {
     if (a >= b && a >= c && a >= d) {
         return a;
@@ -18,18 +18,18 @@ inline float max_of_4(float a, float b, float c, float d)
     return d;
 }
 
-inline float avg_of_4(float a, float b, float c, float d)
+inline int8_t avg_of_4(int8_t a, int8_t b, int8_t c, int8_t d)
 {
     return (a + b + c + d) / 4;
 }
 
-inline void pooling_2x2(float *in, float *out, unsigned size, bool type)
+inline void pooling_2x2(int8_t *in, int8_t *out, unsigned size, bool type)
 {
 
     assert(type >= 1 && type <= 2);
 
     unsigned i, j, out_i;
-    float    a, b, c, d;
+    int8_t   a, b, c, d;
     for (i = 0; i < size - 1; i += 2) {
         for (j = 0; j < size - 1; j += 2) {
             a     = in[i * size + j];
@@ -56,10 +56,10 @@ inline void pooling_2x2(float *in, float *out, unsigned size, bool type)
     }
 }
 
-void sw_conv_layer(const float *input, const int channels, const int height, const int width, const int kernel_h,
+void sw_conv_layer(const int8_t *input, const int channels, const int height, const int width, const int kernel_h,
                    const int kernel_w, const int pad_h, const int pad_w, const int stride_h, const int stride_w,
-                   const int dilation_h, const int dilation_w, const int num_filters, const float *weights,
-                   const float *biases, float *output, const bool do_relu, const int pool_type, const int batch_size)
+                   const int dilation_h, const int dilation_w, const int num_filters, const int8_t *weights,
+                   const int8_t *biases, int8_t *output, const bool do_relu, const int pool_type, const int batch_size)
 {
 
     const int channel_size      = round_up(height * width, DMA_WORD_PER_BEAT);
@@ -73,8 +73,8 @@ void sw_conv_layer(const float *input, const int channels, const int height, con
         for (int num_filter = 0; num_filter < num_filters; num_filter++) {
             for (int output_row = 0; output_row < output_h; output_row++) {
                 for (int output_col = 0; output_col < output_w; output_col++) {
-                    int   k         = 0;
-                    float out_value = 0;
+                    int    k         = 0;
+                    int8_t out_value = 0;
                     for (int channel = 0; channel < channels; channel++) {
                         for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
                             for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {

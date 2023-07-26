@@ -5,7 +5,7 @@
 #define __SYSTEM_HPP__
 
 #include "conv2dU8_data.hpp"
-#include "fpdata.hpp"
+// #include "fpdata.hpp"
 #include "conv2dU8_conf_info.hpp"
 #include "conv2dU8_debug_info.hpp"
 #include "conv2dU8.hpp"
@@ -109,11 +109,11 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
     uint32_t bias_size;
     uint32_t out_size;
 
-    float *input;
-    float *weights;
-    float *bias;
-    float *hw_output;
-    float *sw_output;
+    int8_t *input;       // float *input;
+    int8_t *weights;     // float *weights;
+    int8_t *bias;        // float *bias;
+    int8_t *hw_output;   // float *hw_output;
+    int8_t *sw_output;   // float *sw_output;
 
     // Other Functions
 };

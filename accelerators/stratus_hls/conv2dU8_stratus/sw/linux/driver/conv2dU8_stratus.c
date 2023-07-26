@@ -33,7 +33,7 @@ static struct of_device_id conv2dU8_device_ids[] = {
         .name = "SLD_CONV2DU8_STRATUS",
     },
     {
-        .name = "eb_052",
+        .name = "eb_054",
     },
     {
         .compatible = "sld,conv2dU8_stratus",

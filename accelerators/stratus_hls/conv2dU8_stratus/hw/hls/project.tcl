@@ -99,7 +99,8 @@ if {$TECH_IS_XILINX == 1} {
 # DSE configuration
 #
 
-set data_width 32
+# set data_width 32
+set data_width 8
 set input_plm_size 2048
 set weights_plm_size 2048
 set bias_plm_size 16

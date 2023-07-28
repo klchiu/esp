@@ -168,7 +168,7 @@ void *accelerator_thread(void *ptr)
     int                rc = 0;
 
     gettime(&th_start);
-    printf("[humu]: accelerator_thread: before ioctl, devname: %s\n", info->devname);
+    // printf("[humu]: accelerator_thread: before ioctl, devname: %s\n", info->devname);
     rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
     gettime(&th_end);
     if (rc < 0) {
@@ -231,18 +231,19 @@ void *accelerator_thread_serial(void *ptr)
         if (!info->run)
             continue;
 
-        printf("[humu]: accelerator_thread_serial: dev_id = %d\n", dev_id);
-        printf("[humu]: accelerator_thread_serial: strlen(info->devname) = %ld\n", strlen(info->devname));
+        // printf("[humu]: accelerator_thread_serial: dev_id = %d\n", dev_id);
+        // printf("[humu]: accelerator_thread_serial: strlen(info->devname) = %ld\n", strlen(info->devname));
 
         // [humu]: there should be a better way of changing the dev number in devname c string
         char *temp_name = malloc(sizeof(char) * strlen(info->devname) + 1);
         for (j = 0; j < strlen(info->devname) + 1; j++) {
-            // printf("[humu]: info->devname[%d] = %c\n", j, info->devname[j]);
+            // // printf("[humu]: info->devname[%d] = %c\n", j, info->devname[j]);
             temp_name[j] = info->devname[j];
         }
         // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
 
         dev_id = lock_a_device(info->devname_noid);
+        // dev_id = 1;
 
         temp_name[strlen(info->devname) - 1] = '0' + dev_id;
         info->devname                        = temp_name;
@@ -307,7 +308,7 @@ static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
 {
     int i, j;
 
-    printf("[humu]: print_time_info\n");
+    // printf("[humu]: print_time_info\n");
     printf("  > Test timey: %llu ns\n", hw_ns);
     for (i = 0; i < nthreads; i++) {
         unsigned len = nacc[i];
@@ -428,7 +429,7 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
     pthread_t *     thread = malloc(nthreads * sizeof(pthread_t));
     int             rc     = 0;
 
-    printf("[humu]: esp_run_parallel()\n");
+    // printf("[humu]: esp_run_parallel()\n");
 
     esp_config(cfg, nthreads, nacc);
     for (i = 0; i < nthreads; i++) {
@@ -471,10 +472,10 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
         } else {
             if (nthreads == 1) // [humu]: no need to create a new thread
             {
-                printf("[humu]: esp_run_parallel(), nthreads = %d, devname = %s\n", nthreads, args->info->devname);
+                // printf("[humu]: esp_run_parallel(), nthreads = %d, devname = %s\n", nthreads, args->info->devname);
                 accelerator_thread_serial((void *)args);
             } else {
-                printf("[humu]: esp_run_parallel(), nthreads = %d, devname = %s\n", nthreads, args->info->devname);
+                // printf("[humu]: esp_run_parallel(), nthreads = %d, devname = %s\n", nthreads, args->info->devname);
                 rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void *)args);
             }
         }
@@ -495,7 +496,7 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
     gettime(&th_end);
     free(thread);
 
-    printf("[humu]: esp_run_parallel, before calling print_time_info\n");
+    // printf("[humu]: esp_run_parallel, before calling print_time_info\n");
     print_time_info(cfg, ts_subtract(&th_start, &th_end), nthreads, nacc);
 
     return;

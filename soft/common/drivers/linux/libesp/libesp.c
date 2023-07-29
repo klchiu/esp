@@ -7,7 +7,7 @@
 
 buf2handle_node *head = NULL;
 
-int lock_a_device(char *devname_noid)
+int lock_a_device2(char *devname_noid)
 {
     FILE * pFile;
     char   acc[3][30];
@@ -79,7 +79,7 @@ int lock_a_device(char *devname_noid)
     return -1;
 }
 
-int unlock_a_device(char *devname_noid, int dev_id)
+int unlock_a_device2(char *devname_noid, int dev_id)
 {
     FILE *pFile;
     char  acc_lock[30];
@@ -102,6 +102,138 @@ ret_flock =  flock(fileno(pFile), LOCK_UN);
 
     return -1;
 }
+
+int lock_a_device(char *devname_noid, char *puffinname)
+{
+    FILE * pFile;
+    char   acc[3][30];
+    char   acc_lock[3][30];
+    int8_t i = 0;
+    // int8_t dev_id      = -1;
+    int8_t acc_num_max = 4; // assume maximum number of accelerator is 4 at the beginning
+
+
+    while (true) {
+        i = i % acc_num_max;
+
+        sprintf(acc[i], "/dev/%s.%d", devname_noid, i);
+        sprintf(acc_lock[i], "/lock/%s.%d", devname_noid, i);
+
+        if (access(acc[i], F_OK) == 0) { // device exists
+            fprintf(stderr, "[%s]: Found --> %s\n", puffinname, acc[i]);
+
+            if (access(acc_lock[i], F_OK) == 0) { // lock exists
+                fprintf(stderr, "[%s]: Lock exists --> %s\n", puffinname, acc_lock[i]);
+
+            } else { // lock not exists
+                fprintf(stderr, "[%s]: Lock NOT exists --> %s\n", puffinname, acc_lock[i]);
+
+                pFile = fopen(acc_lock[i], "w");
+                if (pFile != NULL) {
+                    fputs("This file serves as a lock for accelerator.\n", pFile);
+                    fclose(pFile);
+                }
+                fprintf(stderr, "[%s]: Create lock file --> %s\n", puffinname, acc_lock[i]);
+                return i;
+            }
+
+        } else { // device not exists
+            fprintf(stderr, "[%s]: No found --> %s\n", puffinname, acc[i]);
+        }
+
+        i++;
+    }
+
+    return -1;
+}
+
+int unlock_a_device(char *devname_noid, int dev_id, char *puffinname)
+{
+    char  acc_lock[30];
+
+    sprintf(acc_lock, "/lock/%s.%d", devname_noid, dev_id);
+    
+    fprintf(stderr, "[%s]: Let's just remove the lock file: %s\n", puffinname, acc_lock);
+    remove(acc_lock);
+
+    return -1;
+}
+
+
+
+int lock_dir(char* puffinname)
+{
+    FILE * pFile;
+    char   dirLock[] = "/lock/dirLock";
+    int    ret_flock;
+
+    fprintf(stderr, "[%s]: lock_dir() \n", puffinname);
+
+
+    while (true) {
+        
+            if (access(dirLock, F_OK) == 0) { // lock exists
+                fprintf(stderr, "[%s]: dirLock exists\n", puffinname);
+
+            } else { // lock not exists
+                fprintf(stderr, "[%s]: dirLock NOT exists\n", puffinname);
+
+                pFile = fopen(dirLock, "w");
+                if (pFile != NULL) {
+                    fputs("This file serves as a lock for the /lock directory.\n", pFile);
+                    fclose(pFile);
+                }
+                fprintf(stderr, "[%s]: Create lock file --> dirLock\n", puffinname);
+            }
+
+            // if dirLock is unlocked:
+            // [humu]: lock the dirLock.
+            // else if dirLock is locked:
+            // [humu]: wait until it's unlocked
+
+            pFile = fopen(dirLock, "r");
+
+            ret_flock = flock(fileno(pFile), LOCK_EX | LOCK_NB);
+            if (ret_flock == -1) { // fail to lock it
+                if (errno == EWOULDBLOCK) {
+                    fprintf(stderr, "[%s]: dirLock was locked, wait until it's unlocked\n", puffinname);
+                    continue;
+                } else {
+                    fprintf(stderr, "[%s]: other lock error --> errno = %d\n", puffinname, errno);
+                    return -1;
+                }
+            } else { // successfully lock it
+                flock(fileno(pFile), LOCK_EX);
+                fprintf(stderr, "[%s]: dirLock was unlocked, lock it\n", puffinname);
+                return 0;
+            }
+            fclose(pFile);
+    }
+
+    return -1;
+}
+
+int unlock_dir(char* puffinname)
+{
+    FILE *pFile;
+    char   dirLock[] = "/lock/dirLock";
+    int    ret_flock;
+
+
+    pFile = fopen(dirLock, "r");
+
+    fprintf(stderr, "[%s]: unlock dirLock\n", puffinname);
+    ret_flock =  flock(fileno(pFile), LOCK_UN);
+    fprintf(stderr, "[%s]: ret_flock: %d\n", puffinname, ret_flock);
+    
+    fclose(pFile);
+
+    fprintf(stderr, "[%s]: Let's just remove the dirLock\n", puffinname);
+    remove(dirLock);
+
+    return -1;
+}
+
 
 void insert_buf(void *buf, contig_handle_t *handle, enum contig_alloc_policy policy)
 {
@@ -220,6 +352,8 @@ void *accelerator_thread_serial(void *ptr)
     unsigned            nacc   = args->nacc;
     int                 i, j;
     int                 dev_id = -1;
+    int k = 0;
+    k++;
 
     for (i = 0; i < nacc; i++) {
 
@@ -242,7 +376,10 @@ void *accelerator_thread_serial(void *ptr)
         }
         // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
 
-        dev_id = lock_a_device(info->devname_noid);
+        lock_dir(info->puffinname);
+        dev_id = lock_a_device(info->devname_noid, info->puffinname);
+        unlock_dir(info->puffinname);
+        
         // dev_id = 1;
 
         temp_name[strlen(info->devname) - 1] = '0' + dev_id;
@@ -251,6 +388,10 @@ void *accelerator_thread_serial(void *ptr)
         gettime(&th_start);
         printf("[humu]: accelerator_thread_serial: before ioctl, ------- devname: %s\n", info->devname);
         rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
+        // sleep(10);
+        // for (k = 0 ; k < 200; k++){
+        //     printf("%s\t%d\n", info->devname, k);
+        // }
         printf("[humu]: accelerator_thread_serial: after ioctl, ------- puffinname: %s\n", info->puffinname);
 
         gettime(&th_end);
@@ -258,7 +399,10 @@ void *accelerator_thread_serial(void *ptr)
             perror("ioctl");
         }
 
-        unlock_a_device(info->devname_noid, dev_id);
+        lock_dir(info->puffinname);
+        unlock_a_device(info->devname_noid, dev_id, info->puffinname);
+        unlock_dir(info->puffinname);
+
 
         info->hw_ns = ts_subtract(&th_start, &th_end);
         close(info->fd);

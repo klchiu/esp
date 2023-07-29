@@ -54,7 +54,8 @@ void _gemmU8_pv(double *mtx_inA, double *mtx_inB, double *mtx_out, size_t is_tra
 #else //  Inefficient implementation
 
     unsigned d1, d2, d3, mtx_inA_i, mtx_inB_i;
-    double   accumulator;
+    /* double   accumulator; */
+    int8_t   accumulator;
 
     for (d1 = 0; d1 < rowsA; ++d1) {
         for (d2 = 0; d2 < colsB; ++d2) {
@@ -64,7 +65,11 @@ void _gemmU8_pv(double *mtx_inA, double *mtx_inB, double *mtx_out, size_t is_tra
                 mtx_inA_i = d1 * colsA + d3;
                 mtx_inB_i = is_trans ? (d2 * colsA + d3) : (d3 * colsB + d2);
 
-                accumulator += mtx_inA[mtx_inA_i] * mtx_inB[mtx_inB_i];
+		int8_t inA_int8 = FPDATA(mtx_inA[mtx_inA_i]);
+		int8_t inB_int8 = FPDATA(mtx_inB[mtx_inB_i]);
+
+                /* accumulator += mtx_inA[mtx_inA_i] * mtx_inB[mtx_inB_i]; */
+                accumulator += inA_int8 * inB_int8;
             }
 
             mtx_out[d1 * colsB + d2] = accumulator;

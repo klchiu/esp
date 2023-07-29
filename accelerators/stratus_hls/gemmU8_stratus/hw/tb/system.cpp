@@ -161,7 +161,7 @@ void system_t::load_memory()
     for (uint32_t b = 0; b < batch_size; ++b) {
         for (uint32_t d1 = 0; d1 < rowsA; ++d1) {
             for (uint32_t d2 = 0; d2 < colsA; ++d2) {
-                data = fp2bv<FPDATA, WORD_SIZE>(FPDATA((float)matrix_inA->data[k++]));
+                data = fp2bv<FPDATA, WORD_SIZE>(FPDATA(matrix_inA->data[k++]));
 
                 // TODO works only for WORDS_PER_DMA = {1, 2}
                 if (!((k - 1) % WORDS_PER_DMA))

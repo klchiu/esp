@@ -203,7 +203,7 @@ void gemmU8::load_input()
                                 HLS_BREAK_ARRAY_DEPENDENCY(input0);
                                 HLS_BREAK_ARRAY_DEPENDENCY(input1);
 
-#if (WORDS_PER_DMA == 2)
+#if (WORDS_PER_DMA >= 2)
                                 if (pingpong_m1) {
 
                                     if (!(misaligned && !k))
@@ -638,7 +638,13 @@ void gemmU8::compute_kernel()
 #ifdef FIXED_POINT
                                 HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-fixed");
 #else
+
+#if (PARALLELISM >= 32)
+                                HLS_PIPELINE_LOOP(HARD_STALL, 3, "pipeline-mac-float");
+#else
                                 HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-float");
+#endif
+
 #endif
                                 HLS_BREAK_ARRAY_DEPENDENCY(input0);
                                 HLS_BREAK_ARRAY_DEPENDENCY(input1);
@@ -668,6 +674,24 @@ void gemmU8::compute_kernel()
                                     row[14] = INT2FP(input0[plm_i_row++]);
                                     row[15] = INT2FP(input0[plm_i_row++]);
 #endif
+#if (PARALLELISM >= 32)
+                                    row[16]  = INT2FP(input0[plm_i_row++]);
+                                    row[17]  = INT2FP(input0[plm_i_row++]);
+                                    row[18] = INT2FP(input0[plm_i_row++]);
+                                    row[19] = INT2FP(input0[plm_i_row++]);
+                                    row[20] = INT2FP(input0[plm_i_row++]);
+                                    row[21] = INT2FP(input0[plm_i_row++]);
+                                    row[22] = INT2FP(input0[plm_i_row++]);
+                                    row[23] = INT2FP(input0[plm_i_row++]);
+                                    row[24]  = INT2FP(input0[plm_i_row++]);
+                                    row[25]  = INT2FP(input0[plm_i_row++]);
+                                    row[26] = INT2FP(input0[plm_i_row++]);
+                                    row[27] = INT2FP(input0[plm_i_row++]);
+                                    row[28] = INT2FP(input0[plm_i_row++]);
+                                    row[29] = INT2FP(input0[plm_i_row++]);
+                                    row[30] = INT2FP(input0[plm_i_row++]);
+                                    row[31] = INT2FP(input0[plm_i_row++]);
+#endif
                                 } else {
                                     row[0] = INT2FP(input1[plm_i_row++]);
                                     row[1] = INT2FP(input1[plm_i_row++]);
@@ -690,6 +714,24 @@ void gemmU8::compute_kernel()
                                     row[13] = INT2FP(input1[plm_i_row++]);
                                     row[14] = INT2FP(input1[plm_i_row++]);
                                     row[15] = INT2FP(input1[plm_i_row++]);
+#endif
+#if (PARALLELISM >= 32)
+                                    row[16]  = INT2FP(input1[plm_i_row++]);
+                                    row[17]  = INT2FP(input1[plm_i_row++]);
+                                    row[18] = INT2FP(input1[plm_i_row++]);
+                                    row[19] = INT2FP(input1[plm_i_row++]);
+                                    row[20] = INT2FP(input1[plm_i_row++]);
+                                    row[21] = INT2FP(input1[plm_i_row++]);
+                                    row[22] = INT2FP(input1[plm_i_row++]);
+                                    row[23] = INT2FP(input1[plm_i_row++]);
+                                    row[24]  = INT2FP(input1[plm_i_row++]);
+                                    row[25]  = INT2FP(input1[plm_i_row++]);
+                                    row[26] = INT2FP(input1[plm_i_row++]);
+                                    row[27] = INT2FP(input1[plm_i_row++]);
+                                    row[28] = INT2FP(input1[plm_i_row++]);
+                                    row[29] = INT2FP(input1[plm_i_row++]);
+                                    row[30] = INT2FP(input1[plm_i_row++]);
+                                    row[31] = INT2FP(input1[plm_i_row++]);
 #endif
                                 }
                                 if (pingpong_m2) {
@@ -715,6 +757,24 @@ void gemmU8::compute_kernel()
                                     col[14] = INT2FP(input2[plm_i_col++]);
                                     col[15] = INT2FP(input2[plm_i_col++]);
 #endif
+#if (PARALLELISM >= 32)
+                                    col[16]  = INT2FP(input2[plm_i_col++]);
+                                    col[17]  = INT2FP(input2[plm_i_col++]);
+                                    col[18] = INT2FP(input2[plm_i_col++]);
+                                    col[19] = INT2FP(input2[plm_i_col++]);
+                                    col[20] = INT2FP(input2[plm_i_col++]);
+                                    col[21] = INT2FP(input2[plm_i_col++]);
+                                    col[22] = INT2FP(input2[plm_i_col++]);
+                                    col[23] = INT2FP(input2[plm_i_col++]);
+                                    col[24]  = INT2FP(input2[plm_i_col++]);
+                                    col[25]  = INT2FP(input2[plm_i_col++]);
+                                    col[26] = INT2FP(input2[plm_i_col++]);
+                                    col[27] = INT2FP(input2[plm_i_col++]);
+                                    col[28] = INT2FP(input2[plm_i_col++]);
+                                    col[29] = INT2FP(input2[plm_i_col++]);
+                                    col[30] = INT2FP(input2[plm_i_col++]);
+                                    col[31] = INT2FP(input2[plm_i_col++]);
+#endif
                                 } else {
                                     col[0] = INT2FP(input3[plm_i_col++]);
                                     col[1] = INT2FP(input3[plm_i_col++]);
@@ -737,6 +797,24 @@ void gemmU8::compute_kernel()
                                     col[13] = INT2FP(input3[plm_i_col++]);
                                     col[14] = INT2FP(input3[plm_i_col++]);
                                     col[15] = INT2FP(input3[plm_i_col++]);
+#endif
+#if (PARALLELISM >= 32)
+                                    col[16]  = INT2FP(input3[plm_i_col++]);
+                                    col[17]  = INT2FP(input3[plm_i_col++]);
+                                    col[18] = INT2FP(input3[plm_i_col++]);
+                                    col[19] = INT2FP(input3[plm_i_col++]);
+                                    col[20] = INT2FP(input3[plm_i_col++]);
+                                    col[21] = INT2FP(input3[plm_i_col++]);
+                                    col[22] = INT2FP(input3[plm_i_col++]);
+                                    col[23] = INT2FP(input3[plm_i_col++]);
+                                    col[24]  = INT2FP(input3[plm_i_col++]);
+                                    col[25]  = INT2FP(input3[plm_i_col++]);
+                                    col[26] = INT2FP(input3[plm_i_col++]);
+                                    col[27] = INT2FP(input3[plm_i_col++]);
+                                    col[28] = INT2FP(input3[plm_i_col++]);
+                                    col[29] = INT2FP(input3[plm_i_col++]);
+                                    col[30] = INT2FP(input3[plm_i_col++]);
+                                    col[31] = INT2FP(input3[plm_i_col++]);
 #endif
                                 }
 
@@ -808,6 +886,72 @@ void gemmU8::compute_kernel()
                                 else
                                     mult_out[15] = 0;
 #endif
+#if (PARALLELISM >= 32)
+                                if (plm_i + 15 < length)
+                                    mult_out[16] = row[16] * col[16];
+                                else
+                                    mult_out[16] = 0;
+                                if (plm_i + 16 < length)
+                                    mult_out[17] = row[17] * col[17];
+                                else
+                                    mult_out[17] = 0;
+                                if (plm_i + 17 < length)
+                                    mult_out[18] = row[18] * col[18];
+                                else
+                                    mult_out[18] = 0;
+                                if (plm_i + 18 < length)
+                                    mult_out[19] = row[19] * col[19];
+                                else
+                                    mult_out[19] = 0;
+                                if (plm_i + 19 < length)
+                                    mult_out[20] = row[20] * col[20];
+                                else
+                                    mult_out[20] = 0;
+                                if (plm_i + 20 < length)
+                                    mult_out[21] = row[21] * col[21];
+                                else
+                                    mult_out[21] = 0;
+                                if (plm_i + 21 < length)
+                                    mult_out[22] = row[22] * col[22];
+                                else
+                                    mult_out[22] = 0;
+                                if (plm_i + 22 < length)
+                                    mult_out[23] = row[23] * col[23];
+                                else
+                                    mult_out[23] = 0;
+                                if (plm_i + 23 < length)
+                                    mult_out[24] = row[24] * col[24];
+                                else
+                                    mult_out[24] = 0;
+                                if (plm_i + 24 < length)
+                                    mult_out[25] = row[25] * col[25];
+                                else
+                                    mult_out[25] = 0;
+                                if (plm_i + 25 < length)
+                                    mult_out[26] = row[26] * col[26];
+                                else
+                                    mult_out[26] = 0;
+                                if (plm_i + 26 < length)
+                                    mult_out[27] = row[27] * col[27];
+                                else
+                                    mult_out[27] = 0;
+                                if (plm_i + 27 < length)
+                                    mult_out[28] = row[28] * col[28];
+                                else
+                                    mult_out[28] = 0;
+                                if (plm_i + 28 < length)
+                                    mult_out[29] = row[29] * col[29];
+                                else
+                                    mult_out[29] = 0;
+                                if (plm_i + 29 < length)
+                                    mult_out[30] = row[30] * col[30];
+                                else
+                                    mult_out[30] = 0;
+                                if (plm_i + 30 < length)
+                                    mult_out[31] = row[31] * col[31];
+                                else
+                                    mult_out[31] = 0;
+#endif
 
 #if (PARALLELISM == 2)
                                 accumulator += mult_out[0] + mult_out[1];
@@ -839,6 +983,38 @@ void gemmU8::compute_kernel()
                                 FPDATA add_tmp12 = add_tmp8 + add_tmp9;
                                 FPDATA add_tmp13 = add_tmp10 + add_tmp11;
                                 accumulator += add_tmp12 + add_tmp13;
+#elif (PARALLELISM == 32)
+                                FPDATA add_tmp0  = mult_out[0] + mult_out[1];
+                                FPDATA add_tmp1  = mult_out[2] + mult_out[3];
+                                FPDATA add_tmp2  = mult_out[4] + mult_out[5];
+                                FPDATA add_tmp3  = mult_out[6] + mult_out[7];
+                                FPDATA add_tmp4  = mult_out[8] + mult_out[9];
+                                FPDATA add_tmp5  = mult_out[10] + mult_out[11];
+                                FPDATA add_tmp6  = mult_out[12] + mult_out[13];
+                                FPDATA add_tmp7  = mult_out[14] + mult_out[15];
+                                FPDATA add_tmp8  = mult_out[16] + mult_out[17];
+                                FPDATA add_tmp9  = mult_out[18] + mult_out[19];
+                                FPDATA add_tmp10 = mult_out[20] + mult_out[21];
+                                FPDATA add_tmp11 = mult_out[22] + mult_out[23];
+                                FPDATA add_tmp12 = mult_out[24] + mult_out[25];
+                                FPDATA add_tmp13 = mult_out[26] + mult_out[27];
+                                FPDATA add_tmp14  = mult_out[28] + mult_out[29];
+                                FPDATA add_tmp15  = mult_out[30] + mult_out[31];
+                                FPDATA add_tmp16  = add_tmp0 + add_tmp1;
+                                FPDATA add_tmp17  = add_tmp2 + add_tmp3;
+                                FPDATA add_tmp18  = add_tmp4 + add_tmp5;
+                                FPDATA add_tmp19  = add_tmp6 + add_tmp7;
+                                FPDATA add_tmp20  = add_tmp8 + add_tmp9;
+                                FPDATA add_tmp21  = add_tmp10 + add_tmp11;
+                                FPDATA add_tmp22  = add_tmp12 + add_tmp13;
+                                FPDATA add_tmp23  = add_tmp14 + add_tmp15;
+                                FPDATA add_tmp24 = add_tmp16 + add_tmp17;
+                                FPDATA add_tmp25 = add_tmp18 + add_tmp19;
+                                FPDATA add_tmp26 = add_tmp20 + add_tmp21;
+                                FPDATA add_tmp27 = add_tmp22 + add_tmp23;
+                                FPDATA add_tmp28 = add_tmp24 + add_tmp25;
+                                FPDATA add_tmp29 = add_tmp26 + add_tmp27;
+                                accumulator += add_tmp28 + add_tmp29;
 #endif
                             }
                         }

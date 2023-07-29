@@ -74,22 +74,27 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 #
 set INPUT_PATH  "../datagen/input"
 set OUTPUT_PATH "../datagen/output"
-set TESTBENCHES "testS testM testL testR testC testNTS testNTM testNTL"
-#set TESTBENCHES "testS"
+#set TESTBENCHES "testS testM testL testR testC testNTS testNTM testNTL"
+set TESTBENCHES "testL"
 
 #
 # Common options for all configurations
 #
 
-append COMMON_HLS_FLAGS \
-    " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
-set COMMON_CFG_FLAGS \
-    "-DFIXED_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+# append COMMON_HLS_FLAGS \
+#     " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
+# set COMMON_CFG_FLAGS \
+#     "-DFIXED_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
 
 # append COMMON_HLS_FLAGS \
 #     " -DFLOAT_POINT --clock_period=$CLOCK_PERIOD"
 # set COMMON_CFG_FLAGS \
 #     "-DFLOAT_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+
+append COMMON_HLS_FLAGS \
+    " -DINT8 --clock_period=$CLOCK_PERIOD"
+set COMMON_CFG_FLAGS \
+    "-DINT8 -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
 
 if {$TECH_IS_XILINX == 1} {
     append COMMON_HLS_FLAGS " -DTECH_IS_FPGA "
@@ -102,10 +107,11 @@ if {$TECH_IS_XILINX == 1} {
 # set DMA_WIDTH "32 64"
 set DMA_CHUNK "2048" 
 set WORD_SIZE "32"
-set PARALLELISM "8"
+#set WORD_SIZE "8"
+#set PARALLELISM "8"
+set PARALLELISM "32"
 set DMA_WIDTH "64"
 # set DMA_CHUNK "8 16 32 64 128 512 2048 4096 8192" 
-# set WORD_SIZE "32"
 # set PARALLELISM "4 8 16"
 
 set_attr split_multiply 32
@@ -144,32 +150,32 @@ foreach chk $DMA_CHUNK {
 			-argv $ARGV
 		}
 
-		foreach cfg [list BASIC] {
+		# foreach cfg [list BASIC] {
 
-		    set cname $cfg\_$conf
+		#     set cname $cfg\_$conf
 
-		    define_hls_config gemmU8 $cname -io_config IOCFG_$conf \
-			-DDMA_CHUNK=$chk -DDMA_WIDTH=$dma -DWORD_SIZE=$word \
-			-DPARALLELISM=$paral $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
+		#     define_hls_config gemmU8 $cname -io_config IOCFG_$conf \
+		# 	-DDMA_CHUNK=$chk -DDMA_WIDTH=$dma -DWORD_SIZE=$word \
+		# 	-DPARALLELISM=$paral $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
 
-		    foreach tb $TESTBENCHES {
+		#     foreach tb $TESTBENCHES {
 
-			set ARGV ""
-			append ARGV "$INPUT_PATH/$tb\_A.txt ";  # argv[1]
-			append ARGV "$INPUT_PATH/$tb\_B.txt ";  # argv[2]
-			append ARGV "$OUTPUT_PATH/$tb.txt ";    # argv[3]
+		# 	set ARGV ""
+		# 	append ARGV "$INPUT_PATH/$tb\_A.txt ";  # argv[1]
+		# 	append ARGV "$INPUT_PATH/$tb\_B.txt ";  # argv[2]
+		# 	append ARGV "$OUTPUT_PATH/$tb.txt ";    # argv[3]
 
-			if {$TECH_IS_XILINX == 1} {
-			    define_sim_config "$cname\_$tb\_V" "gemmU8 RTL_V $cname" \
-				"tb TESTBENCH_$conf" -io_config IOCFG_$conf \
-				-argv $ARGV -verilog_top_modules glbl
-			} else {
-			    define_sim_config "$cname\_$tb\_V" "gemmU8 RTL_V $cname" \
-				"tb TESTBENCH_$conf" -io_config IOCFG_$conf \
-				-argv $ARGV
-			}
-		    }
-		}
+		# 	if {$TECH_IS_XILINX == 1} {
+		# 	    define_sim_config "$cname\_$tb\_V" "gemmU8 RTL_V $cname" \
+		# 		"tb TESTBENCH_$conf" -io_config IOCFG_$conf \
+		# 		-argv $ARGV -verilog_top_modules glbl
+		# 	} else {
+		# 	    define_sim_config "$cname\_$tb\_V" "gemmU8 RTL_V $cname" \
+		# 		"tb TESTBENCH_$conf" -io_config IOCFG_$conf \
+		# 		-argv $ARGV
+		# 	}
+		#     }
+		# }
 	    }
 	}
     }

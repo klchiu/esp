@@ -18,7 +18,7 @@
 const unsigned int FPDATA_WL = WORD_SIZE;
 // const unsigned int FPDATA_IL = WORD_SIZE / 2;
 // const unsigned int FPDATA_FL = WORD_SIZE - FPDATA_IL;
-const unsigned int FPDATA_IL = WORD_SIZE;
+const unsigned int FPDATA_IL = 8;
 const unsigned int FPDATA_FL = 0; 
 typedef sc_dt::sc_int<WORD_SIZE> PLM_WORD;
 

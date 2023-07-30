@@ -402,7 +402,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	void *arg;
 	int rc = 0;
 
-printk("[kk] esp_access_ioctl() -- debug 0, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 0, xxx = %d\n", xxx++);
 
 	arg = kmalloc(esp->driver->arg_size, GFP_KERNEL);
 	if (arg == NULL)
@@ -435,7 +435,7 @@ printk("[kk] esp_access_ioctl() -- debug 0, xxx = %d\n", xxx++);
 		goto out;
 	}
 
-printk("[kk] esp_access_ioctl() -- debug 1, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 1, xxx = %d\n", xxx++);
 
 
 	if (mutex_lock_interruptible(&esp->lock)) {
@@ -443,7 +443,7 @@ printk("[kk] esp_access_ioctl() -- debug 1, xxx = %d\n", xxx++);
 		goto out;
 	}
 
-printk("[kk] esp_access_ioctl() -- debug 2, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 2, xxx = %d\n", xxx++);
 
 
 	rc = esp_p2p_init(esp, access);
@@ -462,41 +462,41 @@ printk("[kk] esp_access_ioctl() -- debug 2, xxx = %d\n", xxx++);
         goto out;
     }
 
-printk("[kk] esp_access_ioctl() -- debug 3, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 3, xxx = %d\n", xxx++);
 
 
 
     esp_runtime_config(esp);
 
-printk("[kk] esp_access_ioctl() -- debug 4, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 4, xxx = %d\n", xxx++);
 
 
     mutex_unlock(&esp_status.lock);
 
-printk("[kk] esp_access_ioctl() -- debug 5, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 5, xxx = %d\n", xxx++);
 
 	rc = esp_flush(esp);
 	if (rc)
 		goto out;
 
-printk("[kk] esp_access_ioctl() -- debug 6, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 6, xxx = %d\n", xxx++);
 
 
 	esp_transfer(esp, contig);
 
-printk("[kk] esp_access_ioctl() -- debug 7, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 7, xxx = %d\n", xxx++);
 
 
 	if (esp->driver->prep_xfer)
 		esp->driver->prep_xfer(esp, arg);
 
-printk("[kk] esp_access_ioctl() -- debug 8, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 8, xxx = %d\n", xxx++);
 
 
 	if (access->run) {
 		
 		
-		printk("[kk] esp_access_ioctl() -- debug 8.1, xxx = %d\n", xxx++);
+		//-- printk("[kk] esp_access_ioctl() -- debug 8.1, xxx = %d\n", xxx++);
 
 		esp_run(esp);
 
@@ -504,7 +504,7 @@ printk("[kk] esp_access_ioctl() -- debug 8, xxx = %d\n", xxx++);
 
 
 		rc = esp_wait(esp);
-		printk("[kk] esp_access_ioctl() -- debug 8.2, xxx = %d\n", xxx++);
+		//-- printk("[kk] esp_access_ioctl() -- debug 8.2, xxx = %d\n", xxx++);
 
 		// if (mutex_lock_interruptible(&esp->lock)) {
 		// 	rc = -EINTR;
@@ -513,7 +513,7 @@ printk("[kk] esp_access_ioctl() -- debug 8, xxx = %d\n", xxx++);
 	}
 
 
-printk("[kk] esp_access_ioctl() -- debug 9, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 9, xxx = %d\n", xxx++);
 
 
     if (mutex_lock_interruptible(&esp_status.lock)) {
@@ -521,20 +521,20 @@ printk("[kk] esp_access_ioctl() -- debug 9, xxx = %d\n", xxx++);
         goto out;
     }
 
-printk("[kk] esp_access_ioctl() -- debug 10, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 10, xxx = %d\n", xxx++);
 
 
     esp_update_status(esp);
 
     mutex_unlock(&esp_status.lock);
 
-printk("[kk] esp_access_ioctl() -- debug 11, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 11, xxx = %d\n", xxx++);
 
 
 	mutex_unlock(&esp->lock);
 
-printk("[kk] esp_access_ioctl() -- debug 12, xxx = %d\n", xxx++);
-printk("[kk] esp_access_ioctl() -- debug 13, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 12, xxx = %d\n", xxx++);
+//-- printk("[kk] esp_access_ioctl() -- debug 13, xxx = %d\n", xxx++);
 
 
 out:
@@ -544,7 +544,7 @@ out:
 
 static int esp_run_ioctl(struct esp_device *esp)
 {
-//-- printk("[kk] esp_run_ioctl() -- debug 0\n");
+//-- //-- printk("[kk] esp_run_ioctl() -- debug 0\n");
 
 	esp_run(esp);
 	return 0;

@@ -91,8 +91,8 @@ int unlock_a_device2(char *devname_noid, int dev_id)
 
     fprintf(stderr, "unlock this: %s\n", acc_lock);
     // unlock the acc_lock file
-ret_flock =  flock(fileno(pFile), LOCK_UN);
-    fprintf(stderr, "ret_flock: %d\n", ret_flock);
+    ret_flock =  flock(fileno(pFile), LOCK_UN);
+    fprintf(stderr, "unlock_a_device() ret_flock: %d\n", ret_flock);
 
     
     fclose(pFile);
@@ -160,7 +160,6 @@ int unlock_a_device(char *devname_noid, int dev_id, char *puffinname)
 }
 
 
-
 int lock_dir(char* puffinname)
 {
     FILE * pFile;
@@ -174,7 +173,7 @@ int lock_dir(char* puffinname)
         
             if (access(dirLock, F_OK) == 0) { // lock exists
                 fprintf(stderr, "[%s]: dirLock exists\n", puffinname);
-
+                continue;
             } else { // lock not exists
                 fprintf(stderr, "[%s]: dirLock NOT exists\n", puffinname);
 
@@ -197,13 +196,14 @@ int lock_dir(char* puffinname)
             if (ret_flock == -1) { // fail to lock it
                 if (errno == EWOULDBLOCK) {
                     fprintf(stderr, "[%s]: dirLock was locked, wait until it's unlocked\n", puffinname);
+                    fclose(pFile);
                     continue;
                 } else {
                     fprintf(stderr, "[%s]: other lock error --> errno = %d\n", puffinname, errno);
                     return -1;
                 }
             } else { // successfully lock it
-                flock(fileno(pFile), LOCK_EX);
+                // flock(fileno(pFile), LOCK_EX);
                 fprintf(stderr, "[%s]: dirLock was unlocked, lock it\n", puffinname);
                 return 0;
             }
@@ -387,8 +387,8 @@ void *accelerator_thread_serial(void *ptr)
 
         gettime(&th_start);
         printf("[humu]: accelerator_thread_serial: before ioctl, ------- devname: %s\n", info->devname);
-        rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
-        // sleep(10);
+        // rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
+        sleep(5);
         // for (k = 0 ; k < 200; k++){
         //     printf("%s\t%d\n", info->devname, k);
         // }

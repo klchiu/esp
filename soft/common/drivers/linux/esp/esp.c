@@ -68,14 +68,14 @@ static irqreturn_t esp_irq(int irq, void *dev)
 	struct esp_device *esp = dev_get_drvdata(dev);
 	u32 status, error, done;
 
-	printk("esp_irq() -- debug 0\n");
+	//-- printk("[kk] esp_irq() -- debug 0\n");
 
 
 	status = ioread32be(esp->iomem + STATUS_REG);
 	error = status & STATUS_MASK_ERR;
 	done = status & STATUS_MASK_DONE;
 
-	printk("esp_irq() -- debug 1\n");
+	//-- printk("[kk] esp_irq() -- debug 1\n");
 
 
 	printk(KERN_INFO "IRQ: %08x\n", status);
@@ -87,7 +87,7 @@ static irqreturn_t esp_irq(int irq, void *dev)
 		return IRQ_HANDLED;
 	}
 
-	printk("esp_irq() -- debug 2\n");
+	//-- printk("[kk] esp_irq() -- debug 2\n");
 
 	if (done) {
 		iowrite32be(0, esp->iomem + CMD_REG);
@@ -95,7 +95,7 @@ static irqreturn_t esp_irq(int irq, void *dev)
 		return IRQ_HANDLED;
 	}
 
-	printk("esp_irq() -- debug 3\n");
+	//-- printk("[kk] esp_irq() -- debug 3\n");
 
 	return IRQ_NONE;
 }
@@ -104,7 +104,7 @@ static int esp_flush(struct esp_device *esp)
 {
 	int rc = 0;
 
-	printk("esp_flush() -- debug 0\n");
+	//-- printk("[kk] esp_flush() -- debug 0\n");
 
 
 	if (esp->coherence < ACC_COH_RECALL)
@@ -120,7 +120,7 @@ static int esp_open(struct inode *inode, struct file *file)
 {
 	struct esp_device *esp;
 
-	printk("esp_open() -- debug 0\n");
+	//-- printk("[kk] esp_open() -- debug 0\n");
 
 
 	esp = container_of(inode->i_cdev, struct esp_device, cdev);
@@ -134,7 +134,7 @@ static int esp_release(struct inode *inode, struct file *file)
 {
 	struct esp_device *esp;
 
-	printk("esp_release() -- debug 0\n");
+	//-- printk("[kk] esp_release() -- debug 0\n");
 
 
 	esp = file->private_data;
@@ -147,7 +147,7 @@ void esp_status_init(void)
 
 	int i;
 
-	printk("esp_status_init() -- debug 0\n");
+	//-- printk("[kk] esp_status_init() -- debug 0\n");
 
 
 	cache_l2_size = cache_l2_sets * cache_l2_ways * cache_line_bytes;
@@ -169,7 +169,7 @@ void esp_status_init(void)
 
 static void esp_runtime_config(struct esp_device *esp)
 {
-	printk("esp_runtime_config() -- debug 0\n");
+	//-- printk("[kk] esp_runtime_config() -- debug 0\n");
 
 	unsigned int footprint, footprint_llc_threshold;
 	// Update number of active accelerators
@@ -241,7 +241,7 @@ static void esp_runtime_config(struct esp_device *esp)
 static void esp_transfer(struct esp_device *esp, const struct contig_desc *contig)
 {
 
-	printk("esp_transfer() -- debug 0\n");
+	//-- printk("[kk] esp_transfer() -- debug 0\n");
 
 	esp->err = 0;
 	reinit_completion(&esp->completion);
@@ -256,11 +256,11 @@ static void esp_transfer(struct esp_device *esp, const struct contig_desc *conti
 
 static void esp_run(struct esp_device *esp)
 {
-	printk("esp_run() -- debug 0\n");
+	//-- printk("[kk] esp_run() -- debug 0\n");
 
 	iowrite32be(0x1, esp->iomem + CMD_REG);
 	
-	printk("esp_run() -- debug 1\n");
+	//-- printk("[kk] esp_run() -- debug 1\n");
 }
 
 static int esp_wait(struct esp_device *esp)
@@ -268,11 +268,11 @@ static int esp_wait(struct esp_device *esp)
 	/* Interrupt */
 	int wait;
 
-	printk("esp_wait() -- debug 0\n");
+	//-- printk("[kk] esp_wait() -- debug 0\n");
 
 	wait = wait_for_completion_interruptible(&esp->completion);
 
-	printk("esp_wait() -- debug 1\n");
+	//-- printk("[kk] esp_wait() -- debug 1\n");
 
 
 	if (wait < 0)
@@ -282,7 +282,7 @@ static int esp_wait(struct esp_device *esp)
 		return -1;
 	}
 
-	printk("esp_wait() -- debug 2\n");
+	//-- printk("[kk] esp_wait() -- debug 2\n");
 
 
 	return 0;
@@ -290,7 +290,7 @@ static int esp_wait(struct esp_device *esp)
 
 static void esp_update_status(struct esp_device *esp)
 {
-	printk("esp_update_status() -- debug 0\n");
+	//-- printk("[kk] esp_update_status() -- debug 0\n");
 
 	if (esp->coherence == ACC_COH_FULL)
 		esp_status.active_acc_cnt_full--;
@@ -322,7 +322,7 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
 {
 	unsigned nchunk_max = ioread32be(esp->iomem + PT_NCHUNK_MAX_REG);
 
-	printk("esp_xfer_input_ok() -- debug 0\n");
+	//-- printk("[kk] esp_xfer_input_ok() -- debug 0\n");
 
 	/* No check needed if memory is not accessed (PT_NCHUNK_MAX == 0) */
 	if (!nchunk_max)
@@ -347,7 +347,7 @@ static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_inde
 	struct list_head *ele;
 	struct esp_device *dev;
 
-		printk("esp_p2p_set_src() -- debug 0\n");
+		//-- printk("[kk] esp_p2p_set_src() -- debug 0\n");
 
 
 	dev_dbg(esp->pdev, "searching P2P source %s\n", src_name);
@@ -374,7 +374,7 @@ static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
 {
 	int i = 0;
 
-	printk("esp_p2p_init() -- debug 0\n");
+	//-- printk("[kk] esp_p2p_init() -- debug 0\n");
 
 	esp_p2p_reset(esp);
 
@@ -402,7 +402,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	void *arg;
 	int rc = 0;
 
-printk("esp_access_ioctl() -- debug 00, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 0, xxx = %d\n", xxx++);
 
 	arg = kmalloc(esp->driver->arg_size, GFP_KERNEL);
 	if (arg == NULL)
@@ -435,7 +435,7 @@ printk("esp_access_ioctl() -- debug 00, xxx = %d\n", xxx++);
 		goto out;
 	}
 
-printk("esp_access_ioctl() -- debug 1, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 1, xxx = %d\n", xxx++);
 
 
 	if (mutex_lock_interruptible(&esp->lock)) {
@@ -443,7 +443,7 @@ printk("esp_access_ioctl() -- debug 1, xxx = %d\n", xxx++);
 		goto out;
 	}
 
-printk("esp_access_ioctl() -- debug 2, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 2, xxx = %d\n", xxx++);
 
 
 	rc = esp_p2p_init(esp, access);
@@ -462,55 +462,58 @@ printk("esp_access_ioctl() -- debug 2, xxx = %d\n", xxx++);
         goto out;
     }
 
-printk("esp_access_ioctl() -- debug 3, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 3, xxx = %d\n", xxx++);
 
 
 
     esp_runtime_config(esp);
 
-printk("esp_access_ioctl() -- debug 4, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 4, xxx = %d\n", xxx++);
 
 
     mutex_unlock(&esp_status.lock);
 
-printk("esp_access_ioctl() -- debug 5, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 5, xxx = %d\n", xxx++);
 
 	rc = esp_flush(esp);
 	if (rc)
 		goto out;
 
-printk("esp_access_ioctl() -- debug 6, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 6, xxx = %d\n", xxx++);
 
 
 	esp_transfer(esp, contig);
 
-printk("esp_access_ioctl() -- debug 7, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 7, xxx = %d\n", xxx++);
 
 
 	if (esp->driver->prep_xfer)
 		esp->driver->prep_xfer(esp, arg);
 
-printk("esp_access_ioctl() -- debug 8, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 8, xxx = %d\n", xxx++);
 
-	mutex_unlock(&esp->lock);
-
-printk("esp_access_ioctl() -- debug 8.1, xxx = %d\n", xxx++);
 
 	if (access->run) {
+		
+		
+		printk("[kk] esp_access_ioctl() -- debug 8.1, xxx = %d\n", xxx++);
+
 		esp_run(esp);
+
+		// mutex_unlock(&esp->lock);
+
+
 		rc = esp_wait(esp);
+		printk("[kk] esp_access_ioctl() -- debug 8.2, xxx = %d\n", xxx++);
+
+		// if (mutex_lock_interruptible(&esp->lock)) {
+		// 	rc = -EINTR;
+		// 	goto out;
+		// }
 	}
 
-printk("esp_access_ioctl() -- debug 8.2, xxx = %d\n", xxx++);
 
-
-	if (mutex_lock_interruptible(&esp->lock)) {
-		rc = -EINTR;
-		goto out;
-	}
-
-
-printk("esp_access_ioctl() -- debug 9, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 9, xxx = %d\n", xxx++);
 
 
     if (mutex_lock_interruptible(&esp_status.lock)) {
@@ -518,20 +521,20 @@ printk("esp_access_ioctl() -- debug 9, xxx = %d\n", xxx++);
         goto out;
     }
 
-printk("esp_access_ioctl() -- debug 10, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 10, xxx = %d\n", xxx++);
 
 
     esp_update_status(esp);
 
     mutex_unlock(&esp_status.lock);
 
-printk("esp_access_ioctl() -- debug 11, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 11, xxx = %d\n", xxx++);
 
 
 	mutex_unlock(&esp->lock);
 
-printk("esp_access_ioctl() -- debug 12, xxx = %d\n", xxx++);
-printk("esp_access_ioctl() -- debug 13, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 12, xxx = %d\n", xxx++);
+printk("[kk] esp_access_ioctl() -- debug 13, xxx = %d\n", xxx++);
 
 
 out:
@@ -541,7 +544,7 @@ out:
 
 static int esp_run_ioctl(struct esp_device *esp)
 {
-printk("esp_run_ioctl() -- debug 0\n");
+//-- printk("[kk] esp_run_ioctl() -- debug 0\n");
 
 	esp_run(esp);
 	return 0;
@@ -574,19 +577,19 @@ static long esp_do_ioctl(struct file *file, unsigned int cm, void __user *arg)
 {
 	struct esp_device *esp = file->private_data;
 
-printk("esp_do_ioctl() -- debug 0, cm = %d\n", cm);
+//-- printk("[kk] esp_do_ioctl() -- debug 0, cm = %d\n", cm);
 
 	switch (cm) {
 	case ESP_IOC_RUN:
-		printk("esp_do_ioctl() -- ESP_IOC_RUN\n");
+		//-- printk("[kk] esp_do_ioctl() -- ESP_IOC_RUN\n");
 		return esp_run_ioctl(esp);
 	case ESP_IOC_FLUSH:
-		printk("esp_do_ioctl() -- ESP_IOC_FLUSH\n");
+		//-- printk("[kk] esp_do_ioctl() -- ESP_IOC_FLUSH\n");
 		return esp_flush_ioctl(esp, arg);
 	default:
-		printk("esp_do_ioctl() -- default\n");
+		//-- printk("[kk] esp_do_ioctl() -- default\n");
 		if (cm == esp->driver->ioctl_cm){
-			printk("esp_do_ioctl() -- default\n");
+			//-- printk("[kk] esp_do_ioctl() -- default\n");
 			return esp_access_ioctl(esp, arg);
 		}
 		return -ENOTTY;
@@ -595,7 +598,7 @@ printk("esp_do_ioctl() -- debug 0, cm = %d\n", cm);
 
 static long esp_ioctl(struct file *file, unsigned int cm, unsigned long arg)
 {
-	printk("esp_ioctl() -- debug 0\n");
+	//-- printk("[kk] esp_ioctl() -- debug 0\n");
 
 	return esp_do_ioctl(file, cm, (void __user *)arg);
 }
@@ -613,12 +616,12 @@ static int esp_create_cdev(struct esp_device *esp, int ndev)
 	const char *name = esp->driver->plat.driver.name;
 	int rc;
 
-	printk("esp_create_cdev() -- debug 0, name = %s\n", name);
+	//-- printk("[kk] esp_create_cdev() -- debug 0, name = %s\n", name);
 
 
 	cdev_init(&esp->cdev, &esp_fops);
 
-	printk("esp_create_cdev() -- debug 1\n");
+	//-- printk("[kk] esp_create_cdev() -- debug 1\n");
 
 	esp->cdev.owner = esp->module;
 	rc = cdev_add(&esp->cdev, devno, 1);
@@ -627,12 +630,12 @@ static int esp_create_cdev(struct esp_device *esp, int ndev)
 		goto out;
 	}
 
-	printk("esp_create_cdev() -- debug 2\n");
+	//-- printk("[kk] esp_create_cdev() -- debug 2\n");
 
 
 	esp->dev = device_create(esp->driver->class, esp->pdev, devno, NULL, "%s.%i", name, ndev);
 
-	printk("esp_create_cdev() -- debug 3\n");
+	//-- printk("[kk] esp_create_cdev() -- debug 3\n");
 
 	if (IS_ERR(esp->dev)) {
 		rc = PTR_ERR(esp->dev);
@@ -641,7 +644,7 @@ static int esp_create_cdev(struct esp_device *esp, int ndev)
 		goto device_create_failed;
 	}
 
-	printk("esp_create_cdev() -- debug 4\n");
+	//-- printk("[kk] esp_create_cdev() -- debug 4\n");
 
 
 	dev_set_drvdata(esp->dev, esp);
@@ -657,13 +660,13 @@ static void esp_destroy_cdev(struct esp_device *esp, int ndev)
 {
 	dev_t devno = MKDEV(MAJOR(esp->driver->devno), ndev);
 
-	printk("esp_destroy_cdev() -- debug 0, devno = %d\n", devno);
+	//-- printk("[kk] esp_destroy_cdev() -- debug 0, devno = %d\n", devno);
 
 
 	device_destroy(esp->driver->class, devno);
 	cdev_del(&esp->cdev);
 
-	printk("esp_destroy_cdev() -- debug 1\n");
+	//-- printk("[kk] esp_destroy_cdev() -- debug 1\n");
 }
 
 int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
@@ -671,7 +674,7 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
 	struct resource *res;
 	int rc;
 
-	printk("esp_device_register() -- debug 0\n");
+	//-- printk("[kk] esp_device_register() -- debug 0\n");
 
 
 	esp->pdev = &pdev->dev;
@@ -679,13 +682,13 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
 	init_completion(&esp->completion);
 
 
-printk("esp_device_register() -- debug 1\n");
+//-- printk("[kk] esp_device_register() -- debug 1\n");
 
 	rc = esp_create_cdev(esp, esp->number);
 	if (rc)
 		goto out;
 
-printk("esp_device_register() -- debug 2, esp->number = %d\n", esp->number);
+//-- printk("[kk] esp_device_register() -- debug 2, esp->number = %d\n", esp->number);
 
 
 #ifndef __sparc
@@ -699,7 +702,7 @@ printk("esp_device_register() -- debug 2, esp->number = %d\n", esp->number);
 		goto out_irq;
 	}
 
-printk("esp_device_register() -- debug 3, esp->number = %d\n", esp->number);
+//-- printk("[kk] esp_device_register() -- debug 3, esp->number = %d\n", esp->number);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	esp->iomem = devm_ioremap_resource(&pdev->dev, res);
@@ -741,7 +744,7 @@ EXPORT_SYMBOL_GPL(esp_device_register);
 
 void esp_device_unregister(struct esp_device *esp)
 {
-	printk("esp_device_unregister() -- debug 0, esp->number = %d\n", esp->number);
+	//-- printk("[kk] esp_device_unregister() -- debug 0, esp->number = %d\n", esp->number);
 
 	list_del(&esp->list);
 	free_irq(esp->irq, esp->pdev);
@@ -757,7 +760,7 @@ static int esp_sysfs_device_create(struct esp_driver *drv)
 	int rc;
 
 
-	printk("esp_sysfs_device_create() -- debug 0, name = %s, devno = %d\n", name, drv->devno);
+	//-- printk("[kk] esp_sysfs_device_create() -- debug 0, name = %s, devno = %d\n", name, drv->devno);
 
 
 	drv->class = class_create(drv->plat.driver.owner, name);
@@ -785,7 +788,7 @@ static void esp_sysfs_device_remove(struct esp_driver *drv)
 {
 	dev_t devno = MKDEV(MAJOR(drv->devno), 0);
 
-	printk("esp_sysfs_device_remove() -- debug 0, devno = %d\n", devno);
+	//-- printk("[kk] esp_sysfs_device_remove() -- debug 0, devno = %d\n", devno);
 
 
 	class_destroy(drv->class);
@@ -797,7 +800,7 @@ int esp_driver_register(struct esp_driver *driver)
 	struct platform_driver *plat = &driver->plat;
 	int rc;
 
-	printk("esp_driver_register() -- debug 0\n");
+	//-- printk("[kk] esp_driver_register() -- debug 0\n");
 
 
 	rc = esp_sysfs_device_create(driver);
@@ -808,7 +811,7 @@ int esp_driver_register(struct esp_driver *driver)
 		goto err;
 	return 0;
 err:
-	printk("esp_driver_register() -- debug 1\n");
+	//-- printk("[kk] esp_driver_register() -- debug 1\n");
 
 	esp_sysfs_device_remove(driver);
 	return rc;
@@ -817,7 +820,7 @@ EXPORT_SYMBOL_GPL(esp_driver_register);
 
 void esp_driver_unregister(struct esp_driver *driver)
 {
-	printk("esp_driver_unregister() -- debug 0\n");
+	//-- printk("[kk] esp_driver_unregister() -- debug 0\n");
 
 	platform_driver_unregister(&driver->plat);
 	esp_sysfs_device_remove(driver);
@@ -826,7 +829,7 @@ EXPORT_SYMBOL_GPL(esp_driver_unregister);
 
 static int __init esp_init(void)
 {
-	printk("esp_init() -- debug 0\n");
+	//-- printk("[kk] esp_init() -- debug 0\n");
 
     esp_status_init();
 	return 0;
@@ -834,7 +837,7 @@ static int __init esp_init(void)
 
 static void __exit esp_exit(void)
 {
-	printk("esp_exit() -- debug 0\n");
+	//-- printk("[kk] esp_exit() -- debug 0\n");
 }
 
 module_init(esp_init);

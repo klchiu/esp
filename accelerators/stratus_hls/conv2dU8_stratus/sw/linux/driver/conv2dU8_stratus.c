@@ -33,7 +33,7 @@ static struct of_device_id conv2dU8_device_ids[] = {
         .name = "SLD_CONV2DU8_STRATUS",
     },
     {
-        .name = "eb_054",
+        .name = "eb_052",
     },
     {
         .compatible = "sld,conv2dU8_stratus",
@@ -84,11 +84,12 @@ static bool conv2dU8_xfer_input_ok(struct esp_device *esp, void *arg)
 static int conv2dU8_probe(struct platform_device *pdev)
 {
     struct conv2dU8_stratus_device *conv2dU8;
-    struct esp_device *           esp;
+    struct esp_device            *esp;
     int                           rc;
+    // char lock_name[30];
+    // FILE * pFile;
 
     printk("[humu]: conv2dU8_probe()\n");
-
 
     conv2dU8 = kzalloc(sizeof(*conv2dU8), GFP_KERNEL);
     if (conv2dU8 == NULL)
@@ -101,6 +102,17 @@ static int conv2dU8_probe(struct platform_device *pdev)
     if (rc)
         goto err;
 
+    printk("[humu]:  conv2dU8_probe(),  number = %u\n", esp->number);
+    printk("[humu]:  conv2dU8_probe(),  irq    = %u\n", esp->irq);
+
+    // sprintf(lock_name, "/lock/conv2dU8_stratus.%d", esp->number);
+    // pFile = fopen(lock_name, "w");
+    // if (pFile!=NULL)
+    // {
+    //     fputs ("fopen example",pFile);
+    //     fclose (pFile);
+    // }
+
     conv2dU8_devs++;
     return 0;
 err:
@@ -110,11 +122,10 @@ err:
 
 static int __exit conv2dU8_remove(struct platform_device *pdev)
 {
-    struct esp_device *           esp    = platform_get_drvdata(pdev);
+    struct esp_device            *esp    = platform_get_drvdata(pdev);
     struct conv2dU8_stratus_device *conv2dU8 = to_conv2dU8(esp);
 
     printk("[humu]: conv2dU8_remove()\n");
-
 
     esp_device_unregister(esp);
     kfree(conv2dU8);

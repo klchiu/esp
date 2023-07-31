@@ -1,30 +1,30 @@
 // Copyright (c) 2011-2023 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __CONV2DU8_DATA_HPP__
-#define __CONV2DU8_DATA_HPP__
+#ifndef __CONV2DU8_2_DATA_HPP__
+#define __CONV2DU8_2_DATA_HPP__
 
 #include <systemc.h>
 
 // Data types
 
-#if defined(FIXED_POINT)
+// #if defined(FIXED_POINT)
 
-const unsigned int FPDATA_WL = DATA_WIDTH;
-const unsigned int FPDATA_IL = DATA_WIDTH / 2;
-const unsigned int FPDATA_FL = DATA_WIDTH - FPDATA_IL;
+// const unsigned int FPDATA_WL = DATA_WIDTH;
+// const unsigned int FPDATA_IL = DATA_WIDTH / 2;
+// const unsigned int FPDATA_FL = DATA_WIDTH - FPDATA_IL;
 
-#elif defined(FLOAT_POINT)
+// #elif defined(FLOAT_POINT)
 
-    #if (DATA_WIDTH == 32)
-const unsigned int FPDATA_ML = 23;
-const unsigned int FPDATA_EL = 8;
-    #elif (DATA_WIDTH == 64)
-const unsigned int FPDATA_ML = 52;
-const unsigned int FPDATA_EL = 11;
-    #endif
+//     #if (DATA_WIDTH == 32)
+// const unsigned int FPDATA_ML = 23;
+// const unsigned int FPDATA_EL = 8;
+//     #elif (DATA_WIDTH == 64)
+// const unsigned int FPDATA_ML = 52;
+// const unsigned int FPDATA_EL = 11;
+//     #endif
 
-#endif
+// #endif
 
 // Custom SC data types
 typedef sc_dt::sc_uint<2>  uint2_t;
@@ -40,4 +40,4 @@ typedef sc_dt::sc_int<20>  int20_t;
 typedef sc_dt::sc_int<24>  int24_t;
 typedef sc_dt::sc_int<28>  int28_t;
 
-#endif // __CONV2DU8_DATA_HPP__
+#endif // __CONV2DU8_2_DATA_HPP__

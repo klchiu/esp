@@ -132,7 +132,7 @@ void system_t::config_proc()
     {
         // Print information about begin time
         sc_time begin_time = sc_time_stamp();
-        ESP_REPORT_TIME(begin_time, "BEGIN - conv2dU8");
+        ESP_REPORT_TIME(begin_time, "BEGIN - conv2dU8_2");
 
         // Wait the termination of the accelerator
         do {
@@ -142,7 +142,7 @@ void system_t::config_proc()
 
         // Print information about end time
         sc_time end_time = sc_time_stamp();
-        ESP_REPORT_TIME(end_time, "END - conv2dU8");
+        ESP_REPORT_TIME(end_time, "END - conv2dU8_2");
 
         esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
         wait();
@@ -160,14 +160,14 @@ void system_t::config_proc()
 
     // printf("Performance: data-in : moved %u (%u bytes) / memory footprint %u (%u bytes) / PLM locality %.2f%%",
     // 	   data_in_movement, data_in_movement * sizeof(FPDATA), channels * height * width, channels * height *
-    // 	   width * sizeof(FPDATA),100*(channels * height * width)/((float)data_in_movement));
+    // 	   width * sizeof(FPDATA),100*(channels * height * width)/((int8_t)data_in_movement));
     // printf("Performance: weights : moved %u (%u bytes) / memory footprint %u (%u bytes) / PLM locality %.2f%%",
     // 	   weights_movement, weights_movement * sizeof(FPDATA), num_filters * channels * kernel_h * kernel_w,
     // 	   num_filters * channels * kernel_h * kernel_w * sizeof(FPDATA),
-    // 	   100*(num_filters * channels * kernel_h * kernel_w)/((float)weights_movement));
+    // 	   100*(num_filters * channels * kernel_h * kernel_w)/((int8_t)weights_movement));
     // printf("Performance: data-out: moved %u (%u bytes) / memory footprint %u (%u bytes) / PLM locality %.2f%%",
     // 	   data_out_movement, data_out_movement * sizeof(FPDATA), num_filters * height * width,  num_filters *
-    // 	   height * width * sizeof(FPDATA), 100*(num_filters*height*width)/((float)data_out_movement));
+    // 	   height * width * sizeof(FPDATA), 100*(num_filters*height*width)/((int8_t)data_out_movement));
 
     // Validate
     {
@@ -220,11 +220,11 @@ void system_t::load_memory()
     bias_size    = bias_words_adj * (1);
     out_size     = out_words_adj * (1);
 
-    input     = (float *)malloc(in_size * sizeof(float));
-    weights   = (float *)malloc(weights_size * sizeof(float));
-    bias      = (float *)malloc(bias_size * sizeof(float));
-    sw_output = (float *)malloc(out_size * sizeof(float));
-    hw_output = (float *)malloc(out_size * sizeof(float));
+    input     = (int8_t *)malloc(in_size * sizeof(int8_t));
+    weights   = (int8_t *)malloc(weights_size * sizeof(int8_t));
+    bias      = (int8_t *)malloc(bias_size * sizeof(int8_t));
+    sw_output = (int8_t *)malloc(out_size * sizeof(int8_t));
+    hw_output = (int8_t *)malloc(out_size * sizeof(int8_t));
 
     init_tensor(input, in_size, true);
     init_tensor(weights, weights_size, true);
@@ -240,46 +240,43 @@ void system_t::load_memory()
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)
     for (i = 0; i < in_size; i++) {
-        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(input[i]));
+        sc_dt::sc_bv<DATA_WIDTH> data_bv = input[i];
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] = data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
     for (; i < in_size + weights_size; i++) {
-        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(weights[i - in_size]));
+        sc_dt::sc_bv<DATA_WIDTH> data_bv = weights[i - in_size];
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] = data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
     for (; i < in_size + weights_size + bias_size; i++) {
-        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(bias[i - in_size - weights_size]));
+        sc_dt::sc_bv<DATA_WIDTH> data_bv = bias[i - in_size - weights_size];
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] = data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
 #else
     for (i = 0; i < in_size / DMA_WORD_PER_BEAT; i++) {
-        // ESP_REPORT_INFO("tb load in %i : %f", i, (float) input[i]);
-        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(input[i]));
+        // ESP_REPORT_INFO("tb load in %i : %f", i, (int8_t) input[i]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv = input[i];
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
-            data_bv.range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
-                fp2bv<FPDATA, DATA_WIDTH>(FPDATA(input[i * DMA_WORD_PER_BEAT + j]));
+            data_bv.range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH) = input[i * DMA_WORD_PER_BEAT + j];
         mem[i] = data_bv;
     }
     for (; i < (in_size + weights_size) / DMA_WORD_PER_BEAT; i++) {
         // ESP_REPORT_INFO("tb load we %i : %f",
-        // i, (float) weights[i - in_size / DMA_WORD_PER_BEAT]);
-        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(weights[i - in_size / DMA_WORD_PER_BEAT]));
+        // i, (int8_t) weights[i - in_size / DMA_WORD_PER_BEAT]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv = weights[i - in_size / DMA_WORD_PER_BEAT];
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
-            data_bv.range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
-                fp2bv<FPDATA, DATA_WIDTH>(FPDATA(weights[i * DMA_WORD_PER_BEAT + j - in_size]));
+            data_bv.range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH) = weights[i * DMA_WORD_PER_BEAT + j - in_size];
         mem[i] = data_bv;
     }
     for (; i < (in_size + weights_size + bias_size) / DMA_WORD_PER_BEAT; i++) {
         // ESP_REPORT_INFO("tb load we %i : %f",
-        // i, (float) bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]);
-        sc_dt::sc_bv<DMA_WIDTH> data_bv =
-            fp2bv<FPDATA, DATA_WIDTH>(FPDATA(bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]));
+        // i, (int8_t) bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv = bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT];
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
             data_bv.range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
-                fp2bv<FPDATA, DATA_WIDTH>(FPDATA(bias[i * DMA_WORD_PER_BEAT + j - in_size - weights_size]));
+                bias[i * DMA_WORD_PER_BEAT + j - in_size - weights_size];
         mem[i] = data_bv;
     }
 #endif
@@ -293,27 +290,28 @@ void system_t::dump_memory()
     uint32_t offset = in_size + weights_size + bias_size;
     // ESP_REPORT_INFO("DUMP MEM: offset %u", offset);
 
-#if (DMA_WORD_PER_BEAT == 0)
-    offset = offset * DMA_BEAT_PER_WORD;
-    for (int i = 0; i < out_size; i++) {
-        sc_dt::sc_bv<DATA_WIDTH> data_bv;
+// #if (DMA_WORD_PER_BEAT == 0)
+    // offset = offset * DMA_BEAT_PER_WORD;
+    // for (int i = 0; i < out_size; i++) {
+    //     sc_dt::sc_bv<DATA_WIDTH> data_bv;
 
-        for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
-            data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH) = mem[offset + DMA_BEAT_PER_WORD * i + j];
+    //     for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
+    //         data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH) = mem[offset + DMA_BEAT_PER_WORD * i + j];
 
-        FPDATA fpdata_elem = bv2fp<FPDATA, DATA_WIDTH>(data_bv);
-        hw_output[i]       = (float)fpdata_elem.to_double();
-    }
-#else
-    offset = offset / DMA_WORD_PER_BEAT;
-    for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++) {
-        for (int j = 0; j < DMA_WORD_PER_BEAT; j++) {
-            FPDATA fpdata_elem =
-                bv2fp<FPDATA, DATA_WIDTH>(mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH));
-            hw_output[i * DMA_WORD_PER_BEAT + j] = (float)fpdata_elem.to_double();
-        }
-    }
-#endif
+    //     hw_output[i] = (int8_t)(data_bv);
+    // }
+// #else
+//     offset = offset / DMA_WORD_PER_BEAT;
+//     for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++) {
+//         for (int j = 0; j < DMA_WORD_PER_BEAT; j++) {
+//             sc_dt::sc_bv<DATA_WIDTH> data_bv;
+//             data_bv.range(DATA_WIDTH - 1, 0) = mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH);
+
+//             //  hw_output[i * DMA_WORD_PER_BEAT + j] = (int8_t)(data_bv);
+//             hw_output[i] = (int8_t)(data_bv);
+//         }
+//     }
+// #endif
 
     ESP_REPORT_INFO("dump memory completed");
 }

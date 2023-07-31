@@ -1,20 +1,20 @@
 // Copyright (c) 2011-2023 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __CONV2DU8_HPP__
-#define __CONV2DU8_HPP__
+#ifndef __CONV2DU8_2_HPP__
+#define __CONV2DU8_2_HPP__
 
 #include <math.h>
 
 #include "common.hpp"
-#include "conv2dU8_data.hpp"
-#include "fpdata.hpp"
-#include "conv2dU8_conf_info.hpp"
-#include "conv2dU8_debug_info.hpp"
+#include "conv2dU8_2_data.hpp"
+// #include "fpdata.hpp"
+#include "conv2dU8_2_conf_info.hpp"
+#include "conv2dU8_2_debug_info.hpp"
 
 #include "esp_templates.hpp"
 
-#include "conv2dU8_directives.hpp"
+#include "conv2dU8_2_directives.hpp"
 
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
@@ -23,12 +23,12 @@
 #define PARALLELISM 8
 #define PARAL_LOG2  3
 
-class conv2dU8 : public esp_accelerator_3P<DMA_WIDTH>
+class conv2dU8_2 : public esp_accelerator_3P<DMA_WIDTH>
 {
   public:
     // Constructor
-    SC_HAS_PROCESS(conv2dU8);
-    conv2dU8(const sc_module_name &name)
+    SC_HAS_PROCESS(conv2dU8_2);
+    conv2dU8_2(const sc_module_name &name)
         : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
         , load_compute_cfg_done("load_compute_cfg_done")
@@ -65,7 +65,7 @@ class conv2dU8 : public esp_accelerator_3P<DMA_WIDTH>
     // Store the output data
     void store_output();
 
-    // Configure conv2dU8
+    // Configure conv2dU8_2
     esp_config_proc cfg;
 
     // Custom handshakes
@@ -104,17 +104,17 @@ class conv2dU8 : public esp_accelerator_3P<DMA_WIDTH>
     inline void store_load_cfg_handshake();
 
     // Private local memories
-    FPDATA_WORD plm_in_ping[INPUT_PLM_SIZE];
-    FPDATA_WORD plm_in_pong[INPUT_PLM_SIZE];
-    FPDATA_WORD plm_weights_ping[WEIGHTS_PLM_SIZE];
-    FPDATA_WORD plm_weights_pong[WEIGHTS_PLM_SIZE];
-    FPDATA_WORD plm_bias_ping[BIAS_PLM_SIZE];
-    FPDATA_WORD plm_bias_pong[BIAS_PLM_SIZE];
-    FPDATA_WORD plm_out_ping[OUTPUT_PLM_SIZE];
-    FPDATA_WORD plm_out_pong[OUTPUT_PLM_SIZE];
-    FPDATA      reg_patch[PARALLELISM];
-    FPDATA      reg_mac[PARALLELISM];
-    FPDATA      reg_w[PARALLELISM];
+    uint32_t plm_in_ping[INPUT_PLM_SIZE];        // FPDATA_WORD
+    uint32_t plm_in_pong[INPUT_PLM_SIZE];        // FPDATA_WORD
+    uint32_t plm_weights_ping[WEIGHTS_PLM_SIZE]; // FPDATA_WORD
+    uint32_t plm_weights_pong[WEIGHTS_PLM_SIZE]; // FPDATA_WORD
+    uint32_t plm_bias_ping[BIAS_PLM_SIZE];       // FPDATA_WORD
+    uint32_t plm_bias_pong[BIAS_PLM_SIZE];       // FPDATA_WORD
+    uint32_t plm_out_ping[OUTPUT_PLM_SIZE];      // FPDATA_WORD
+    uint32_t plm_out_pong[OUTPUT_PLM_SIZE];      // FPDATA_WORD
+    uint32_t reg_patch[PARALLELISM];             // FPDATA
+    uint32_t reg_mac[PARALLELISM];               // FPDATA
+    uint32_t reg_w[PARALLELISM];                 // FPDATA
 
     // Custom configuration signals
     sc_signal<uint4_t>  pad_sig;
@@ -136,4 +136,4 @@ class conv2dU8 : public esp_accelerator_3P<DMA_WIDTH>
     sc_signal<uint16_t> chan_rem_sz_sig;
 };
 
-#endif /* __CONV2DU8_HPP__ */
+#endif /* __CONV2DU8_2_HPP__ */

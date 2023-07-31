@@ -1,19 +1,19 @@
 // Copyright (c) 2011-2023 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
-#include "conv2dU8.hpp"
-#include "conv2dU8_directives.hpp"
+#include "conv2dU8_2.hpp"
+#include "conv2dU8_2_directives.hpp"
 
 // Functions
 
-#include "conv2dU8_functions.hpp"
+#include "conv2dU8_2_functions.hpp"
 
 // Processes
 
 // NOTE
 // - most datatypes are custom (e.g. uint4_t), make sure you don't need more bits!
 
-void conv2dU8::load_input()
+void conv2dU8_2::load_input()
 {
 
     // Reset
@@ -397,7 +397,7 @@ void conv2dU8::load_input()
     }
 }
 
-void conv2dU8::store_output()
+void conv2dU8_2::store_output()
 {
     // Reset
     {
@@ -512,17 +512,18 @@ void conv2dU8::store_output()
                             uint16_t pool_i_in1 = pool_i_in1_base;
                             uint16_t pool_i_in2 = pool_i_in2_base;
                             for (uint16_t out_w = 0; out_w < output_w - 1; out_w += 2) {
-                                FPDATA a, b, c, d, res;
+                                // FPDATA a, b, c, d, res;
+                                uint32_t a, b, c, d, res;
                                 if (ping_output) {
-                                    a = INT2FP(plm_out_ping[pool_i_in1]);
-                                    b = INT2FP(plm_out_ping[pool_i_in1 + 1]);
-                                    c = INT2FP(plm_out_ping[pool_i_in2]);
-                                    d = INT2FP(plm_out_ping[pool_i_in2 + 1]);
+                                    a = plm_out_ping[pool_i_in1];     // INT2FP
+                                    b = plm_out_ping[pool_i_in1 + 1]; // INT2FP
+                                    c = plm_out_ping[pool_i_in2];     // INT2FP
+                                    d = plm_out_ping[pool_i_in2 + 1]; // INT2FP
                                 } else {
-                                    a = INT2FP(plm_out_pong[pool_i_in1]);
-                                    b = INT2FP(plm_out_pong[pool_i_in1 + 1]);
-                                    c = INT2FP(plm_out_pong[pool_i_in2]);
-                                    d = INT2FP(plm_out_pong[pool_i_in2 + 1]);
+                                    a = plm_out_pong[pool_i_in1];     // INT2FP
+                                    b = plm_out_pong[pool_i_in1 + 1]; // INT2FP
+                                    c = plm_out_pong[pool_i_in2];     // INT2FP
+                                    d = plm_out_pong[pool_i_in2 + 1]; // INT2FP
                                 }
                                 pool_i_in1 += 2;
                                 pool_i_in2 += 2;
@@ -538,13 +539,14 @@ void conv2dU8::store_output()
                                         res = d;
                                     }
                                 } else { // pool_type == 2
-                                    res = (a + b + c + d) * 0.25;
+                                    // res = (a + b + c + d) * 0.25;
+									res = (a + b + c + d) << 2;
                                 }
 
                                 if (ping_output) {
-                                    plm_out_ping[pool_i_out++] = FP2INT(res);
+                                    plm_out_ping[pool_i_out++] = res; // FP2INT
                                 } else {
-                                    plm_out_pong[pool_i_out++] = FP2INT(res);
+                                    plm_out_pong[pool_i_out++] = res; // FP2INT
                                 }
                             }
                             pool_i_in1_base += (output_w << 1);
@@ -574,13 +576,15 @@ void conv2dU8::store_output()
 
                             // Write to PLM (all DMA_WORD_PER_BEAT words in one cycle)
                             if (ping_output) {
-                                std::cout << "store ping " << INT2FP(plm_out_ping[plm_out_index]) << std::endl;
+                                // std::cout << "store ping " << INT2FP(plm_out_ping[plm_out_index]) << std::endl;
+                                std::cout << "store ping " << plm_out_ping[plm_out_index] << std::endl;
                                 dataBv.range(31, 0) = plm_out_ping[plm_out_index++];
 #if (DMA_WORD_PER_BEAT == 2)
                                 dataBv.range(63, 32) = plm_out_ping[plm_out_index++];
 #endif
                             } else {
-                                std::cout << "store pong " << INT2FP(plm_out_pong[plm_out_index]) << std::endl;
+                                // std::cout << "store pong " << INT2FP(plm_out_pong[plm_out_index]) << std::endl;
+                                std::cout << "store pong " << plm_out_pong[plm_out_index] << std::endl;
                                 dataBv.range(31, 0) = plm_out_pong[plm_out_index++];
 #if (DMA_WORD_PER_BEAT == 2)
                                 dataBv.range(63, 32) = plm_out_pong[plm_out_index++];
@@ -611,7 +615,7 @@ void conv2dU8::store_output()
     }
 }
 
-void conv2dU8::compute_kernel()
+void conv2dU8_2::compute_kernel()
 {
     // Reset
     {
@@ -753,10 +757,10 @@ void conv2dU8::compute_kernel()
                                     HLS_BREAK_ARRAY_DEPENDENCY(plm_in_pong);
                                     HLS_PIPELINE_LOOP(HARD_STALL, 1, "patch-pipeline");
 
-                                    FPDATA_WORD val;
-                                    int16_t     in_r  = in_r_base + k_r;
-                                    int16_t     in_c  = in_c_base + k_c;
-                                    uint16_t    plm_i = (uint16_t)ch_base + ((int16_t)in_r * width) + in_c;
+                                    uint32_t val; // FPDATA_WORD
+                                    int16_t  in_r  = in_r_base + k_r;
+                                    int16_t  in_c  = in_c_base + k_c;
+                                    uint16_t plm_i = (uint16_t)ch_base + ((int16_t)in_r * width) + in_c;
 
                                     if (in_r >= 0 && in_r < loadable_rows && in_c >= 0 && in_c < width &&
                                         ch < channels) {
@@ -768,7 +772,8 @@ void conv2dU8::compute_kernel()
                                         val = 0;
                                     }
 
-                                    reg_patch[j] = INT2FP(val);
+                                    // reg_patch[j] = INT2FP(val);
+                                    reg_patch[j] = val;
 
                                     k_c++;
                                     if (k_c == filter_dim) {
@@ -793,35 +798,37 @@ void conv2dU8::compute_kernel()
                                     HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(plm_out_ping, 13);
                                     HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(plm_out_pong, 13);
 
-                                    FPDATA   bias, res_relu, res_bias, res_partial, res_mac = 0;
+                                    // FPDATA   bias, res_relu, res_bias, res_partial, res_mac = 0;
+                                    uint32_t bias, res_relu, res_bias, res_partial, res_mac = 0;
+
                                     uint16_t start_addr = start_addr_base1 + start_addr_base2;
                                     if (ping_weights) {
-                                        reg_w[0] = INT2FP(plm_weights_ping[start_addr]);
-                                        reg_w[1] = INT2FP(plm_weights_ping[start_addr + 1]);
-                                        reg_w[2] = INT2FP(plm_weights_ping[start_addr + 2]);
-                                        reg_w[3] = INT2FP(plm_weights_ping[start_addr + 3]);
-                                        reg_w[4] = INT2FP(plm_weights_ping[start_addr + 4]);
-                                        reg_w[5] = INT2FP(plm_weights_ping[start_addr + 5]);
-                                        reg_w[6] = INT2FP(plm_weights_ping[start_addr + 6]);
-                                        reg_w[7] = INT2FP(plm_weights_ping[start_addr + 7]);
+                                        reg_w[0] = plm_weights_ping[start_addr];     // INT2FP
+                                        reg_w[1] = plm_weights_ping[start_addr + 1]; // INT2FP
+                                        reg_w[2] = plm_weights_ping[start_addr + 2]; // INT2FP
+                                        reg_w[3] = plm_weights_ping[start_addr + 3]; // INT2FP
+                                        reg_w[4] = plm_weights_ping[start_addr + 4]; // INT2FP
+                                        reg_w[5] = plm_weights_ping[start_addr + 5]; // INT2FP
+                                        reg_w[6] = plm_weights_ping[start_addr + 6]; // INT2FP
+                                        reg_w[7] = plm_weights_ping[start_addr + 7]; // INT2FP
                                     } else {
-                                        reg_w[0] = INT2FP(plm_weights_pong[start_addr]);
-                                        reg_w[1] = INT2FP(plm_weights_pong[start_addr + 1]);
-                                        reg_w[2] = INT2FP(plm_weights_pong[start_addr + 2]);
-                                        reg_w[3] = INT2FP(plm_weights_pong[start_addr + 3]);
-                                        reg_w[4] = INT2FP(plm_weights_pong[start_addr + 4]);
-                                        reg_w[5] = INT2FP(plm_weights_pong[start_addr + 5]);
-                                        reg_w[6] = INT2FP(plm_weights_pong[start_addr + 6]);
-                                        reg_w[7] = INT2FP(plm_weights_pong[start_addr + 7]);
+                                        reg_w[0] = plm_weights_pong[start_addr];     // INT2FP
+                                        reg_w[1] = plm_weights_pong[start_addr + 1]; // INT2FP
+                                        reg_w[2] = plm_weights_pong[start_addr + 2]; // INT2FP
+                                        reg_w[3] = plm_weights_pong[start_addr + 3]; // INT2FP
+                                        reg_w[4] = plm_weights_pong[start_addr + 4]; // INT2FP
+                                        reg_w[5] = plm_weights_pong[start_addr + 5]; // INT2FP
+                                        reg_w[6] = plm_weights_pong[start_addr + 6]; // INT2FP
+                                        reg_w[7] = plm_weights_pong[start_addr + 7]; // INT2FP
                                     }
 
                                     if (!i && !in_i) {
-                                        res_partial = FPDATA(0.0);
+                                        res_partial = 0; // FPDATA(0.0);
                                     } else {
                                         if (ping_output) {
-                                            res_partial = INT2FP(plm_out_ping[out_plm_addr]);
+                                            res_partial = plm_out_ping[out_plm_addr]; // INT2FP
                                         } else {
-                                            res_partial = INT2FP(plm_out_pong[out_plm_addr]);
+                                            res_partial = plm_out_pong[out_plm_addr]; // INT2FP
                                         }
                                     }
 
@@ -839,23 +846,23 @@ void conv2dU8::compute_kernel()
 
                                     if (i + 1 == compute_iters && in_i + 1 == chan_iters) {
                                         if (ping_bias)
-                                            bias = INT2FP(plm_bias_ping[plm_bias_i + f]);
+                                            bias = plm_bias_ping[plm_bias_i + f]; // INT2FP
                                         else
-                                            bias = INT2FP(plm_bias_pong[plm_bias_i + f]);
+                                            bias = plm_bias_pong[plm_bias_i + f]; // INT2FP
                                         res_bias = res_mac + bias;
                                         if (do_relu && res_bias < 0)
-                                            res_relu = FPDATA(0);
+                                            res_relu = 0; // FPDATA(0);
                                         else
                                             res_relu = res_bias;
                                     } else {
-                                        res_bias = FPDATA(0);
+                                        res_bias = 0; // FPDATA(0);
                                         res_relu = res_mac;
                                     }
 
                                     if (ping_output) {
-                                        plm_out_ping[out_plm_addr] = FP2INT(res_relu);
+                                        plm_out_ping[out_plm_addr] = res_relu; // FP2INT
                                     } else {
-                                        plm_out_pong[out_plm_addr] = FP2INT(res_relu);
+                                        plm_out_pong[out_plm_addr] = res_relu; // FP2INT
                                     }
 
                                     out_plm_addr += loadable_out_size;

@@ -13,7 +13,7 @@ static int validate_buffer(token_t *acc_buf, native_t *sw_buf, unsigned len)
     native_t val;
     unsigned errors = 0;
 
-    printf("\nPrint output\n");
+    fprintf(stderr, "\nPrint output\n");
 
     for (i = 0; i < len; i++) {
 
@@ -25,14 +25,14 @@ static int validate_buffer(token_t *acc_buf, native_t *sw_buf, unsigned len)
         if (sw_buf[i] != val) {
             errors++;
             // if (errors <= MAX_PRINTED_ERRORS)
-            //     printf("index %d : output %d : expected %d <-- ERROR\n", i, (int)val, (int)sw_buf[i]);
+            //     fprintf(stderr, "index %d : output %d : expected %d <-- ERROR\n", i, (int)val, (int)sw_buf[i]);
         }
     }
 
     if (!errors)
-        printf("\n  ** Test PASSED! **\n");
+        fprintf(stderr, "\n  ** Test PASSED! **\n");
     else
-        printf("\n  ** Test FAILED! **\n");
+        fprintf(stderr, "\n  ** Test FAILED! **\n");
 
     return errors;
 }
@@ -42,7 +42,7 @@ static void init_buffer(token_t *acc_buf, native_t *sw_buf, unsigned in_len)
 {
     int i;
 
-    printf("  Initialize inputs\n");
+    fprintf(stderr, "  Initialize inputs\n");
 
     for (i = 0; i < in_len; i++) {
         native_t val = i % 17 - 8;
@@ -53,6 +53,7 @@ static void init_buffer(token_t *acc_buf, native_t *sw_buf, unsigned in_len)
 #endif
         sw_buf[i] = val;
     }
+    fprintf(stderr, "  Initialize inputs 2\n");
 }
 
 static void init_parameters(int test, int32_t n_channels, int32_t feature_map_height, int32_t feature_map_width,
@@ -93,29 +94,29 @@ static void init_parameters(int test, int32_t n_channels, int32_t feature_map_he
     *out_offset     = *in_len + *weights_len + *bias_len;
     *size           = *in_size + *weights_size + *bias_size + *out_size;
 
-    conv2dU8_cfg_000[0].n_channels         = n_channels;
-    conv2dU8_cfg_000[0].feature_map_height = feature_map_height;
-    conv2dU8_cfg_000[0].feature_map_width  = feature_map_width;
-    conv2dU8_cfg_000[0].n_filters          = n_filters;
-    conv2dU8_cfg_000[0].filter_dim         = filter_dim;
-    conv2dU8_cfg_000[0].is_padded          = is_padded;
-    conv2dU8_cfg_000[0].stride             = stride;
-    conv2dU8_cfg_000[0].do_relu            = do_relu;
-    conv2dU8_cfg_000[0].pool_type          = pool_type;
-    conv2dU8_cfg_000[0].batch_size         = batch_size;
+    conv2dU8_2_cfg_000[0].n_channels         = n_channels;
+    conv2dU8_2_cfg_000[0].feature_map_height = feature_map_height;
+    conv2dU8_2_cfg_000[0].feature_map_width  = feature_map_width;
+    conv2dU8_2_cfg_000[0].n_filters          = n_filters;
+    conv2dU8_2_cfg_000[0].filter_dim         = filter_dim;
+    conv2dU8_2_cfg_000[0].is_padded          = is_padded;
+    conv2dU8_2_cfg_000[0].stride             = stride;
+    conv2dU8_2_cfg_000[0].do_relu            = do_relu;
+    conv2dU8_2_cfg_000[0].pool_type          = pool_type;
+    conv2dU8_2_cfg_000[0].batch_size         = batch_size;
 
     // print test info
-    printf("  Prepare test %d parameters\n", test);
-    printf("    .n_channels = %d\n", n_channels);
-    printf("    .feature_map_height = %d\n", feature_map_height);
-    printf("    .feature_map_width = %d\n", feature_map_width);
-    printf("    .n_filters = %d\n", n_filters);
-    printf("    .filter_dim = %d\n", filter_dim);
-    printf("    .is_padded = %d\n", is_padded);
-    printf("    .stride = %d\n", stride);
-    printf("    .do_relu = %d\n", do_relu);
-    printf("    .pool_type = %d\n", pool_type);
-    printf("    .batch_size = %d\n", batch_size);
+    fprintf(stderr, "  Prepare test %d parameters\n", test);
+    fprintf(stderr, "    .n_channels = %d\n", n_channels);
+    fprintf(stderr, "    .feature_map_height = %d\n", feature_map_height);
+    fprintf(stderr, "    .feature_map_width = %d\n", feature_map_width);
+    fprintf(stderr, "    .n_filters = %d\n", n_filters);
+    fprintf(stderr, "    .filter_dim = %d\n", filter_dim);
+    fprintf(stderr, "    .is_padded = %d\n", is_padded);
+    fprintf(stderr, "    .stride = %d\n", stride);
+    fprintf(stderr, "    .do_relu = %d\n", do_relu);
+    fprintf(stderr, "    .pool_type = %d\n", pool_type);
+    fprintf(stderr, "    .batch_size = %d\n", batch_size);
 }
 
 inline bool sw_is_a_ge_zero_and_a_lt_b(int a, int b)
@@ -123,7 +124,7 @@ inline bool sw_is_a_ge_zero_and_a_lt_b(int a, int b)
     return (a >= 0 && a < b);
 }
 
-inline float max_of_4(float a, float b, float c, float d)
+inline int max_of_4(int a, int b, int c, int d)
 {
     if (a >= b && a >= c && a >= d) {
         return a;
@@ -137,18 +138,18 @@ inline float max_of_4(float a, float b, float c, float d)
     return d;
 }
 
-inline float avg_of_4(float a, float b, float c, float d)
+inline int avg_of_4(int a, int b, int c, int d)
 {
     return (a + b + c + d) / 4;
 }
 
-inline void pooling_2x2(float *in, float *out, unsigned size, unsigned type)
+inline void pooling_2x2(int *in, int *out, unsigned size, unsigned type)
 {
 
     assert(type >= 1 && type <= 2);
 
     unsigned i, j, out_i;
-    float    a, b, c, d;
+    int    a, b, c, d;
     for (i = 0; i < size - 1; i += 2) {
         for (j = 0; j < size - 1; j += 2) {
             a     = in[i * size + j];
@@ -164,10 +165,10 @@ inline void pooling_2x2(float *in, float *out, unsigned size, unsigned type)
     }
 }
 
-void sw_conv_layer(const float *input, const int channels, const int height, const int width, const int kernel_h,
+void sw_conv_layer(const int *input, const int channels, const int height, const int width, const int kernel_h,
                    const int kernel_w, const int pad_h, const int pad_w, const int stride_h, const int stride_w,
-                   const int dilation_h, const int dilation_w, const int num_filters, const float *weights,
-                   const float *biases, float *output, const bool do_relu, const int pool_type, const int batch_size)
+                   const int dilation_h, const int dilation_w, const int num_filters, const int *weights,
+                   const int *biases, int *output, const bool do_relu, const int pool_type, const int batch_size)
 {
 
     const int channel_size      = round_up(height * width, DMA_RATIO);
@@ -182,7 +183,7 @@ void sw_conv_layer(const float *input, const int channels, const int height, con
             for (int output_row = 0; output_row < output_h; output_row++) {
                 for (int output_col = 0; output_col < output_w; output_col++) {
                     int   k         = 0;
-                    float out_value = 0;
+                    int out_value = 0;
                     for (int channel = 0; channel < channels; channel++) {
                         for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
                             for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
@@ -236,14 +237,14 @@ static long long sw_run(int32_t n_channels, int32_t feature_map_height, int32_t 
     gettime(&th_end);
 
     unsigned long long sw_ns = ts_subtract(&th_start, &th_end);
-    printf("    Software execution time: %llu ns\n", sw_ns);
+    fprintf(stderr, "    Software execution time: %llu ns\n", sw_ns);
 
     return sw_ns;
 }
 
 int main(int argc, char **argv)
 {
-    FILE              *log_0323 = fopen("log_0323_conv2dU8.txt", "w");
+    FILE              *log_0323 = fopen("log_0323_conv2dU8_2.txt", "w");
     int                i, j, k;
     unsigned long long hw_ns;
     unsigned long long sw_ns;
@@ -275,17 +276,15 @@ int main(int argc, char **argv)
     // int32_t batch_size[MAX_TESTS] = {1, 1, 1, 1, 1, 1, 4, 8, 12, 16};
 
     // int32_t n_channels_3[8] = {8, 16, 32, 64, 128, 256, 512, 1024};
-    // int32_t n_channels_3[5] = {128, 128, 128, 128, 128};
-    int32_t n_channels_3[2] = {256, 256};
+    int32_t n_channels_3[5] = {128, 128, 128, 128, 128};
     int32_t n_channels      = 100;
     // int32_t feature_map_height_3[8] = {8, 16, 32, 64, 128, 256, 512, 1024};
-    // int32_t feature_map_height_3[5] = {32, 32, 32, 32, 32};
-    int32_t feature_map_height_3[1] = {32};
+    int32_t feature_map_height_3[5] = {32, 32, 32, 32, 32};
     int32_t feature_map_height      = 100;
     int32_t feature_map_width       = 100; // same as feature_map_height_3
     int32_t n_filters               = 2;   // same as n_channels_3
     // int32_t filter_dim_3[3] = {1, 3, 5};
-    int32_t filter_dim_3[1] = {5};
+    int32_t filter_dim_3[3] = {5, 5, 5};
     int32_t filter_dim      = 100;
     int32_t is_padded       = 1;
     int32_t stride          = 1;
@@ -293,7 +292,7 @@ int main(int argc, char **argv)
     int32_t pool_type       = 0;
     int32_t batch_size      = 1;
 
-    printf("\n====== %s ======\n\n", cfg_000[0].devname);
+    fprintf(stderr, "\n====== %s ====== 2 \n\n", cfg_000[0].devname);
 
     // command line arguments
     if (argc < 3) {
@@ -301,36 +300,35 @@ int main(int argc, char **argv)
     } else if (argc == 3) {
         n_tests = strtol(argv[1], NULL, 10);
         if (n_tests > MAX_TESTS) {
-            printf("Wrong input arguments!");
+            fprintf(stderr, "Wrong input arguments!");
             return 1;
         }
         start_test = strtol(argv[2], NULL, 10);
         if (start_test > MAX_TESTS) {
-            printf("Wrong input arguments!");
+            fprintf(stderr, "Wrong input arguments!");
             return 1;
         }
     } else {
-        printf("Wrong input arguments!");
+        fprintf(stderr, "Wrong input arguments!");
         return 1;
     }
-    printf("  Executing %d tests\n", n_tests);
+    fprintf(stderr, "  Executing %d tests\n", n_tests);
 
     // allocations
-    printf("  Allocations\n");
+    fprintf(stderr, "  Allocations\n");
     acc_buf           = (token_t *)esp_alloc(MAX_SIZE);
     cfg_000[0].hw_buf = acc_buf;
-    // cfg_000[1].hw_buf = acc_buf;
 
     sw_buf = malloc(MAX_SIZE);
 
-    for (k = 0; k < 1; k++) {
+    for (k = 0; k < 3; k++) {
         filter_dim = filter_dim_3[k];
 
-        for (i = 0; i < 2; i++) {
+        for (i = 0; i < 5; i++) {
             n_channels = n_channels_3[i];
             n_filters  = n_channels;
 
-            for (j = 0; j < 1; j++) {
+            for (j = 0; j < 5; j++) {
                 feature_map_height = feature_map_height_3[j];
                 feature_map_width  = feature_map_height;
 
@@ -345,21 +343,20 @@ int main(int argc, char **argv)
 
                 // hardware execution
                 struct timespec th_hw_1, th_hw_2;
-                printf("\n  Start accelerator execution\n");
+                fprintf(stderr, "\n  Start accelerator execution\n");
                 gettime(&th_hw_1);
                 esp_run(cfg_000, NACC);
-                // esp_run(cfg_000, 2);
                 gettime(&th_hw_2);
-                printf("  Completed accelerator execution\n");
+                fprintf(stderr, "  Completed accelerator execution\n");
                 hw_ns = ts_subtract(&th_hw_1, &th_hw_2);
 
                 // software execution
-                printf("\n  Start software execution\n");
-                sw_ns = sw_run(n_channels, feature_map_height, feature_map_width,
-                               n_filters, filter_dim, is_padded, stride,
-                               do_relu, pool_type, batch_size,
-                               sw_buf, &sw_buf[weights_offset], &sw_buf[bias_offset], &sw_buf[out_offset]);
-                printf("  Completed software execution\n");
+                fprintf(stderr, "\n  Start software execution\n");
+                // sw_ns = sw_run(n_channels, feature_map_height, feature_map_width,
+                //                n_filters, filter_dim, is_padded, stride,
+                //                do_relu, pool_type, batch_size,
+                //                sw_buf, &sw_buf[weights_offset], &sw_buf[bias_offset], &sw_buf[out_offset]);
+                fprintf(stderr, "  Completed software execution\n");
 
                 // validation
                 int no_error = validate_buffer(&acc_buf[out_offset], &sw_buf[out_offset], out_len);
@@ -378,7 +375,7 @@ int main(int argc, char **argv)
 
     fclose(log_0323);
 
-    printf("\n====== %s ======\n\n", cfg_000[0].devname);
+    fprintf(stderr, "\n====== %s ======\n\n", cfg_000[0].devname);
 
     return 0;
 }

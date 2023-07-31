@@ -58,7 +58,7 @@ set_attr clock_period $CLOCK_PERIOD
 #
 # System level modules to be synthesized
 #
-define_hls_module conv2dU8 ../src/conv2dU8.cpp
+define_hls_module conv2dU8_2 ../src/conv2dU8_2.cpp
 
 #
 # Testbench or system level modules
@@ -99,7 +99,8 @@ if {$TECH_IS_XILINX == 1} {
 # DSE configuration
 #
 
-set data_width 32
+# set data_width 32
+set data_width 8
 set input_plm_size 2048
 set weights_plm_size 2048
 set bias_plm_size 16
@@ -127,14 +128,14 @@ foreach dma [list 32 64] {
 	    set ARGV ""
 	    append ARGV "$iosz "; # argv[1]
 	    append ARGV "$fsz ";  # argv[2]
-	    define_sim_config "BEHAV_DMA$dma\_$iosz\_$fsz" "conv2dU8 BEH" \
+	    define_sim_config "BEHAV_DMA$dma\_$iosz\_$fsz" "conv2dU8_2 BEH" \
 		"tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $ARGV
 	}
     }
 
     foreach cfg [list BASIC] {
 	set cname $cfg\_DMA$dma
-	define_hls_config conv2dU8 $cname -io_config IOCFG_DMA$dma \
+	define_hls_config conv2dU8_2 $cname -io_config IOCFG_DMA$dma \
 	    --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
 
 	foreach iosz $TB_INOUT_SIZE {
@@ -144,11 +145,11 @@ foreach dma [list 32 64] {
 		append ARGV "$fsz ";  # argv[2]
 
 		if {$TECH_IS_XILINX == 1} {
-		    define_sim_config "$cname\_$iosz\_$fsz\_V" "conv2dU8 RTL_V $cname" \
+		    define_sim_config "$cname\_$iosz\_$fsz\_V" "conv2dU8_2 RTL_V $cname" \
 			"tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma \
 			-argv $ARGV -verilog_top_modules glbl
 		} else {
-		    define_sim_config "$cname\_$iosz\_$fsz\_V" "conv2dU8 RTL_V $cname" \
+		    define_sim_config "$cname\_$iosz\_$fsz\_V" "conv2dU8_2 RTL_V $cname" \
 			"tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma \
 			-argv $ARGV
 		}

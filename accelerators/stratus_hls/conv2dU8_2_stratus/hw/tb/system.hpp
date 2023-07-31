@@ -4,12 +4,12 @@
 #ifndef __SYSTEM_HPP__
 #define __SYSTEM_HPP__
 
-#include "conv2dU8_data.hpp"
-#include "fpdata.hpp"
-#include "conv2dU8_conf_info.hpp"
-#include "conv2dU8_debug_info.hpp"
-#include "conv2dU8.hpp"
-#include "conv2dU8_directives.hpp"
+#include "conv2dU8_2_data.hpp"
+// #include "fpdata.hpp"
+#include "conv2dU8_2_conf_info.hpp"
+#include "conv2dU8_2_debug_info.hpp"
+#include "conv2dU8_2.hpp"
+#include "conv2dU8_2_directives.hpp"
 
 // #include "conv_layer.hpp"
 #include "golden.hpp"
@@ -27,7 +27,7 @@ const size_t MEM_SIZE = (input_max_size + weights_max_size + bias_max_size + out
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-    #include "conv2dU8_wrap.h"
+    #include "conv2dU8_2_wrap.h"
 #endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
@@ -35,9 +35,9 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
   public:
     // ACC instance
 #ifdef CADENCE
-    conv2dU8_wrapper *acc;
+    conv2dU8_2_wrapper *acc;
 #else
-    conv2dU8 *acc;
+    conv2dU8_2 *acc;
 #endif
 
     // Constructor
@@ -47,9 +47,9 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
     {
         // ACC
 #ifdef CADENCE
-        acc = new conv2dU8_wrapper("conv2dU8_wrapper");
+        acc = new conv2dU8_2_wrapper("conv2dU8_2_wrapper");
 #else
-        acc = new conv2dU8("conv2dU8_wrapper");
+        acc = new conv2dU8_2("conv2dU8_2_wrapper");
 #endif
         // Binding ACC
         acc->clk(clk);
@@ -109,11 +109,11 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
     uint32_t bias_size;
     uint32_t out_size;
 
-    float *input;
-    float *weights;
-    float *bias;
-    float *hw_output;
-    float *sw_output;
+    int8_t *input;       // float *input;
+    int8_t *weights;     // float *weights;
+    int8_t *bias;        // float *bias;
+    int8_t *hw_output;   // float *hw_output;
+    int8_t *sw_output;   // float *sw_output;
 
     // Other Functions
 };

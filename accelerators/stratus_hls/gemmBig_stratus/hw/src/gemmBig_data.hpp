@@ -20,6 +20,7 @@ const unsigned int FPDATA_IL = WORD_SIZE / 2;
 const unsigned int FPDATA_FL = WORD_SIZE - FPDATA_IL;
 typedef sc_dt::sc_int<WORD_SIZE> PLM_WORD;
 
+
 #elif defined(FLOAT_POINT)
 
 #if (WORD_SIZE == 32)

@@ -86,6 +86,7 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
     unsigned size_inA;
     unsigned size_inB;
     unsigned size_out;
+    unsigned datatype_sel;
 
     // Mem index
     uint32_t indexA;

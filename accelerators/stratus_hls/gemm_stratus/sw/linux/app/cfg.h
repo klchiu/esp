@@ -109,6 +109,8 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "gemm_stratus.0",
+		.devname_noid = "gemm_stratus",
+		.puffinname = "Blue Star",
 		.ioctl_req = GEMM_STRATUS_IOC_ACCESS,
 		.esp_desc = &(gemm_cfg_000[0].esp),
 	}

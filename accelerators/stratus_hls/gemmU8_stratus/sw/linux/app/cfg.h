@@ -46,7 +46,7 @@ typedef long long token_t;
 typedef int token_t;
 #define fx2float fixed32_to_float
 #define float2fx float_to_fixed32
-#define FX_IL 16
+#define FX_IL 32
 #elif (BITWIDTH == 64)
 typedef long long token_t;
 #define fx2float fixed64_to_double
@@ -109,6 +109,8 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "gemmU8_stratus.0",
+		.devname_noid = "gemmU8_stratus",
+		.puffinname = "Yellow Sub",
 		.ioctl_req = GEMMU8_STRATUS_IOC_ACCESS,
 		.esp_desc = &(gemmU8_cfg_000[0].esp),
 	}

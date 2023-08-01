@@ -102,7 +102,7 @@
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p4"
 #elif (PARALLELISM == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p8"
-#else // (PARALLELISM == 16)
+#elif // (PARALLELISM == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p16"
 #else //(PARALLELISM == 32)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p32"

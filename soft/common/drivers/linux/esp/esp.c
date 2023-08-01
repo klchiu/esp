@@ -78,7 +78,7 @@ static irqreturn_t esp_irq(int irq, void *dev)
 	//-- printk("[kk] esp_irq() -- debug 1\n");
 
 
-	printk(KERN_INFO "IRQ: %08x\n", status);
+	// printk(KERN_INFO "IRQ: %08x\n", status);
 
 	if (error) {
 		iowrite32be(0, esp->iomem + CMD_REG);

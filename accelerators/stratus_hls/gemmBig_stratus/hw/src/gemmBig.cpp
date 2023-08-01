@@ -206,11 +206,11 @@ void gemmBig::load_input()
                                 HLS_BREAK_ARRAY_DEPENDENCY(input0);
                                 HLS_BREAK_ARRAY_DEPENDENCY(input1);
 
-if(datatype_sel == 0){
-#if (WORDS_PER_DMA == 2)
-}else{	// datatype_sel == 1
+// if(datatype_sel == 0){
+// #if (WORDS_PER_DMA == 2)
+// }else{	// datatype_sel == 1
 #if (WORDS_PER_DMA >= 2)
-}
+// }
                                 if (pingpong_m1) {
 
                                     if (!(misaligned && !k))

@@ -26,6 +26,7 @@ class conf_info_t
     uint32_t st_offset;  // Output offset
     uint32_t do_relu;    // Do ReLU stage
     uint32_t transpose;  // True if matrix 2 is transposed
+    uint32_t datatype_sel;  // 0: float32, 1: int8
 
     //
     // constructors
@@ -41,6 +42,7 @@ class conf_info_t
         , st_offset(0)
         , do_relu(0)
         , transpose(0)
+        , datatype_sel(0)
     {
     }
 
@@ -49,7 +51,7 @@ class conf_info_t
     {
         return (rhs.ninputs == ninputs) && (rhs.d1 == d1) && (rhs.d2 == d2) && (rhs.d3 == d3) &&
                (rhs.ld_offset1 == ld_offset1) && (rhs.ld_offset2 == ld_offset2) && (rhs.st_offset == st_offset) &&
-               (rhs.do_relu == do_relu) && (rhs.transpose == transpose);
+               (rhs.do_relu == do_relu) && (rhs.transpose == transpose) && (rhs.datatype_sel == datatype_sel);
     }
 
     // assignment operator
@@ -64,6 +66,7 @@ class conf_info_t
         st_offset  = other.st_offset;
         do_relu    = other.do_relu;
         transpose  = other.transpose;
+        datatype_sel  = other.datatype_sel;
         return *this;
     }
 

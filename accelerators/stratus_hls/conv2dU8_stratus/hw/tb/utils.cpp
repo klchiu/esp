@@ -148,16 +148,17 @@ int _validate(float *hw_data_array, float *sw_data_array, int batch_size, int fi
                     int idx_print = b * filters * output_h * output_w + f * output_h * output_w + h * output_w + w;
                     int idx       = b * filters * round_up(output_h * output_w, DMA_WORD_PER_BEAT) +
                               f * round_up(output_h * output_w, DMA_WORD_PER_BEAT) + h * output_w + w;
-                    if (check_error_threshold_for_neuron(float(hw_data_array[idx]), float(sw_data_array[idx]),
+                    if (check_error_threshold_for_neuron(FPDATA(hw_data_array[idx]), FPDATA(sw_data_array[idx]),
                                                          rel_error)) {
                         if (tot_errors < REPORT_THRESHOLD) {
-                            float hw_fdata = hw_data_array[idx];
-                            printf("[ERROR] Validation: Element %d wrong [%.4f - %.4f]\n", idx_print, float(hw_fdata),
-                                   float(sw_data_array[idx]));
+                            int hw_fdata = hw_data_array[idx];
+                            int sw_fdata = sw_data_array[idx];
+                            printf("[ERROR] Validation: Element %d wrong [%.4f - %.4f]\n", idx_print, float(FPDATA(hw_fdata)),
+                                   float(FPDATA(sw_fdata)));
                         }
                         tot_errors++;
                     } else {
-                        float hw_fdata = hw_data_array[idx];
+                        int hw_fdata = hw_data_array[idx];
                         // printf("Validation: Element %d wrong [%.4f - %.4f]\n",
                         //        idx_print, float(hw_fdata), float(sw_data_array[idx]));
                     }

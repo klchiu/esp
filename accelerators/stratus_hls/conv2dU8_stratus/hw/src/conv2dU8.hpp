@@ -20,8 +20,8 @@
 #define round_up(x, y)     ((((x)-1) | __round_mask(x, y)) + 1)
 /* <<--defines-->> */
 #define DMA_SIZE    SIZE_WORD
-#define PARALLELISM 8
-#define PARAL_LOG2  3
+#define PARALLELISM 16
+#define PARAL_LOG2  4
 
 class conv2dU8 : public esp_accelerator_3P<DMA_WIDTH>
 {

@@ -796,25 +796,34 @@ void conv2dU8::compute_kernel()
 
                                     FPDATA   bias, res_relu, res_bias, res_partial, res_mac = 0;
                                     uint16_t start_addr = start_addr_base1 + start_addr_base2;
-                                    if (ping_weights) {
-                                        reg_w[0] = INT2FP(plm_weights_ping[start_addr]);
-                                        reg_w[1] = INT2FP(plm_weights_ping[start_addr + 1]);
-                                        reg_w[2] = INT2FP(plm_weights_ping[start_addr + 2]);
-                                        reg_w[3] = INT2FP(plm_weights_ping[start_addr + 3]);
-                                        reg_w[4] = INT2FP(plm_weights_ping[start_addr + 4]);
-                                        reg_w[5] = INT2FP(plm_weights_ping[start_addr + 5]);
-                                        reg_w[6] = INT2FP(plm_weights_ping[start_addr + 6]);
-                                        reg_w[7] = INT2FP(plm_weights_ping[start_addr + 7]);
-                                    } else {
-                                        reg_w[0] = INT2FP(plm_weights_pong[start_addr]);
-                                        reg_w[1] = INT2FP(plm_weights_pong[start_addr + 1]);
-                                        reg_w[2] = INT2FP(plm_weights_pong[start_addr + 2]);
-                                        reg_w[3] = INT2FP(plm_weights_pong[start_addr + 3]);
-                                        reg_w[4] = INT2FP(plm_weights_pong[start_addr + 4]);
-                                        reg_w[5] = INT2FP(plm_weights_pong[start_addr + 5]);
-                                        reg_w[6] = INT2FP(plm_weights_pong[start_addr + 6]);
-                                        reg_w[7] = INT2FP(plm_weights_pong[start_addr + 7]);
+
+                                    for (uint16_t p = 0; p < PARALLELISM; p++) {
+                                        if (ping_weights) {
+                                            reg_w[p] = INT2FP(plm_weights_ping[start_addr + p]);
+                                        } else {
+                                            reg_w[p] = INT2FP(plm_weights_pong[start_addr + p]);
+                                        }
                                     }
+
+                                    // if (ping_weights) {
+                                    //     reg_w[0] = INT2FP(plm_weights_ping[start_addr]);
+                                    //     reg_w[1] = INT2FP(plm_weights_ping[start_addr + 1]);
+                                    //     reg_w[2] = INT2FP(plm_weights_ping[start_addr + 2]);
+                                    //     reg_w[3] = INT2FP(plm_weights_ping[start_addr + 3]);
+                                    //     reg_w[4] = INT2FP(plm_weights_ping[start_addr + 4]);
+                                    //     reg_w[5] = INT2FP(plm_weights_ping[start_addr + 5]);
+                                    //     reg_w[6] = INT2FP(plm_weights_ping[start_addr + 6]);
+                                    //     reg_w[7] = INT2FP(plm_weights_ping[start_addr + 7]);
+                                    // } else {
+                                    //     reg_w[0] = INT2FP(plm_weights_pong[start_addr]);
+                                    //     reg_w[1] = INT2FP(plm_weights_pong[start_addr + 1]);
+                                    //     reg_w[2] = INT2FP(plm_weights_pong[start_addr + 2]);
+                                    //     reg_w[3] = INT2FP(plm_weights_pong[start_addr + 3]);
+                                    //     reg_w[4] = INT2FP(plm_weights_pong[start_addr + 4]);
+                                    //     reg_w[5] = INT2FP(plm_weights_pong[start_addr + 5]);
+                                    //     reg_w[6] = INT2FP(plm_weights_pong[start_addr + 6]);
+                                    //     reg_w[7] = INT2FP(plm_weights_pong[start_addr + 7]);
+                                    // }
 
                                     if (!i && !in_i) {
                                         res_partial = FPDATA(0.0);
@@ -826,17 +835,23 @@ void conv2dU8::compute_kernel()
                                         }
                                     }
 
-                                    reg_mac[0] = reg_patch[0] * reg_w[0];
-                                    reg_mac[1] = reg_patch[1] * reg_w[1];
-                                    reg_mac[2] = reg_patch[2] * reg_w[2];
-                                    reg_mac[3] = reg_patch[3] * reg_w[3];
-                                    reg_mac[4] = reg_patch[4] * reg_w[4];
-                                    reg_mac[5] = reg_patch[5] * reg_w[5];
-                                    reg_mac[6] = reg_patch[6] * reg_w[6];
-                                    reg_mac[7] = reg_patch[7] * reg_w[7];
+                                    res_mac = res_partial;
+                                    for (uint16_t p = 0; p < PARALLELISM; p++) {
+                                        reg_mac[p] = reg_patch[p] * reg_w[p];
+                                        res_mac += reg_mac[p];
+                                    }
 
-                                    res_mac = ((reg_mac[0] + reg_mac[1]) + (reg_mac[2] + reg_mac[3])) +
-                                              ((reg_mac[4] + reg_mac[5]) + (reg_mac[6] + reg_mac[7])) + res_partial;
+                                    // reg_mac[0] = reg_patch[0] * reg_w[0];
+                                    // reg_mac[1] = reg_patch[1] * reg_w[1];
+                                    // reg_mac[2] = reg_patch[2] * reg_w[2];
+                                    // reg_mac[3] = reg_patch[3] * reg_w[3];
+                                    // reg_mac[4] = reg_patch[4] * reg_w[4];
+                                    // reg_mac[5] = reg_patch[5] * reg_w[5];
+                                    // reg_mac[6] = reg_patch[6] * reg_w[6];
+                                    // reg_mac[7] = reg_patch[7] * reg_w[7];
+
+                                    // res_mac = ((reg_mac[0] + reg_mac[1]) + (reg_mac[2] + reg_mac[3])) +
+                                    //           ((reg_mac[4] + reg_mac[5]) + (reg_mac[6] + reg_mac[7])) + res_partial;
 
                                     if (i + 1 == compute_iters && in_i + 1 == chan_iters) {
                                         if (ping_bias)

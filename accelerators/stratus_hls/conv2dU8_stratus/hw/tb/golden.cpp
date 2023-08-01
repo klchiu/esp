@@ -74,7 +74,8 @@ void sw_conv_layer(const float *input, const int channels, const int height, con
             for (int output_row = 0; output_row < output_h; output_row++) {
                 for (int output_col = 0; output_col < output_w; output_col++) {
                     int   k         = 0;
-                    float out_value = 0;
+                    // float out_value = 0;
+                    int8_t out_value = 0;
                     for (int channel = 0; channel < channels; channel++) {
                         for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
                             for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
@@ -83,15 +84,16 @@ void sw_conv_layer(const float *input, const int channels, const int height, con
                                 if (!(!sw_is_a_ge_zero_and_a_lt_b(input_row, height) ||
                                       (sw_is_a_ge_zero_and_a_lt_b(input_row, height) &&
                                        !sw_is_a_ge_zero_and_a_lt_b(input_col, width)))) {
-                                    out_value += input[batch_i * channels * channel_size + channel * channel_size +
-                                                       input_row * width + input_col] *
-                                                 weights[num_filter * filter_size + k];
+                                    // out_value += input[batch_i * channels * channel_size + channel * channel_size +
+                                    //                    input_row * width + input_col] *
+                                    //              weights[num_filter * filter_size + k];
+                                    out_value += FPDATA(input[batch_i * channels * channel_size + channel * channel_size + input_row * width + input_col]) * FPDATA(weights[num_filter * filter_size + k]);
                                 }
                                 k++;
                             }
                         }
                     }
-                    out_value += biases[num_filter];
+                    out_value += FPDATA(biases[num_filter]);
 
                     if (do_relu && out_value < 0)
                         out_value = 0;

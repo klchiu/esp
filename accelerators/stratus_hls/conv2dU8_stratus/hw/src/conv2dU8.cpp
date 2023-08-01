@@ -174,10 +174,10 @@ void conv2dU8::load_input()
                                 (n_words_to_load + misaligned + DMA_WORD_PER_BEAT_LOG2) >> DMA_WORD_PER_BEAT_LOG2,
                                 DMA_SIZE);
 
-#ifndef STRATUS_HLS
-            ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u", filters_offset_start_phys,
-                            n_words_to_load);
-#endif
+// #ifndef STRATUS_HLS
+//             ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u", filters_offset_start_phys,
+//                             n_words_to_load);
+// #endif
             this->dma_read_ctrl.put(dma_info);
 
             for (uint16_t i = 0; i < adj_words_to_load; i += DMA_WORD_PER_BEAT) {
@@ -239,10 +239,10 @@ void conv2dU8::load_input()
                                     (n_words_to_load + misaligned + DMA_WORD_PER_BEAT_LOG2) >> DMA_WORD_PER_BEAT_LOG2,
                                     DMA_SIZE);
 
-#ifndef STRATUS_HLS
-                ESP_REPORT_INFO("load_input load bias dma_info. offset: %u len %u", bias_offset_start_phys,
-                                n_words_to_load);
-#endif
+// #ifndef STRATUS_HLS
+//                 ESP_REPORT_INFO("load_input load bias dma_info. offset: %u len %u", bias_offset_start_phys,
+//                                 n_words_to_load);
+// #endif
                 this->dma_read_ctrl.put(dma_info);
 
                 for (uint16_t i = 0; i < adj_words_to_load; i += DMA_WORD_PER_BEAT) {
@@ -339,10 +339,10 @@ void conv2dU8::load_input()
                                                 (n_words_to_load + DMA_WORD_PER_BEAT_LOG2) >> DMA_WORD_PER_BEAT_LOG2,
                                                 DMA_SIZE);
 
-#ifndef STRATUS_HLS
-                            ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u", offset_start,
-                                            n_words_to_load);
-#endif
+// #ifndef STRATUS_HLS
+//                             ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u", offset_start,
+//                                             n_words_to_load);
+// #endif
                             this->dma_read_ctrl.put(dma_info);
 
                             for (uint16_t i = 0; i < adj_words_to_load; i += DMA_WORD_PER_BEAT) {
@@ -538,7 +538,8 @@ void conv2dU8::store_output()
                                         res = d;
                                     }
                                 } else { // pool_type == 2
-                                    res = (a + b + c + d) * 0.25;
+                                    // res = (a + b + c + d) * 0.25;
+                                    res = (a + b + c + d) >> 2;
                                 }
 
                                 if (ping_output) {
@@ -558,9 +559,9 @@ void conv2dU8::store_output()
                         dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
                                             (n_words_to_store + DMA_WORD_PER_BEAT_LOG2) >> DMA_WORD_PER_BEAT_LOG2,
                                             DMA_SIZE);
-#ifndef STRATUS_HLS
-                        ESP_REPORT_INFO("store dma info. offset: %u len %u", offset_start, n_words_to_store);
-#endif
+// #ifndef STRATUS_HLS
+//                         ESP_REPORT_INFO("store dma info. offset: %u len %u", offset_start, n_words_to_store);
+// #endif
                         this->dma_write_ctrl.put(dma_info);
 
                         for (uint16_t i = 0; i < n_words_to_store; i += DMA_WORD_PER_BEAT) {
@@ -574,13 +575,13 @@ void conv2dU8::store_output()
 
                             // Write to PLM (all DMA_WORD_PER_BEAT words in one cycle)
                             if (ping_output) {
-                                std::cout << "store ping " << INT2FP(plm_out_ping[plm_out_index]) << std::endl;
+                                // std::cout << "store ping " << INT2FP(plm_out_ping[plm_out_index]) << std::endl;
                                 dataBv.range(31, 0) = plm_out_ping[plm_out_index++];
 #if (DMA_WORD_PER_BEAT == 2)
                                 dataBv.range(63, 32) = plm_out_ping[plm_out_index++];
 #endif
                             } else {
-                                std::cout << "store pong " << INT2FP(plm_out_pong[plm_out_index]) << std::endl;
+                                // std::cout << "store pong " << INT2FP(plm_out_pong[plm_out_index]) << std::endl;
                                 dataBv.range(31, 0) = plm_out_pong[plm_out_index++];
 #if (DMA_WORD_PER_BEAT == 2)
                                 dataBv.range(63, 32) = plm_out_pong[plm_out_index++];
@@ -724,9 +725,9 @@ void conv2dU8::compute_kernel()
                     wait();
                     this->compute_load_handshake();
 
-#ifndef STRATUS_HLS
-                    ESP_REPORT_INFO("compute_load_handshake %u %u %u %u", filter_chunk, b, input_chunk, (unsigned)in_i);
-#endif
+// #ifndef STRATUS_HLS
+//                     ESP_REPORT_INFO("compute_load_handshake %u %u %u %u", filter_chunk, b, input_chunk, (unsigned)in_i);
+// #endif
                     uint12_t channels;
                     uint16_t filt_sz_loc;
                     if (in_i < chan_iters - 1) {

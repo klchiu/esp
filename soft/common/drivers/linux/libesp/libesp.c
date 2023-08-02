@@ -10,11 +10,11 @@ buf2handle_node *head = NULL;
 int lock_a_device2(char *devname_noid, char *puffinname)
 {
     FILE * pFile;
-    char   acc[4][40];
-    char   acc_lock[4][40];
+    char   acc[16][40];
+    char   acc_lock[16][40];
     int8_t i = 0;
     // int8_t dev_id      = -1;
-    int8_t acc_num_max = 4; // assume maximum number of accelerator is 4 at the beginning
+    int8_t acc_num_max = 16; // assume maximum number of accelerator is 4 at the beginning
     int    ret_flock;
 
     // Check the available resources
@@ -455,16 +455,9 @@ static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
 
 void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 {
-    int i, x;
+    int i;
     int dev_id = -1;
 
-    // [humu]: there should be a better way of changing the dev number in devname c string
-    char *temp_name = malloc(sizeof(char) * strlen(cfg->devname) + 1);
-    for (x = 0; x < strlen(cfg->devname) + 1; x++) {
-        // // fprintf(stderr, "[humu]: info->devname[%d] = %c\n", j, info->devname[j]);
-        temp_name[x] = cfg->devname[x];
-    }
-    // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
 
     // dev_id = -2;
     // fprintf(stderr, "[%s]: Firstt dev_id: %d\n", cfg->puffinname, dev_id);
@@ -492,11 +485,22 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 
     // dev_id = 1;
 
-    temp_name[strlen(cfg->devname) - 1] = '0' + dev_id;
+    // [humu]: there should be a better way of changing the dev number in devname c string
+    char *temp_name; 
+    if(dev_id < 10){
+        temp_name = malloc(sizeof(char) * (strlen(cfg->devname)));
+        sprintf(temp_name, "%s.%d", cfg->devname_noid, dev_id);
+    }
+    else{
+        temp_name = malloc(sizeof(char) * (strlen(cfg->devname) + 1));
+        sprintf(temp_name, "%s.%d", cfg->devname_noid, dev_id);
+    }
+
+    // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
     cfg->devname                        = temp_name;
 
-    // fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d, devname: %s\n", cfg->puffinname, dev_id,
-    //         cfg->devname);
+fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d, devname: %s\n", cfg->puffinname, dev_id,
+             cfg->devname);
 
     if (thread_is_p2p(&cfg[0])) {
         esp_thread_info_t *cfg_ptrs[1];

@@ -34,9 +34,12 @@ class gemmBig : public esp_accelerator_3P<DMA_WIDTH>
         load_store_cfg_done.bind_with<DMA_WIDTH>(*this);
 
         // Flatten arrays
-        HLS_FLATTEN_ARRAY(mult_out);
-        HLS_FLATTEN_ARRAY(row);
-        HLS_FLATTEN_ARRAY(col);
+        HLS_FLATTEN_ARRAY(mult_out32);
+        HLS_FLATTEN_ARRAY(row32);
+        HLS_FLATTEN_ARRAY(col32);
+        HLS_FLATTEN_ARRAY(mult_out8);
+        HLS_FLATTEN_ARRAY(row8);
+        HLS_FLATTEN_ARRAY(col8);
 
         // Map memories
         HLS_MAP_plm(input0, IN_PLM_NAME);
@@ -100,10 +103,18 @@ class gemmBig : public esp_accelerator_3P<DMA_WIDTH>
     PLM_WORD input3[DMA_CHUNK];
     PLM_WORD output0[OUT_DMA_CHUNK];
     PLM_WORD output1[OUT_DMA_CHUNK];
-    FPDATA   row[PARALLELISM];
-    FPDATA   col[PARALLELISM];
-    FPDATA   mult_out[PARALLELISM];
-    FPDATA   accumulator;
+
+    //FIXED POINT 32 PLM2
+    FPDATA32   row32[PARALLELISM];
+    FPDATA32   col32[PARALLELISM];
+    FPDATA32   mult_out32[PARALLELISM];
+    FPDATA32   accumulator32;
+
+    //INT8 PLMs
+    FPDATA8   row8[PARALLELISM_8];
+    FPDATA8   col8[PARALLELISM_8];
+    FPDATA8   mult_out8[PARALLELISM_8];
+    FPDATA8   accumulator8;
 
     // Custom configuration signals
     sc_signal<uint32_t> size_matrix_out_sig;
@@ -118,6 +129,11 @@ class gemmBig : public esp_accelerator_3P<DMA_WIDTH>
     sc_signal<uint16_t> loadable_rows_sig;
     sc_signal<uint16_t> loadable_chunk_sig;
     sc_signal<uint16_t> index_d1_incr_sig;
+
+    //Helpers to split datapath
+    void compute_32_helper(uint16_t length, uint16_t plm_i_row, uint16_t plm_i_col, bool pingpong_m1, bool pingpong_m2);
+    void compute_8_helper(uint16_t length, uint16_t plm_i_row, uint16_t plm_i_col, bool pingpong_m1, bool pingpong_m2);
+
 };
 
 #endif /* __GEMMBIG_HPP__ */

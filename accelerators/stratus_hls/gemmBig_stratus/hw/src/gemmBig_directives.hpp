@@ -4,6 +4,8 @@
 #ifndef __GEMMBIG_DIRECTIVES_HPP__
 #define __GEMMBIG_DIRECTIVES_HPP__
 
+#define PARALLELISM_8 32
+
 // Macros
 #if defined(STRATUS_HLS)
 
@@ -96,15 +98,18 @@
 #elif (DMA_CHUNK == 2048)
 #define OUT_DMA_CHUNK 256
 #define OUT_PLM_NAME "plm_w32_d64_chk256"
-#if (PARALLELISM == 1)
+
+// #if (PARALLELISM_8 == 32)
+// #define IN_PLM_NAME "plm_w32_d64_chk2048_p32"
+#if (PARALLELISM_8 == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p1"
-#elif (PARALLELISM == 4)
+#elif (PARALLELISM_8 == 4)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p4"
-#elif (PARALLELISM == 8)
+#elif (PARALLELISM_8 == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p8"
-#elif // (PARALLELISM == 16)
+#ellif (PARALLELISM_8 == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p16"
-#else //(PARALLELISM == 32)
+#else //(PARALLELISM_8 == 32)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p32"
 #endif
 
@@ -292,8 +297,18 @@
 #define OUT_DMA_CHUNK_LOG (slog_2<OUT_DMA_CHUNK>::value)
 
 // floating/fixed point conversions
+#ifdef FLOAT_POINT
 #define INT2FP(x) int2fp<FPDATA, WORD_SIZE>(x)
 #define FP2INT(x) fp2int<FPDATA, WORD_SIZE>(x)
+#endif
+
+#ifdef FIXED_POINT
+#define INT2FP32(x) int2fp<FPDATA32, WORD_SIZE>(x)
+#define FP2INT32(x) fp2int<FPDATA32, WORD_SIZE>(x)
+#define INT2FP8(x) int2fp8<FPDATA8, WORD_SIZE>(x)
+#define FP2INT8(x) fp2int8<FPDATA8, WORD_SIZE>(x)
+#endif
+
 
 // arithmetic operators
 #ifdef FIXED_POINT

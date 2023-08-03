@@ -6,6 +6,8 @@
 
 #include <systemc.h>
 
+//#define PARALLELISM_8 32
+
 #ifdef WORD_SIZE
 #define WORDS_PER_DMA (DMA_WIDTH / WORD_SIZE)
 #define WORDS_PER_DMA_LOG (slog_2<WORDS_PER_DMA>::value)

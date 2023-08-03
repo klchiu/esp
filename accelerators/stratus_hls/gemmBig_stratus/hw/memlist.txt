@@ -50,4 +50,4 @@ plm_w32_d32_chk2048_p8 2048 32 1w:0r 0w:8r
 plm_w32_d64_chk2048_p16 2048 32 2w:0r 0w:16r
 # plm_w32_d64_chk4096_p16 4096 32 2w:0r 0w:16r
 # plm_w32_d64_chk8192_p16 8192 32 2w:0r 0w:16r
-plm_w32_d64_chk2048_p32 2048 8 2w:0r 0w:16r
+plm_w32_d64_chk2048_p32 2048 32 2w:0r 0w:16r

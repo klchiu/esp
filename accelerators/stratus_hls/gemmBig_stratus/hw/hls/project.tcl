@@ -66,16 +66,19 @@ define_hls_module gemmBig ../src/gemmBig.cpp
 #
 # Testbench or system level modules
 #
-define_system_module ../tb/gemmBig_pv.c
-define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
+# define_system_module ../tb/gemmBig_pv.c
+# define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
+
+define_system_module ../tb/gemmU8_pv.c
+define_system_module tb ../tb/systemU8.cpp ../tb/sc_main.cpp
 
 #
 # Testbench configuration
 #
 set INPUT_PATH  "../datagen/input"
 set OUTPUT_PATH "../datagen/output"
-set TESTBENCHES "testS testM testL testR testC testNTS testNTM testNTL"
-#set TESTBENCHES "testS"
+#set TESTBENCHES "testS testM testL testR testC testNTS testNTM testNTL"
+set TESTBENCHES "testL"
 
 #
 # Common options for all configurations

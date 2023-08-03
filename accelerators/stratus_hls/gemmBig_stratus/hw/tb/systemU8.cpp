@@ -4,7 +4,7 @@
 #include <string>
 #include <cstring>
 #include <sstream>
-#include "system.hpp"
+#include "systemU8.hpp"
 #include "validation.hpp"
 
 void system_t::config_proc()
@@ -35,7 +35,7 @@ void system_t::config_proc()
         config.ld_offset2 = indexA * WORDS_PER_DMA;
         config.st_offset  = indexB * WORDS_PER_DMA;
         config.do_relu    = 0;
-        config.datatype_sel = 0;
+        config.datatype_sel = 1;
 
         wait();
         conf_info.write(config);
@@ -48,7 +48,7 @@ void system_t::config_proc()
     {
         // Print information about begin time
         sc_time begin_time = sc_time_stamp();
-        ESP_REPORT_TIME(begin_time, "BEGIN - gemmBig");
+        ESP_REPORT_TIME(begin_time, "BEGIN - gemmU8");
 
         // Wait the termination of the accelerator
         do {
@@ -58,7 +58,7 @@ void system_t::config_proc()
 
         // Print information about end time
         sc_time end_time = sc_time_stamp();
-        ESP_REPORT_TIME(end_time, "END - gemmBig");
+        ESP_REPORT_TIME(end_time, "END - gemmU8");
 
         esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
         wait();
@@ -162,7 +162,7 @@ void system_t::load_memory()
     for (uint32_t b = 0; b < batch_size; ++b) {
         for (uint32_t d1 = 0; d1 < rowsA; ++d1) {
             for (uint32_t d2 = 0; d2 < colsA; ++d2) {
-                data = fp2bv<FPDATA32, WORD_SIZE>(FPDATA32((float)matrix_inA->data[k++]));
+                data = fp2bv8<FPDATA8, WORD_SIZE>(FPDATA8(matrix_inA->data[k++]));
 
                 // TODO works only for WORDS_PER_DMA = {1, 2}
                 if (!((k - 1) % WORDS_PER_DMA))
@@ -186,7 +186,7 @@ void system_t::load_memory()
     for (uint32_t b = 0; b < batch_size; ++b) {
         for (uint32_t d1 = 0; d1 < rowsB_actual; ++d1) {
             for (uint32_t d2 = 0; d2 < colsB_actual; ++d2) {
-                data = fp2bv<FPDATA32, WORD_SIZE>(FPDATA32(matrix_inB->data[k++]));
+                data = fp2bv8<FPDATA8, WORD_SIZE>(FPDATA8(matrix_inB->data[k++]));
 
                 // TODO works only for WORDS_PER_DMA = {1, 2}
                 if (!((k - 1) % WORDS_PER_DMA))
@@ -206,7 +206,7 @@ void system_t::load_memory()
 void system_t::dump_memory()
 {
     // Get results from memory
-    FPDATA32                  elem;
+    FPDATA8                  elem;
     sc_dt::sc_bv<DMA_WIDTH> data;
 
     std::cout << "Dump memory " << std::endl;
@@ -221,7 +221,7 @@ void system_t::dump_memory()
 
         for (uint32_t w = 0; w < WORDS_PER_DMA; ++w) {
 
-            bv2fp<FPDATA32, WORD_SIZE>(elem, data.range((w + 1) * WORD_SIZE - 1, w * WORD_SIZE));
+            bv2fp8<FPDATA8, WORD_SIZE>(elem, data.range((w + 1) * WORD_SIZE - 1, w * WORD_SIZE));
 
             if (k < batch_size * rowsA * colsB)
                 matrix_out->data[k++] = elem.to_double();
@@ -242,20 +242,20 @@ int system_t::validate()
 
     // Compute golden output
     // Call the programmer's view function
-    gemmBig_pv(matrix_inA, matrix_inB, &matrix_out_gold);
+    gemmU8_pv(matrix_inA, matrix_inB, &matrix_out_gold);
 
     // Check for mismatches
     for (uint32_t d2 = 0; d2 < size_out * batch_size; ++d2) {
         if (check_error_threshold(matrix_out->data[d2], matrix_out_gold->data[d2], rel_error)) {
             if (tot_errors < REPORT_THRESHOLD) {
-                ESP_REPORT_INFO("gemmBig[%d] = %lf (%lf) error: %.2lf%%", d2, matrix_out->data[d2],
+                ESP_REPORT_INFO("gemmU8[%d] = %lf (%lf) error: %.2lf%%", d2, matrix_out->data[d2],
                                 matrix_out_gold->data[d2], rel_error * 100);
             }
 
             tot_errors++;
         }
 
-        // ESP_REPORT_INFO("gemmBig[%d] = %lf (%lf) error: %.2lf%%", d2,
+        // ESP_REPORT_INFO("gemmU8[%d] = %lf (%lf) error: %.2lf%%", d2,
         // 		matrix_out->data[d2], matrix_out_gold->data[d2], rel_error * 100);
 
         // Tracking the maximum error w.r.t. the programmer's view

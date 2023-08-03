@@ -170,7 +170,7 @@ void gemmBig::compute_32_helper(uint16_t length, uint16_t plm_i_row, uint16_t pl
 #if (PARALLELISM >= 32)
         HLS_PIPELINE_LOOP(HARD_STALL, 4, "pipeline-mac-fixed");
 #else
-        HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-fixed");
+        HLS_PIPELINE_LOOP(HARD_STALL, 1, "pipeline-mac-fixed");
 #endif
 
 #else
@@ -560,8 +560,10 @@ void gemmBig::compute_8_helper(uint16_t length, uint16_t plm_i_row, uint16_t plm
 
 #if (PARALLELISM_8 >= 32)
         HLS_PIPELINE_LOOP(HARD_STALL, 4, "pipeline-mac-int8");
-#else
+#elif (PARALLELISM_8 >= 16)
         HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-int8");
+#else
+        HLS_PIPELINE_LOOP(HARD_STALL, 1, "pipeline-mac-int8");
 #endif
 
 #else

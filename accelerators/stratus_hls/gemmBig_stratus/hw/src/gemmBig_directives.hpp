@@ -4,7 +4,7 @@
 #ifndef __GEMMBIG_DIRECTIVES_HPP__
 #define __GEMMBIG_DIRECTIVES_HPP__
 
-#define PARALLELISM_8 32
+#define PARALLELISM_8 8
 
 // Macros
 #if defined(STRATUS_HLS)
@@ -107,7 +107,7 @@
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p4"
 #elif (PARALLELISM_8 == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p8"
-#ellif (PARALLELISM_8 == 16)
+#elif (PARALLELISM_8 == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p16"
 #else //(PARALLELISM_8 == 32)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p32"

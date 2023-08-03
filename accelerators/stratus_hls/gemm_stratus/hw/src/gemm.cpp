@@ -665,7 +665,7 @@ void gemm::compute_kernel()
 #if (PARALLELISM >= 32)
                                 HLS_PIPELINE_LOOP(HARD_STALL, 4, "pipeline-mac-fixed");
 #else
- 				HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-fixed");
+ 				HLS_PIPELINE_LOOP(HARD_STALL, 1, "pipeline-mac-fixed");
 #endif
 
 #else

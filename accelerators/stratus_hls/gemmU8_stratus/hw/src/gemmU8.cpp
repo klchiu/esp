@@ -641,8 +641,10 @@ void gemmU8::compute_kernel()
 
 #if (PARALLELISM >= 32)
                                 HLS_PIPELINE_LOOP(HARD_STALL, 4, "pipeline-mac-float");
-#else
+#elif (PARALLELISM >= 16)
                                 HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-float");
+#else
+                                HLS_PIPELINE_LOOP(HARD_STALL, 1, "pipeline-mac-float");
 #endif
 
 #endif

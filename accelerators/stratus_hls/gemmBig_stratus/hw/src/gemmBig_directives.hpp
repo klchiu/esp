@@ -4,7 +4,7 @@
 #ifndef __GEMMBIG_DIRECTIVES_HPP__
 #define __GEMMBIG_DIRECTIVES_HPP__
 
-#define PARALLELISM_8 8
+#define PARALLELISM_8 32
 
 // Macros
 #if defined(STRATUS_HLS)

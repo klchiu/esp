@@ -14,7 +14,7 @@ int lock_a_device2(char *devname_noid, char *puffinname)
     char   acc_lock[16][40];
     int8_t i = 0;
     // int8_t dev_id      = -1;
-    int8_t acc_num_max = 16; // assume maximum number of accelerator is 4 at the beginning
+    int8_t acc_num_max = 4; // assume maximum number of accelerator is 4 at the beginning
     int    ret_flock;
 
     // Check the available resources
@@ -499,8 +499,8 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
     cfg->devname                        = temp_name;
 
-fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d, devname: %s\n", cfg->puffinname, dev_id,
-             cfg->devname);
+// fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d, devname: %s\n", cfg->puffinname, dev_id,
+//              cfg->devname);
 
     if (thread_is_p2p(&cfg[0])) {
         esp_thread_info_t *cfg_ptrs[1];

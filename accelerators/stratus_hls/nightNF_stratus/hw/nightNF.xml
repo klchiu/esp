@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="nightNF" desc="NIGHTNF" data_size="100" device_id="012" hls_tool="stratus_hls">
+    <param name="n_Images" desc="number of input images to process"/>
+    <param name="n_Rows" desc="number of rows of input image"/>
+    <param name="n_Cols" desc="number of columns of input image"/>
+    <param name="do_dwt" desc="enable/disable the DWT stage"/>
+    <param name="is_p2p" desc="enable/disable p2p"/>
+    <param name="p2p_config_0" desc="config of p2p"/>
+  </accelerator>
+</sld>

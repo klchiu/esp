@@ -47,19 +47,12 @@ conf_done, acc_done, debug, dma_read_ctrl_valid, dma_read_ctrl_data_index, dma_r
 
 
    // input/output channels
-   wire [IN_WIDTH*MAX_SLICE_NUM-1 : 0] in_north_bundle;
-   wire [IN_WIDTH*MAX_SLICE_NUM-1 : 0] in_west_bundle;
-   
-   wire [CONFIG-1 : 0] op_mode;
-   wire [11:0]         sys_config;
+   wire [MAX_MATRIX_SIZE-1 : 0] matrix_size;
 
-   // instantiate the systolic_tile
-   systolic_tile tile_0 (.clk(clk),
-                         .rst(rst),
-                         .in_north_bundle(in_north_bundle),
-                         .in_west_bundle(in_west_bundle),
-                         .op_mode(op_mode),
-                         .sys_config(sys_config));
+   // instantiate the systolic_macro
+   systolic_macro_matrix_mult systolic_macro_0 (.clk(clk),
+                                                .rst(rst),
+                                                .matrix_size(matrix_size));
 
 
 

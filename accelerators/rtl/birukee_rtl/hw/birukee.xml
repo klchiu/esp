@@ -4,5 +4,6 @@
     <param name="input1" desc="input1" />
     <param name="input2" desc="input2" />
     <param name="output" desc="output" />
+    <param name="matrix_size" desc="matrix_size" />
   </accelerator>
 </sld>

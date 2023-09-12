@@ -3,6 +3,7 @@ module birukee_rtl_basic_dma64( clk, rst, dma_read_chnl_valid, dma_read_chnl_dat
 conf_info_output,
 conf_info_input2,
 conf_info_input1,
+conf_info_matrix_size,
 conf_done, acc_done, debug, dma_read_ctrl_valid, dma_read_ctrl_data_index, dma_read_ctrl_data_length, dma_read_ctrl_data_size, dma_read_ctrl_ready, dma_write_ctrl_valid, dma_write_ctrl_data_index, dma_write_ctrl_data_length, dma_write_ctrl_data_size, dma_write_ctrl_ready, dma_write_chnl_valid, dma_write_chnl_data, dma_write_chnl_ready);
 
    input clk;
@@ -12,6 +13,7 @@ conf_done, acc_done, debug, dma_read_ctrl_valid, dma_read_ctrl_data_index, dma_r
    input [31:0]  conf_info_output;
    input [31:0]  conf_info_input2;
    input [31:0]  conf_info_input1;
+   input [31:0]  conf_info_matrix_size;
    input 	 conf_done;
 
    input 	 dma_read_ctrl_ready;

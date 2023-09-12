@@ -25,6 +25,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 const int32_t output = 8;
 const int32_t input2 = 8;
 const int32_t input1 = 8;
+const int32_t matrix_size = 8;
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -44,9 +45,10 @@ static unsigned mem_size;
 
 /* User defined registers */
 /* <<--regs-->> */
-#define BIRUKEE_OUTPUT_REG 0x48
-#define BIRUKEE_INPUT2_REG 0x44
-#define BIRUKEE_INPUT1_REG 0x40
+#define BIRUKEE_OUTPUT_REG 		0x48
+#define BIRUKEE_INPUT2_REG 		0x44
+#define BIRUKEE_INPUT1_REG 		0x40
+#define BIRUKEE_MATRIX_SIZE_REG 0x4C
 
 
 static int validate_buf(token_t *out, token_t *gold)
@@ -180,6 +182,7 @@ int main(int argc, char * argv[])
 		iowrite32(dev, BIRUKEE_OUTPUT_REG, output);
 		iowrite32(dev, BIRUKEE_INPUT2_REG, input2);
 		iowrite32(dev, BIRUKEE_INPUT1_REG, input1);
+		iowrite32(dev, BIRUKEE_MATRIX_SIZE_REG, matrix_size);
 
 			// Flush (customize coherence model here)
 			esp_flush(coherence);

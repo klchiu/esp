@@ -1,0 +1,1 @@
+plm_a0b0_synth 65536 64 2w:0r 0w:2r

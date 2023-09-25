@@ -1,0 +1,2 @@
+plm_A0_bayer_132x132 17424 16 1w:0r 0w:2r
+plm_B0_debayer_128x128 16384 48 2w:0r 0w:2r

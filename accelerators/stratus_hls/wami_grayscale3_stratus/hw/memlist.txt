@@ -1,0 +1,2 @@
+plm_a0_debayer_128x128 16384 48 2w:0r 0w:2r
+plm_b0_grayscale_128x128 16384 64 2w:0r 0w:2r

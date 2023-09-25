@@ -1,0 +1,25 @@
+digraph G {
+  debayer -> grayscale;
+  grayscale -> gradient;
+  grayscale -> warp_grayscale;
+  add -> warp_grayscale [color=red];
+  warp_grayscale -> subtract;
+  warp_iwxp -> subtract [color=red];
+  gradient -> warp_dx;
+  add -> warp_dx [color=red];
+  gradient -> warp_dy;
+  add -> warp_dy [color=red];
+  warp_dx -> steepest_descent;
+  warp_dy -> steepest_descent;
+  subtract -> sd_update;
+  steepest_descent -> sd_update;
+  steepest_descent -> hessian;
+  hessian -> invert_gauss_jordan;
+  sd_update -> mult;
+  invert_gauss_jordan -> mult;
+  mult -> reshape;
+  reshape -> add;
+  grayscale -> warp_iwxp;
+  add -> warp_iwxp;
+  warp_iwxp -> change_detection;
+}

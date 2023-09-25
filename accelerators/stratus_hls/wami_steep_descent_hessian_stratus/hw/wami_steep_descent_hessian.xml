@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="wami_steep_descent_hessian" desc="WAMI_STEEP_DESCENT_HESSIAN" data_size="100" device_id="084" hls_tool="stratus_hls">
+    <param name="src_dst_offset_0" desc="Data base address in main memory"/>
+    <param name="num_img" desc="Number of images"/>
+    <param name="num_col" desc="Number of columns for each image"/>
+    <param name="num_row" desc="Number of rows for each image"/>
+    <param name="pad" desc="Some accelerators may require padding information"/>
+    <param name="kern_id" desc="Kernel ID"/>
+    <param name="batch" desc="Batch"/>
+    <param name="src_dst_offset_1" desc="src_dst_offset_1"/>
+    <param name="src_dst_offset_2" desc="src_dst_offset_2"/>
+    <param name="src_dst_offset_3" desc="src_dst_offset_3"/>
+    <param name="src_dst_offset_4" desc="src_dst_offset_4"/>
+  </accelerator>
+</sld>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="wami_hessian3" desc="WAMI_HESSIAN3" data_size="100" device_id="077" hls_tool="stratus_hls">
+    <param name="num_img" desc="Number of images"/>
+    <param name="num_col" desc="Number of columns for each image"/>
+    <param name="num_row" desc="Number of rows for each image"/>
+    <param name="pad" desc="Some accelerators may need padding information"/>
+    <param name="kern_id" desc="Kernel ID"/>
+    <param name="batch" desc="Batch"/>
+    <param name="src_dst_offset_0" desc="Source or Destination offset 0"/>
+    <param name="src_dst_offset_1" desc="Source or Destination offset 1"/>
+    <param name="src_dst_offset_2" desc="Source or Destination offset 2"/>
+    <param name="src_dst_offset_3" desc="Source or Destination offset 3"/>
+    <param name="src_dst_offset_4" desc="Source or Destination offset 4"/>
+    <param name="is_p2p" desc="Indicate P2P mode"/>
+    <param name="p2p_config_0" desc="P2P configuration 0"/>
+    <param name="p2p_config_1" desc="P2P configuration 1"/>
+  </accelerator>
+</sld>

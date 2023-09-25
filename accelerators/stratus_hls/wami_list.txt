@@ -1,0 +1,13 @@
+wami_debayer3
+wami_grayscale3
+wami_gradient3
+wami_warp3
+wami_sub3
+wami_steep_descent3
+wami_hessian3
+wami_inv3
+wami_sd_update3
+wami_mult3
+wami_reshape3
+wami_add3
+wami_gmm3

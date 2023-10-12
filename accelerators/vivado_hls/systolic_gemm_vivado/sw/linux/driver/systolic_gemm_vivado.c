@@ -13,9 +13,9 @@
 #define DRV_NAME	"systolic_gemm_vivado"
 
 /* <<--regs-->> */
-#define SYSTOLIC_GEMM_MAC_VEC_REG 0x48
-#define SYSTOLIC_GEMM_MAC_LEN_REG 0x44
-#define SYSTOLIC_GEMM_MAC_N_REG 0x40
+#define SYSTOLIC_GEMM_MATRIX_C_DIM_REG 0x48
+#define SYSTOLIC_GEMM_MATRIX_A_DIM_REG 0x44
+#define SYSTOLIC_GEMM_MATRIX_B_DIM_REG 0x40
 
 struct systolic_gemm_vivado_device {
 	struct esp_device esp;
@@ -48,9 +48,9 @@ static void systolic_gemm_prep_xfer(struct esp_device *esp, void *arg)
 	struct systolic_gemm_vivado_access *a = arg;
 
 	/* <<--regs-config-->> */
-	iowrite32be(a->mac_vec, esp->iomem + SYSTOLIC_GEMM_MAC_VEC_REG);
-	iowrite32be(a->mac_len, esp->iomem + SYSTOLIC_GEMM_MAC_LEN_REG);
-	iowrite32be(a->mac_n, esp->iomem + SYSTOLIC_GEMM_MAC_N_REG);
+	iowrite32be(a->matrix_C_dim, esp->iomem + SYSTOLIC_GEMM_MATRIX_C_DIM_REG);
+	iowrite32be(a->matrix_A_dim, esp->iomem + SYSTOLIC_GEMM_MATRIX_A_DIM_REG);
+	iowrite32be(a->matrix_B_dim, esp->iomem + SYSTOLIC_GEMM_MATRIX_B_DIM_REG);
 	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
 	iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 

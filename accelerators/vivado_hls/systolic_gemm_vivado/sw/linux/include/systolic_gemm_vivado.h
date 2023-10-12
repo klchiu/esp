@@ -20,9 +20,9 @@
 struct systolic_gemm_vivado_access {
 	struct esp_access esp;
 	/* <<--regs-->> */
-	unsigned mac_vec;
-	unsigned mac_len;
-	unsigned mac_n;
+	unsigned matrix_C_dim;
+	unsigned matrix_A_dim;
+	unsigned matrix_B_dim;
 	unsigned src_offset;
 	unsigned dst_offset;
 };

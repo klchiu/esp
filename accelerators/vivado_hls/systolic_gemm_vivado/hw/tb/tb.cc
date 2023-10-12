@@ -12,9 +12,9 @@ int main(int argc, char **argv) {
     printf("****start*****\n");
 
     /* <<--params-->> */
-	 const unsigned mac_vec = 100;
-	 const unsigned mac_len = 64;
-	 const unsigned mac_n = 1;
+	 const unsigned matrix_C_dim = 2;
+	 const unsigned matrix_A_dim = 2;
+	 const unsigned matrix_B_dim = 2;
 
     uint32_t in_words_adj;
     uint32_t out_words_adj;
@@ -25,10 +25,10 @@ int main(int argc, char **argv) {
     uint32_t dma_size;
 
 
-    in_words_adj = round_up(mac_len * mac_vec, VALUES_PER_WORD);
-    out_words_adj = round_up(mac_vec, VALUES_PER_WORD);
-    in_size = in_words_adj * (mac_n);
-    out_size = out_words_adj * (mac_n);
+    in_words_adj = round_up(matrix_A_dim * matrix_A_dim * 2, VALUES_PER_WORD);
+    out_words_adj = round_up(matrix_C_dim * matrix_C_dim, VALUES_PER_WORD);
+    in_size = in_words_adj * (1);
+    out_size = out_words_adj * (1);
 
     dma_in_size = in_size / VALUES_PER_WORD;
     dma_out_size = out_size / VALUES_PER_WORD;
@@ -42,8 +42,8 @@ int main(int argc, char **argv) {
     dma_info_t store;
 
     // Prepare input data
-    for(unsigned i = 0; i < mac_n; i++)
-        for(unsigned j = 0; j < mac_len * mac_vec; j++)
+    for(unsigned i = 0; i < 1; i++)
+        for(unsigned j = 0; j < matrix_A_dim * matrix_A_dim * 2; j++)
             inbuff[i * in_words_adj + j] = (word_t) j;
 
     for(unsigned i = 0; i < dma_in_size; i++)
@@ -51,17 +51,17 @@ int main(int argc, char **argv) {
 	    mem[i].word[k] = inbuff[i * VALUES_PER_WORD + k];
 
     // Set golden output
-    for(unsigned i = 0; i < mac_n; i++)
-        for(unsigned j = 0; j < mac_vec; j++)
+    for(unsigned i = 0; i < 1; i++)
+        for(unsigned j = 0; j < matrix_C_dim * matrix_C_dim; j++)
             outbuff_gold[i * out_words_adj + j] = (word_t) j;
 
 
     // Call the TOP function
     top(mem, mem,
         /* <<--args-->> */
-	 	 mac_vec,
-	 	 mac_len,
-	 	 mac_n,
+	 	 matrix_C_dim,
+	 	 matrix_A_dim,
+	 	 matrix_B_dim,
         load, store);
 
     // Validate
@@ -71,8 +71,8 @@ int main(int argc, char **argv) {
 	    outbuff[i * VALUES_PER_WORD + k] = mem[out_offset + i].word[k];
 
     int errors = 0;
-    for(unsigned i = 0; i < mac_n; i++)
-        for(unsigned j = 0; j < mac_vec; j++)
+    for(unsigned i = 0; i < 1; i++)
+        for(unsigned j = 0; j < matrix_C_dim * matrix_C_dim; j++)
 	    if (outbuff[i * out_words_adj + j] != outbuff_gold[i * out_words_adj + j])
 		errors++;
 

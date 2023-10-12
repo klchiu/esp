@@ -3,9 +3,9 @@
 
 # User-defined configuration ports
 # <<--directives-param-->>
-set_directive_interface -mode ap_none "top" conf_info_mac_vec
-set_directive_interface -mode ap_none "top" conf_info_mac_len
-set_directive_interface -mode ap_none "top" conf_info_mac_n
+set_directive_interface -mode ap_none "top" conf_info_matrix_C_dim
+set_directive_interface -mode ap_none "top" conf_info_matrix_A_dim
+set_directive_interface -mode ap_none "top" conf_info_matrix_B_dim
 
 # Insert here any custom directive
 set_directive_dataflow "top/go"

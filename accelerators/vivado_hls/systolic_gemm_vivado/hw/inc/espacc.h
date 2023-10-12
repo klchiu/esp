@@ -73,9 +73,9 @@ typedef struct dma_info {
 
 void top(dma_word_t *out, dma_word_t *in1,
 	/* <<--params-->> */
-	 const unsigned conf_info_mac_vec,
-	 const unsigned conf_info_mac_len,
-	 const unsigned conf_info_mac_n,
+	 const unsigned conf_info_matrix_C_dim,
+	 const unsigned conf_info_matrix_A_dim,
+	 const unsigned conf_info_matrix_B_dim,
 	 dma_info_t &load_ctrl, dma_info_t &store_ctrl);
 
 void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],

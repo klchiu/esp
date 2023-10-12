@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
   <accelerator name="systolic_gemm" desc="Accelerator SYSTOLIC_GEMM" data_size="4" device_id="087" hls_tool="vivado_hls">
-    <param name="mac_n" desc="mac_n" />
-    <param name="mac_len" desc="mac_len" />
-    <param name="mac_vec" desc="mac_vec" />
+    <param name="matrix_A_dim" desc="matrix_A_dim" />
+    <param name="matrix_B_dim" desc="matrix_B_dim" />
+    <param name="matrix_C_dim" desc="matrix_C_dim" />
   </accelerator>
 </sld>

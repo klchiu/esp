@@ -9,23 +9,23 @@
 typedef int32_t token_t;
 
 /* <<--params-def-->> */
-#define MAC_VEC 100
-#define MAC_LEN 64
-#define MAC_N 1
+#define MATRIX_C_DIM 2
+#define MATRIX_A_DIM 2
+#define MATRIX_B_DIM 2
 
 /* <<--params-->> */
-const int32_t mac_vec = MAC_VEC;
-const int32_t mac_len = MAC_LEN;
-const int32_t mac_n = MAC_N;
+const int32_t matrix_C_dim = MATRIX_C_DIM;
+const int32_t matrix_A_dim = MATRIX_A_DIM;
+const int32_t matrix_B_dim = MATRIX_B_DIM;
 
 #define NACC 1
 
 struct systolic_gemm_vivado_access systolic_gemm_cfg_000[] = {
 	{
 		/* <<--descriptor-->> */
-		.mac_vec = MAC_VEC,
-		.mac_len = MAC_LEN,
-		.mac_n = MAC_N,
+		.matrix_C_dim = MATRIX_C_DIM,
+		.matrix_A_dim = MATRIX_A_DIM,
+		.matrix_B_dim = MATRIX_B_DIM,
 		.src_offset = 0,
 		.dst_offset = 0,
 		.esp.coherence = ACC_COH_NONE,

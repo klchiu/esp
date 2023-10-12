@@ -22,9 +22,9 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "sld,systolic_gemm_vivado"
 
 /* <<--params-->> */
-const int32_t mac_vec = 100;
-const int32_t mac_len = 64;
-const int32_t mac_n = 1;
+const int32_t matrix_C_dim = 2;
+const int32_t matrix_A_dim = 2;
+const int32_t matrix_B_dim = 2;
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -44,9 +44,9 @@ static unsigned mem_size;
 
 /* User defined registers */
 /* <<--regs-->> */
-#define SYSTOLIC_GEMM_MAC_VEC_REG 0x48
-#define SYSTOLIC_GEMM_MAC_LEN_REG 0x44
-#define SYSTOLIC_GEMM_MAC_N_REG 0x40
+#define SYSTOLIC_GEMM_MATRIX_C_DIM_REG 0x48
+#define SYSTOLIC_GEMM_MATRIX_A_DIM_REG 0x44
+#define SYSTOLIC_GEMM_MATRIX_B_DIM_REG 0x40
 
 
 static int validate_buf(token_t *out, token_t *gold)
@@ -55,8 +55,8 @@ static int validate_buf(token_t *out, token_t *gold)
 	int j;
 	unsigned errors = 0;
 
-	for (i = 0; i < mac_n; i++)
-		for (j = 0; j < mac_vec; j++)
+	for (i = 0; i < 1; i++)
+		for (j = 0; j < matrix_C_dim * matrix_C_dim; j++)
 			if (gold[i * out_words_adj + j] != out[i * out_words_adj + j])
 				errors++;
 
@@ -69,12 +69,12 @@ static void init_buf (token_t *in, token_t * gold)
 	int i;
 	int j;
 
-	for (i = 0; i < mac_n; i++)
-		for (j = 0; j < mac_len * mac_vec; j++)
+	for (i = 0; i < 1; i++)
+		for (j = 0; j < matrix_A_dim * matrix_A_dim * 2; j++)
 			in[i * in_words_adj + j] = (token_t) j;
 
-	for (i = 0; i < mac_n; i++)
-		for (j = 0; j < mac_vec; j++)
+	for (i = 0; i < 1; i++)
+		for (j = 0; j < matrix_C_dim * matrix_C_dim; j++)
 			gold[i * out_words_adj + j] = (token_t) j;
 }
 
@@ -94,14 +94,14 @@ int main(int argc, char * argv[])
 	unsigned coherence;
 
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-		in_words_adj = mac_len * mac_vec;
-		out_words_adj = mac_vec;
+		in_words_adj = matrix_A_dim * matrix_A_dim * 2;
+		out_words_adj = matrix_C_dim * matrix_C_dim;
 	} else {
-		in_words_adj = round_up(mac_len * mac_vec, DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(mac_vec, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_words_adj = round_up(matrix_A_dim * matrix_A_dim * 2, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		out_words_adj = round_up(matrix_C_dim * matrix_C_dim, DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
-	in_len = in_words_adj * (mac_n);
-	out_len = out_words_adj * (mac_n);
+	in_len = in_words_adj * (1);
+	out_len = out_words_adj * (1);
 	in_size = in_len * sizeof(token_t);
 	out_size = out_len * sizeof(token_t);
 	out_offset  = in_len;
@@ -177,9 +177,9 @@ int main(int argc, char * argv[])
 
 			// Pass accelerator-specific configuration parameters
 			/* <<--regs-config-->> */
-		iowrite32(dev, SYSTOLIC_GEMM_MAC_VEC_REG, mac_vec);
-		iowrite32(dev, SYSTOLIC_GEMM_MAC_LEN_REG, mac_len);
-		iowrite32(dev, SYSTOLIC_GEMM_MAC_N_REG, mac_n);
+		iowrite32(dev, SYSTOLIC_GEMM_MATRIX_C_DIM_REG, matrix_C_dim);
+		iowrite32(dev, SYSTOLIC_GEMM_MATRIX_A_DIM_REG, matrix_A_dim);
+		iowrite32(dev, SYSTOLIC_GEMM_MATRIX_B_DIM_REG, matrix_B_dim);
 
 			// Flush (customize coherence model here)
 			esp_flush(coherence);

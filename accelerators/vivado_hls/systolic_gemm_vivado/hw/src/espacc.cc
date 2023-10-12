@@ -8,14 +8,14 @@
 
 void load(word_t _inbuff[SIZE_IN_CHUNK_DATA], dma_word_t *in1,
           /* <<--compute-params-->> */
-	 const unsigned mac_vec,
-	 const unsigned mac_len,
-	 const unsigned mac_n,
+	 const unsigned matrix_C_dim,
+	 const unsigned matrix_A_dim,
+	 const unsigned matrix_B_dim,
 	  dma_info_t &load_ctrl, int chunk, int batch)
 {
 load_data:
 
-    const unsigned length = round_up(mac_len * mac_vec, VALUES_PER_WORD) / 1;
+    const unsigned length = round_up(matrix_A_dim * matrix_A_dim * 2, VALUES_PER_WORD) / 1;
     const unsigned index = length * (batch * 1 + chunk);
 
     unsigned dma_length = length / VALUES_PER_WORD;
@@ -34,15 +34,15 @@ load_data:
 
 void store(word_t _outbuff[SIZE_OUT_CHUNK_DATA], dma_word_t *out,
           /* <<--compute-params-->> */
-	 const unsigned mac_vec,
-	 const unsigned mac_len,
-	 const unsigned mac_n,
+	 const unsigned matrix_C_dim,
+	 const unsigned matrix_A_dim,
+	 const unsigned matrix_B_dim,
 	   dma_info_t &store_ctrl, int chunk, int batch)
 {
 store_data:
 
-    const unsigned length = round_up(mac_vec, VALUES_PER_WORD) / 1;
-    const unsigned store_offset = round_up(mac_len * mac_vec, VALUES_PER_WORD) * mac_n;
+    const unsigned length = round_up(matrix_C_dim * matrix_C_dim, VALUES_PER_WORD) / 1;
+    const unsigned store_offset = round_up(matrix_A_dim * matrix_A_dim * 2, VALUES_PER_WORD) * 1;
     const unsigned out_offset = store_offset;
     const unsigned index = out_offset + length * (batch * 1 + chunk);
 
@@ -63,69 +63,36 @@ store_data:
 
 void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],
              /* <<--compute-params-->> */
-	 const unsigned mac_vec,
-	 const unsigned mac_len,
-	 const unsigned mac_n,
+	 const unsigned matrix_C_dim,
+	 const unsigned matrix_A_dim,
+	 const unsigned matrix_B_dim,
              word_t _outbuff[SIZE_OUT_CHUNK_DATA])
 {
 
     // TODO implement compute functionality
-    // const unsigned length = round_up(mac_len * mac_vec, VALUES_PER_WORD) / 1;
+    const unsigned length = round_up(matrix_A_dim * matrix_A_dim * 2, VALUES_PER_WORD) / 1;
 
-    // for (int i = 0; i < length; i++)
-    //     _outbuff[i] = _inbuff[i];
-    
-
-    // Compute
-unsigned in_length = mac_len * mac_vec;
-unsigned out_length = mac_vec;
-
-unsigned vector_index = 0;
-unsigned vector_number = 0;
-int acc = 0;
-
-for (int in_rem = in_length; in_rem > 0; in_rem -= SIZE_IN_CHUNK_DATA)
-{
-
-    unsigned in_len  = in_rem  > SIZE_IN_CHUNK_DATA  ? SIZE_IN_CHUNK_DATA  : in_rem;
-
-    // Computing phase implementation
-    for (int i = 0; i < in_len; i += 2) {
-
-        // Multiply and accumulate
-        acc += _inbuff[i] * _inbuff[i+1];
-
-        vector_index += 2;
-
-        // Write accumulated result
-        if (vector_index == mac_len) {
-            _outbuff[vector_number] = acc;
-
-            acc = 0;
-            vector_index = 0;
-            vector_number++;
-        }
-    }
-}
+    for (int i = 0; i < length; i++)
+        _outbuff[i] = _inbuff[i];
 }
 
 
 void top(dma_word_t *out, dma_word_t *in1,
          /* <<--params-->> */
-	 const unsigned conf_info_mac_vec,
-	 const unsigned conf_info_mac_len,
-	 const unsigned conf_info_mac_n,
+	 const unsigned conf_info_matrix_C_dim,
+	 const unsigned conf_info_matrix_A_dim,
+	 const unsigned conf_info_matrix_B_dim,
 	 dma_info_t &load_ctrl, dma_info_t &store_ctrl)
 {
 
     /* <<--local-params-->> */
-	 const unsigned mac_vec = conf_info_mac_vec;
-	 const unsigned mac_len = conf_info_mac_len;
-	 const unsigned mac_n = conf_info_mac_n;
+	 const unsigned matrix_C_dim = conf_info_matrix_C_dim;
+	 const unsigned matrix_A_dim = conf_info_matrix_A_dim;
+	 const unsigned matrix_B_dim = conf_info_matrix_B_dim;
 
     // Batching
 batching:
-    for (unsigned b = 0; b < mac_n; b++)
+    for (unsigned b = 0; b < 1; b++)
     {
         // Chunking
     go:
@@ -136,21 +103,21 @@ batching:
 
             load(_inbuff, in1,
                  /* <<--args-->> */
-	 	 mac_vec,
-	 	 mac_len,
-	 	 mac_n,
+	 	 matrix_C_dim,
+	 	 matrix_A_dim,
+	 	 matrix_B_dim,
                  load_ctrl, c, b);
             compute(_inbuff,
                     /* <<--args-->> */
-	 	 mac_vec,
-	 	 mac_len,
-	 	 mac_n,
+	 	 matrix_C_dim,
+	 	 matrix_A_dim,
+	 	 matrix_B_dim,
                     _outbuff);
             store(_outbuff, out,
                   /* <<--args-->> */
-	 	 mac_vec,
-	 	 mac_len,
-	 	 mac_n,
+	 	 matrix_C_dim,
+	 	 matrix_A_dim,
+	 	 matrix_B_dim,
                   store_ctrl, c, b);
         }
     }

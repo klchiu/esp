@@ -61,6 +61,36 @@ store_label1:
     }
 }
 
+void compute_PE_2(word_t *input_west, word_t *input_north, word_t *output_east, word_t *output_south, word_t *out_buff,
+                  int PE_index, int stream_length)
+{
+    // *output = *output + ((*input_north) * (*input_west));
+    word_t temp1;
+    word_t temp2;
+
+    printf("[humu]: computePE: PE_index = %d, stream_length = %d\n", PE_index, stream_length);
+
+    for (int i = 0; i < stream_length; i++) {
+        temp1           = input_west[i] * input_north[i];
+        temp2           = tempC[PE_index];
+        tempC[PE_index] = temp1 + temp2;
+
+        printf("[humu]: compute_PE_2: PE_index = %d, input_north = %d\n", PE_index, (int)(input_north[i]));
+        printf("[humu]: compute_PE_2: PE_index = %d, input_west = %d\n", PE_index, (int)(input_west[i]));
+        printf("[humu]: compute_PE_2: PE_index = %d, temp1 = %d\n", PE_index, (int)(temp1));
+        printf("[humu]: compute_PE_2: PE_index = %d, temp2 = %d\n", PE_index, (int)(temp2));
+        printf("[humu]: compute_PE_2: PE_index = %d, tempC[%d] = %d\n", PE_index, PE_index, (int)(tempC[PE_index]));
+        *out_buff = tempC[PE_index];
+    }
+
+    // pass west to east and pass north to south
+
+    for (int i = 0; i < stream_length; i++) {
+        output_east[i + 1]  = input_west[i];
+        output_south[i + 1] = input_north[i];
+    }
+}
+
 // /*
 void compute_PE(word_t *input_west, word_t *input_north, word_t *output_east, word_t *output_south, word_t *out_buff,
                 int PE_index, int stream_length)
@@ -181,28 +211,27 @@ void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],
 
     PE_12_north[0] = 0; // padd a 0 at the front
     for (int i = 0; i < matrix_B_dim; i++) {
-        PE_12_north[i + 1] = input_B_from_north[i*matrix_B_dim +1 ];
+        PE_12_north[i + 1] = input_B_from_north[i * matrix_B_dim + 1];
     }
 
     // -- PE_22
     PE_22_west[0]  = 0; // padd a 0 at the front
     PE_22_west[1]  = 0; // padd a 0 at the front
-    PE_22_west[2] = PE_21_west[1];
-    PE_22_west[3] = PE_21_west[2];
+    PE_22_west[2]  = PE_21_west[1];
+    PE_22_west[3]  = PE_21_west[2];
     PE_22_north[0] = 0; // padd a 0 at the front
     PE_22_north[1] = 0; // padd a 0 at the front
-    PE_22_north[2]= PE_12_north[1];
-    PE_22_north[3]= PE_12_north[2];
-     for (int i = 0; i < 4; i++) {
+    PE_22_north[2] = PE_12_north[1];
+    PE_22_north[3] = PE_12_north[2];
+    for (int i = 0; i < 4; i++) {
         printf("[humu]: compute: PE_22_west = %d\n", (int)PE_22_west[i]);
         printf("[humu]: compute: PE_22_north = %d\n", (int)PE_22_north[i]);
     }
 
-
     compute_PE(PE_11_west, PE_11_north, PE_12_west, PE_21_north, &_outbuff[0], 11, 3); // (PE_index = 11)
     compute_PE(PE_21_west, PE_21_north, PE_22_west, NULL, &_outbuff[2], 21, 3);        // (PE_index = 21)
-    compute_PE(PE_12_west, PE_12_north, NULL, PE_22_north, &_outbuff[1], 12, 3);           // (PE_index = 12)
-    compute_PE(PE_22_west, PE_22_north, NULL, NULL, &_outbuff[3], 22, 4);                   // (PE_index = 22)
+    compute_PE(PE_12_west, PE_12_north, NULL, PE_22_north, &_outbuff[1], 12, 3);       // (PE_index = 12)
+    compute_PE(PE_22_west, PE_22_north, NULL, NULL, &_outbuff[3], 22, 4);              // (PE_index = 22)
 
     for (int i = 0; i < 4; i++) {
         printf("[humu]: compute: _outbuff = %d\n", (int)_outbuff[i]);
@@ -231,6 +260,27 @@ void top(dma_word_t *out, dma_word_t *in1,
     const unsigned matrix_A_dim = conf_info_matrix_A_dim;
     const unsigned matrix_B_dim = conf_info_matrix_B_dim;
 
+    word_t input_west_11[5] = {2, 3, 0, 0};
+    word_t input_west_12[5] = {0, 0, 0, 0};
+    word_t input_west_21[5] = {0, 4, 5, 0};
+    word_t input_west_22[5] = {0, 0, 0, 0};
+
+    word_t input_north_11[5] = {6, 8, 0, 0};
+    word_t input_north_12[5] = {0, 7, 9, 0};
+    word_t input_north_21[5] = {0, 0, 0, 0};
+    word_t input_north_22[5] = {0, 0, 0, 0};
+
+    word_t output_east_12[5];
+    word_t output_east_22[5];
+
+    word_t output_south_21[5];
+    word_t output_south_22[5];
+
+    word_t output_buff_11;
+    word_t output_buff_12;
+    word_t output_buff_21;
+    word_t output_buff_22;
+
     // Batching
 batching:
     for (unsigned b = 0; b < 1; b++) {
@@ -248,9 +298,15 @@ go:
             load(_inbuff, in1,
                  /* <<--args-->> */
                  matrix_C_dim, matrix_A_dim, matrix_B_dim, load_ctrl, c, b);
-            compute(_inbuff,
-                    /* <<--args-->> */
-                    matrix_C_dim, matrix_A_dim, matrix_B_dim, _outbuff);
+            // compute(_inbuff,
+            //         /* <<--args-->> */
+            //         matrix_C_dim, matrix_A_dim, matrix_B_dim, _outbuff);
+
+            compute_PE_2(input_west_11, input_north_11, input_west_12, input_north_21, &_outbuff[0], 11, 4);
+            compute_PE_2(input_west_12, input_north_12, output_east_12, input_north_22, &_outbuff[1], 12, 4);
+            compute_PE_2(input_west_21, input_north_21, input_west_22, output_south_21, &_outbuff[2], 21, 4);
+            compute_PE_2(input_west_22, input_north_22, output_east_22, output_south_22, &_outbuff[3], 22, 4);
+
             store(_outbuff, out,
                   /* <<--args-->> */
                   matrix_C_dim, matrix_A_dim, matrix_B_dim, store_ctrl, c, b);

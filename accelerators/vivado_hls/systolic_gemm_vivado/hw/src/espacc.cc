@@ -12,7 +12,7 @@ word_t tempC[4];
 void load(word_t _inbuff[SIZE_IN_CHUNK_DATA], dma_word_t *in1,
           /* <<--compute-params-->> */
           const unsigned matrix_C_dim, const unsigned matrix_A_dim, const unsigned matrix_B_dim, dma_info_t &load_ctrl,
-          int chunk, int batch)
+          int chunk, int batch, word_t *in_west_11, word_t *in_west_21, word_t *in_north_11, word_t *in_north_12)
 {
 load_data:
 
@@ -26,12 +26,28 @@ load_data:
     load_ctrl.length = dma_length;
     load_ctrl.size   = SIZE_WORD_T;
 
+    printf("[load]: dma_index = %d\n", dma_index);
+    printf("[load]: dma_length = %d\n", dma_length);
+    printf("[load]: SIZE_WORD_T = %d\n", SIZE_WORD_T);
+    printf("[load]: VALUES_PER_WORD = %d\n", VALUES_PER_WORD);
+
     for (unsigned i = 0; i < dma_length; i++) {
 load_label0:
         for (unsigned j = 0; j < VALUES_PER_WORD; j++) {
             _inbuff[i * VALUES_PER_WORD + j] = in1[dma_index + i].word[j];
+
+            printf("[load]: _inbuff[%d] = %d\n", i * VALUES_PER_WORD + j, (int)_inbuff[i * VALUES_PER_WORD + j]);
         }
     }
+
+    in_west_11[0]  = _inbuff[0];
+    in_west_11[1]  = _inbuff[1];
+    in_west_21[1]  = _inbuff[2];
+    in_west_21[2]  = _inbuff[3];
+    in_north_11[0] = _inbuff[4];
+    in_north_11[1] = _inbuff[6];
+    in_north_12[1] = _inbuff[5];
+    in_north_12[2] = _inbuff[7];
 }
 
 void store(word_t _outbuff[SIZE_OUT_CHUNK_DATA], dma_word_t *out,
@@ -260,13 +276,13 @@ void top(dma_word_t *out, dma_word_t *in1,
     const unsigned matrix_A_dim = conf_info_matrix_A_dim;
     const unsigned matrix_B_dim = conf_info_matrix_B_dim;
 
-    word_t input_west_11[5] = {2, 3, 0, 0};
+    word_t input_west_11[5] = {0, 0, 0, 0}; //{2, 3, 0, 0};
     word_t input_west_12[5] = {0, 0, 0, 0};
-    word_t input_west_21[5] = {0, 4, 5, 0};
+    word_t input_west_21[5] = {0, 0, 0, 0}; //{0, 4, 5, 0};
     word_t input_west_22[5] = {0, 0, 0, 0};
 
-    word_t input_north_11[5] = {6, 8, 0, 0};
-    word_t input_north_12[5] = {0, 7, 9, 0};
+    word_t input_north_11[5] = {0, 0, 0, 0}; //{6, 8, 0, 0};
+    word_t input_north_12[5] = {0, 0, 0, 0}; //{0, 7, 9, 0};
     word_t input_north_21[5] = {0, 0, 0, 0};
     word_t input_north_22[5] = {0, 0, 0, 0};
 
@@ -289,6 +305,8 @@ go:
         for (int c = 0; c < 1; c++) {
             word_t _inbuff[SIZE_IN_CHUNK_DATA];
             word_t _outbuff[SIZE_OUT_CHUNK_DATA];
+            printf("[top]: SIZE_IN_CHUNK_DATA = %d\n", SIZE_IN_CHUNK_DATA);
+            printf("[top]: SIZE_OUT_CHUNK_DATA = %d\n", SIZE_OUT_CHUNK_DATA);
 
             // init tempC to zeros
             for (int x = 0; x < SIZE_OUT_CHUNK_DATA; x++) {
@@ -297,7 +315,8 @@ go:
 
             load(_inbuff, in1,
                  /* <<--args-->> */
-                 matrix_C_dim, matrix_A_dim, matrix_B_dim, load_ctrl, c, b);
+                 matrix_C_dim, matrix_A_dim, matrix_B_dim, load_ctrl, c, b, input_west_11, input_west_21,
+                 input_north_11, input_north_12);
             // compute(_inbuff,
             //         /* <<--args-->> */
             //         matrix_C_dim, matrix_A_dim, matrix_B_dim, _outbuff);

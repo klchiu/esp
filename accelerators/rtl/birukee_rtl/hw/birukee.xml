@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="birukee" desc="Accelerator BIRUKEE" data_size="4" device_id="087" hls_tool="rtl">
+  <accelerator name="birukee" desc="Accelerator BIRUKEE" data_size="4" device_id="085" hls_tool="rtl">
     <param name="input1" desc="input1" />
     <param name="input2" desc="input2" />
     <param name="output" desc="output" />

@@ -25,6 +25,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 const int32_t matrix_C_dim = 2;
 const int32_t matrix_A_dim = 2;
 const int32_t matrix_B_dim = 2;
+const int32_t state_control = 0;
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -44,6 +45,7 @@ static unsigned mem_size;
 
 /* User defined registers */
 /* <<--regs-->> */
+#define SYSTOLIC_GEMM3_STATE_CONTROL_REG 0x4C
 #define SYSTOLIC_GEMM3_MATRIX_C_DIM_REG 0x48
 #define SYSTOLIC_GEMM3_MATRIX_A_DIM_REG 0x44
 #define SYSTOLIC_GEMM3_MATRIX_B_DIM_REG 0x40
@@ -180,6 +182,7 @@ int main(int argc, char * argv[])
 		iowrite32(dev, SYSTOLIC_GEMM3_MATRIX_C_DIM_REG, matrix_C_dim);
 		iowrite32(dev, SYSTOLIC_GEMM3_MATRIX_A_DIM_REG, matrix_A_dim);
 		iowrite32(dev, SYSTOLIC_GEMM3_MATRIX_B_DIM_REG, matrix_B_dim);
+		iowrite32(dev, SYSTOLIC_GEMM3_STATE_CONTROL_REG, state_control);
 
 			// Flush (customize coherence model here)
 			esp_flush(coherence);
@@ -202,9 +205,9 @@ int main(int argc, char * argv[])
 			/* Validation */
 			errors = validate_buf(&mem[out_offset], gold);
 			if (errors)
-				printf("  ... FAIL\n");
+				printf("  ... FAIL ...\n");
 			else
-				printf("  ... PASS\n");
+				printf("  ... PASS ...\n");
 		}
 		aligned_free(ptable);
 		aligned_free(mem);

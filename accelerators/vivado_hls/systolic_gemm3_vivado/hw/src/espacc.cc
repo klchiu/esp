@@ -11,9 +11,14 @@ void load(word_t _inbuff[SIZE_IN_CHUNK_DATA], dma_word_t *in1,
 	 const unsigned matrix_C_dim,
 	 const unsigned matrix_A_dim,
 	 const unsigned matrix_B_dim,
+     const unsigned state_control,
 	  dma_info_t &load_ctrl, int chunk, int batch)
 {
 load_data:
+
+#ifndef __SYNTHESIS__
+    printf("state_control: %d \n", state_control);
+#endif
 
     const unsigned length = round_up(matrix_A_dim * matrix_A_dim * 2, VALUES_PER_WORD) / 1;
     const unsigned index = length * (batch * 1 + chunk);
@@ -21,14 +26,23 @@ load_data:
     unsigned dma_length = length / VALUES_PER_WORD;
     unsigned dma_index = index / VALUES_PER_WORD;
 
+
+if(state_control != 2) // Don't load
+    {
     load_ctrl.index = dma_index;
     load_ctrl.length = dma_length;
     load_ctrl.size = SIZE_WORD_T;
+
+#ifndef __SYNTHESIS__
+        printf("DMA INFO LOAD: index = %d, length = %d, size = %d \n", dma_index, dma_length, SIZE_WORD_T);
+        printf("VALUES_PER_WORD: %d\n", VALUES_PER_WORD);
+#endif
 
     for (unsigned i = 0; i < dma_length; i++) {
     load_label0:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
 	    _inbuff[i * VALUES_PER_WORD + j] = in1[dma_index + i].word[j];
     	}
+    }
     }
 }
 
@@ -37,6 +51,7 @@ void store(word_t _outbuff[SIZE_OUT_CHUNK_DATA], dma_word_t *out,
 	 const unsigned matrix_C_dim,
 	 const unsigned matrix_A_dim,
 	 const unsigned matrix_B_dim,
+     const unsigned state_control,
 	   dma_info_t &store_ctrl, int chunk, int batch)
 {
 store_data:
@@ -49,14 +64,24 @@ store_data:
     unsigned dma_length = length / VALUES_PER_WORD;
     unsigned dma_index = index / VALUES_PER_WORD;
 
+
+    if(state_control != 1)
+    {
+
     store_ctrl.index = dma_index;
     store_ctrl.length = dma_length;
     store_ctrl.size = SIZE_WORD_T;
+
+
+#ifndef __SYNTHESIS__
+        printf("DMA INFO STORE: index = %d, length = %d, size = %d \n", dma_index, dma_length, SIZE_WORD_T);
+#endif
 
     for (unsigned i = 0; i < dma_length; i++) {
     store_label1:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
 	    out[dma_index + i].word[j] = _outbuff[i * VALUES_PER_WORD + j];
 	}
+    }
     }
 }
 
@@ -66,14 +91,20 @@ void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],
 	 const unsigned matrix_C_dim,
 	 const unsigned matrix_A_dim,
 	 const unsigned matrix_B_dim,
+     const unsigned state_control,
              word_t _outbuff[SIZE_OUT_CHUNK_DATA])
 {
-
     // TODO implement compute functionality
     const unsigned length = round_up(matrix_A_dim * matrix_A_dim * 2, VALUES_PER_WORD) / 1;
 
+if(state_control != 1)
+    {
+
     for (int i = 0; i < length; i++)
         _outbuff[i] = _inbuff[i];
+    
+    }
+
 }
 
 
@@ -82,6 +113,7 @@ void top(dma_word_t *out, dma_word_t *in1,
 	 const unsigned conf_info_matrix_C_dim,
 	 const unsigned conf_info_matrix_A_dim,
 	 const unsigned conf_info_matrix_B_dim,
+     const unsigned conf_info_state_control,
 	 dma_info_t &load_ctrl, dma_info_t &store_ctrl)
 {
 
@@ -89,6 +121,7 @@ void top(dma_word_t *out, dma_word_t *in1,
 	 const unsigned matrix_C_dim = conf_info_matrix_C_dim;
 	 const unsigned matrix_A_dim = conf_info_matrix_A_dim;
 	 const unsigned matrix_B_dim = conf_info_matrix_B_dim;
+     const unsigned state_control = conf_info_state_control;
 
     // Batching
 batching:
@@ -101,24 +134,46 @@ batching:
             word_t _inbuff[SIZE_IN_CHUNK_DATA];
             word_t _outbuff[SIZE_OUT_CHUNK_DATA];
 
+#ifndef __SYNTHESIS__
+        printf("Start top/go: \n");
+#endif
+
             load(_inbuff, in1,
                  /* <<--args-->> */
 	 	 matrix_C_dim,
 	 	 matrix_A_dim,
 	 	 matrix_B_dim,
+         state_control,
                  load_ctrl, c, b);
+
+#ifndef __SYNTHESIS__
+        printf("Finished load \n");
+#endif
+
             compute(_inbuff,
                     /* <<--args-->> */
 	 	 matrix_C_dim,
 	 	 matrix_A_dim,
 	 	 matrix_B_dim,
+         state_control,
                     _outbuff);
+
+#ifndef __SYNTHESIS__
+        printf("Finished compute \n");
+#endif
+
             store(_outbuff, out,
                   /* <<--args-->> */
 	 	 matrix_C_dim,
 	 	 matrix_A_dim,
 	 	 matrix_B_dim,
+         state_control,
                   store_ctrl, c, b);
+
+#ifndef __SYNTHESIS__
+        printf("Finished store \n");
+#endif
+
         }
     }
 }

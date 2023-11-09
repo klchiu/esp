@@ -4,5 +4,6 @@
     <param name="matrix_B_dim" desc="matrix_B_dim" />
     <param name="matrix_A_dim" desc="matrix_A_dim" />
     <param name="matrix_C_dim" desc="matrix_C_dim" />
+    <param name="state_control" desc="state_control" />
   </accelerator>
 </sld>

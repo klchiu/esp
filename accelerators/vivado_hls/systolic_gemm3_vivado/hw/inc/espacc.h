@@ -76,6 +76,7 @@ void top(dma_word_t *out, dma_word_t *in1,
 	 const unsigned conf_info_matrix_C_dim,
 	 const unsigned conf_info_matrix_A_dim,
 	 const unsigned conf_info_matrix_B_dim,
+	 const unsigned conf_info_state_control,
 	 dma_info_t &load_ctrl, dma_info_t &store_ctrl);
 
 void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],

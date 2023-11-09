@@ -6,6 +6,7 @@
 set_directive_interface -mode ap_none "top" conf_info_matrix_C_dim
 set_directive_interface -mode ap_none "top" conf_info_matrix_A_dim
 set_directive_interface -mode ap_none "top" conf_info_matrix_B_dim
+set_directive_interface -mode ap_none "top" conf_info_state_control
 
 # Insert here any custom directive
-set_directive_dataflow "top/go"
+# set_directive_dataflow "top/go"

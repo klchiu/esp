@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="conv2d" desc="Accelerator CONV2D" data_size="4" device_id="091" hls_tool="vivado_hls">
+    <param name="feature_map_height" desc="feature_map_height" />
+    <param name="pool_type" desc="pool_type" />
+    <param name="is_padded" desc="is_padded" />
+    <param name="filter_dim" desc="filter_dim" />
+    <param name="batch_size" desc="batch_size" />
+    <param name="n_filters" desc="n_filters" />
+    <param name="n_channels" desc="n_channels" />
+    <param name="feature_map_width" desc="feature_map_width" />
+    <param name="stride" desc="stride" />
+    <param name="do_relu" desc="do_relu" />
+  </accelerator>
+</sld>

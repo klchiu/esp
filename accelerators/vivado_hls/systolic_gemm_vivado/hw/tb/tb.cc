@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     const unsigned matrix_A_dim = 2;
     const unsigned matrix_B_dim = 2;
     const unsigned matrix_C_dim = 2;
+    unsigned state_control = 0;
 
     uint32_t in_words_adj;
     uint32_t out_words_adj;
@@ -69,10 +70,23 @@ int main(int argc, char **argv)
     printf("outbuff_gold[2]: %d\n", (int)outbuff_gold[2]);
     printf("outbuff_gold[3]: %d\n", (int)outbuff_gold[3]);
 
+
     // Call the TOP function
+    state_control = 1; // only load
     top(mem, mem,
         /* <<--args-->> */
-        matrix_C_dim, matrix_A_dim, matrix_B_dim, load, store);
+        matrix_C_dim, matrix_A_dim, matrix_B_dim, state_control, load, store);
+
+    state_control = 2; // only compute and store
+    top(mem, mem,
+        /* <<--args-->> */
+        matrix_C_dim, matrix_A_dim, matrix_B_dim, state_control, load, store);
+
+    // state_control = 3; // only store
+    // top(mem, mem,
+    //     /* <<--args-->> */
+    //     matrix_C_dim, matrix_A_dim, matrix_B_dim, state_control, load, store);
+
 
     // Validate
     uint32_t out_offset = dma_in_size;

@@ -55,12 +55,22 @@ static int validate_buf(token_t *out, token_t *gold)
 {
 	int i;
 	int j;
+	    int index;
 	unsigned errors = 0;
 
 	for (i = 0; i < 1; i++)
 		for (j = 0; j < matrix_C_dim * matrix_C_dim; j++)
+		{
+			index = i * out_words_adj + j;
+
+
 			if (gold[i * out_words_adj + j] != out[i * out_words_adj + j])
 				errors++;
+
+
+			printf("gold[%d] = %d\tout[%d] = %d\n", index, gold[index], index, out[index]);
+
+		}
 
 	return errors;
 }
@@ -160,6 +170,14 @@ int main(int argc, char * argv[])
 			printf("  Generate input...\n");
 			init_buf(mem, gold);
 
+
+printf("Check mem buff--------\n");
+for(i = 0 ; i < mem_size; i++){
+    printf("mem[%d] = %d\n", i, mem[i]);
+}
+printf("End Check mem buff--------\n");
+
+
 			// Pass common configuration parameters
 
 			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
@@ -185,7 +203,7 @@ int main(int argc, char * argv[])
 		iowrite32(dev, SYSTOLIC_GEMM3_STATE_CONTROL_REG, state_control);
 
 			// Flush (customize coherence model here)
-			esp_flush(coherence);
+			// esp_flush(coherence);
 
 			// Start accelerators
 			printf("  Start...\n");
@@ -209,6 +227,14 @@ int main(int argc, char * argv[])
 			else
 				printf("  ... PASS ...\n");
 		}
+	
+printf("Check mem buff--------\n");
+for(i = 0 ; i < mem_size; i++){
+    printf("mem[%d] = %d\n", i, mem[i]);
+}
+printf("End Check mem buff--------\n");
+
+
 		aligned_free(ptable);
 		aligned_free(mem);
 		aligned_free(gold);

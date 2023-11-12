@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="conv2dU8" desc="Conv2D Accelerator" data_size="128" device_id="052" hls_tool="stratus_hls">
+  <accelerator name="conv2dU8" desc="Conv2D Accelerator" data_size="128" device_id="064" hls_tool="stratus_hls">
     <param name="n_channels" desc="n_channels" />
     <param name="feature_map_height" desc="feature_map_height" />
     <param name="feature_map_width" desc="feature_map_width" />

@@ -45,7 +45,7 @@ static int conv2d_devs;
 
 static inline struct conv2d_stratus_device *to_conv2d(struct esp_device *esp)
 {
-    printk("[humu]: to_conv2d()\n");
+    // printk("[humu]: to_conv2d()\n");
 
     return container_of(esp, struct conv2d_stratus_device, esp);
 }
@@ -54,7 +54,7 @@ static void conv2d_prep_xfer(struct esp_device *esp, void *arg)
 {
     struct conv2d_stratus_access *a = arg;
 
-    printk("[humu]: conv2d_prep_xfer()\n");
+    // printk("[humu]: conv2d_prep_xfer()\n");
 
     /* <<--regs-config-->> */
     iowrite32be(a->n_channels, esp->iomem + CONV2D_N_CHANNELS_REG);
@@ -73,7 +73,7 @@ static void conv2d_prep_xfer(struct esp_device *esp, void *arg)
 
 static bool conv2d_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-    printk("[humu]: conv2d_xfer_input_ok()\n");
+    // printk("[humu]: conv2d_xfer_input_ok()\n");
 
     /* struct conv2d_stratus_device *conv2d = to_conv2d(esp); */
     /* struct conv2d_stratus_access *a = arg; */
@@ -89,7 +89,7 @@ static int conv2d_probe(struct platform_device *pdev)
     // char lock_name[30];
     // FILE * pFile;
 
-    printk("[humu]: conv2d_probe()\n");
+    // printk("[humu]: conv2d_probe()\n");
 
     conv2d = kzalloc(sizeof(*conv2d), GFP_KERNEL);
     if (conv2d == NULL)
@@ -102,8 +102,8 @@ static int conv2d_probe(struct platform_device *pdev)
     if (rc)
         goto err;
 
-    printk("[humu]:  conv2d_probe(),  number = %u\n", esp->number);
-    printk("[humu]:  conv2d_probe(),  irq    = %u\n", esp->irq);
+    // printk("[humu]:  conv2d_probe(),  number = %u\n", esp->number);
+    // printk("[humu]:  conv2d_probe(),  irq    = %u\n", esp->irq);
 
     // sprintf(lock_name, "/lock/conv2d_stratus.%d", esp->number);
     // pFile = fopen(lock_name, "w");
@@ -125,7 +125,7 @@ static int __exit conv2d_remove(struct platform_device *pdev)
     struct esp_device            *esp    = platform_get_drvdata(pdev);
     struct conv2d_stratus_device *conv2d = to_conv2d(esp);
 
-    printk("[humu]: conv2d_remove()\n");
+    // printk("[humu]: conv2d_remove()\n");
 
     esp_device_unregister(esp);
     kfree(conv2d);
@@ -152,13 +152,13 @@ static struct esp_driver conv2d_driver = {
 
 static int __init conv2d_init(void)
 {
-    printk("[humu]: conv2d_init()\n");
+    // printk("[humu]: conv2d_init()\n");
     return esp_driver_register(&conv2d_driver);
 }
 
 static void __exit conv2d_exit(void)
 {
-    printk("[humu]: conv2d_exit()\n");
+    // printk("[humu]: conv2d_exit()\n");
     esp_driver_unregister(&conv2d_driver);
 }
 

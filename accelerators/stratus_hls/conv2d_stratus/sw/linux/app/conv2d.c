@@ -245,6 +245,7 @@ int main(int argc, char **argv)
 {
     FILE              *log_0323 = fopen("log_0323_conv2d.txt", "w");
     int                i, j, k;
+    int no_error = 0;
     unsigned long long hw_ns;
     unsigned long long sw_ns;
 
@@ -276,16 +277,16 @@ int main(int argc, char **argv)
 
     // int32_t n_channels_3[8] = {8, 16, 32, 64, 128, 256, 512, 1024};
     // int32_t n_channels_3[5] = {128, 128, 128, 128, 128};
-    int32_t n_channels_3[2] = {128, 128};
+    int32_t n_channels_3[2] = {256, 256};
     int32_t n_channels      = 100;
     // int32_t feature_map_height_3[8] = {8, 16, 32, 64, 128, 256, 512, 1024};
     // int32_t feature_map_height_3[5] = {32, 32, 32, 32, 32};
-    int32_t feature_map_height_3[2] = {32, 32};
+    int32_t feature_map_height_3[1] = {32};
     int32_t feature_map_height      = 100;
     int32_t feature_map_width       = 100; // same as feature_map_height_3
     int32_t n_filters               = 2;   // same as n_channels_3
     // int32_t filter_dim_3[3] = {1, 3, 5};
-    int32_t filter_dim_3[3] = {5, 5, 5};
+    int32_t filter_dim_3[1] = {5};
     int32_t filter_dim      = 100;
     int32_t is_padded       = 1;
     int32_t stride          = 1;
@@ -319,17 +320,18 @@ int main(int argc, char **argv)
     printf("  Allocations\n");
     acc_buf           = (token_t *)esp_alloc(MAX_SIZE);
     cfg_000[0].hw_buf = acc_buf;
+    // cfg_000[1].hw_buf = acc_buf;
 
     sw_buf = malloc(MAX_SIZE);
 
-    for (k = 0; k < 3; k++) {
+    for (k = 0; k < 1; k++) {
         filter_dim = filter_dim_3[k];
 
         for (i = 0; i < 2; i++) {
             n_channels = n_channels_3[i];
             n_filters  = n_channels;
 
-            for (j = 0; j < 2; j++) {
+            for (j = 0; j < 1; j++) {
                 feature_map_height = feature_map_height_3[j];
                 feature_map_width  = feature_map_height;
 
@@ -347,20 +349,21 @@ int main(int argc, char **argv)
                 printf("\n  Start accelerator execution\n");
                 gettime(&th_hw_1);
                 esp_run(cfg_000, NACC);
+                // esp_run(cfg_000, 2);
                 gettime(&th_hw_2);
                 printf("  Completed accelerator execution\n");
                 hw_ns = ts_subtract(&th_hw_1, &th_hw_2);
 
                 // software execution
-                printf("\n  Start software execution\n");
+                // printf("\n  Start software execution\n");
                 // sw_ns = sw_run(n_channels, feature_map_height, feature_map_width,
                 //                n_filters, filter_dim, is_padded, stride,
                 //                do_relu, pool_type, batch_size,
                 //                sw_buf, &sw_buf[weights_offset], &sw_buf[bias_offset], &sw_buf[out_offset]);
-                printf("  Completed software execution\n");
+                // printf("  Completed software execution\n");
 
                 // validation
-                int no_error = validate_buffer(&acc_buf[out_offset], &sw_buf[out_offset], out_len);
+                // no_error = validate_buffer(&acc_buf[out_offset], &sw_buf[out_offset], out_len);
                 /* validate_buffer(acc_buf, sw_buf, out_len + out_offset); */
 
                 fprintf(log_0323,

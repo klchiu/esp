@@ -60,6 +60,8 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "fft2_stratus.0",
+		.devname_noid = "fft2_stratus",
+		.puffinname = "Paul Walker",
 		.ioctl_req = FFT2_STRATUS_IOC_ACCESS,
 		.esp_desc = &(fft2_cfg_000[0].esp),
 	}

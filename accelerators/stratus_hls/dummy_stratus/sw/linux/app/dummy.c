@@ -136,9 +136,61 @@ static void print_time_info(accelerator_thread_info_t *info, unsigned long long 
 	printf("      Test time: %llu ns\n", hw_ns);
 }
 
+void* app1(void* pString)
+{
+	int status;
+	printf("=================================== run conv2d 1: %s\n", (char*)pString);
+	// status = system("./conv2d_stratus.exe");
+	status = system((char*)pString);
+	printf("=================================== conv2d 1, status = %d\n", status);
+
+	return 0;
+}
+
+void* app2(void* pString)
+{
+	int status;
+	printf("=================================== run conv2d 2: %s\n", (char*)pString);
+	// status = system("./conv2d_stratus.exe");
+	status = system((char*)pString);
+	printf("=================================== conv2d 2, status = %d\n", status);
+
+	return 0;
+}
+
+int run2(int argc, char *argv[])
+{
+    pthread_t thread1, thread2;
+
+	printf("argc: %d\n", argc);
+	printf("argv[0]: %s\n", argv[0]);
+	printf("argv[1]: %s\n", argv[1]);
+	printf("argv[2]: %s\n", argv[2]);
+
+
+    // make threads
+    // pthread_create(&thread1, NULL, app1, "Blue Angel");
+	pthread_create(&thread1, NULL, app1, argv[1]);
+    // pthread_create(&thread2, NULL, app2, "Red Bull");
+    pthread_create(&thread2, NULL, app2, argv[2]);
+
+    // wait for them to finish
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL); 
+
+    return 0;
+}
+
 
 int main(int argc, char *argv[])
 {
+	printf("------- This is dummy to run 2 conv2d --------\n");
+
+	run2(argc, argv);
+
+	return 0;
+
+
 	int i;
 	int rc = 0;
 	int fd[3];

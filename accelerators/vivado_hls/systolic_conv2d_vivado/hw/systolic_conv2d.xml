@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="systolic_conv2d" desc="Accelerator SYSTOLIC_CONV2D" data_size="4" device_id="086" hls_tool="vivado_hls">
+    <param name="matrix_A_dim" desc="matrix_A_dim" />
+    <param name="matrix_B_dim" desc="matrix_B_dim" />
+    <param name="matrix_C_dim" desc="matrix_C_dim" />
+    <param name="state_control" desc="state_control" />
+  </accelerator>
+</sld>

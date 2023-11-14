@@ -112,10 +112,10 @@ store_data:
         store_ctrl.length = dma_length;
         store_ctrl.size   = SIZE_WORD_T;
 
-        _outbuff[0] = 17;
-        _outbuff[1] = 18;
-        _outbuff[2] = 19;
-        _outbuff[3] = 20;
+        // _outbuff[0] = 17;
+        // _outbuff[1] = 18;
+        // _outbuff[2] = 19;
+        // _outbuff[3] = 20;
 
         for (unsigned i = 0; i < dma_length; i++) {
 store_label1:
@@ -123,12 +123,12 @@ store_label1:
                 out[dma_index + i].word[j] = _outbuff[i * VALUES_PER_WORD + j];
                 // out[dma_index + i].word[j] = tempC[i * VALUES_PER_WORD + j];
 
-#ifndef __SYNTHESIS__
-                printf("[store]: dma_index + i = %d\n", dma_index + i);
-                printf("[store]: j = %d\n", j);
-                printf("[store]: i * VALUES_PER_WORD + j = %d\n", i * VALUES_PER_WORD + j);
-                // printf("[store]: _outbuff = %d\n", _outbuff[i * VALUES_PER_WORD + j]);
-#endif
+// #ifndef __SYNTHESIS__
+//                 printf("[store]: dma_index + i = %d\n", dma_index + i);
+//                 printf("[store]: j = %d\n", j);
+//                 printf("[store]: i * VALUES_PER_WORD + j = %d\n", i * VALUES_PER_WORD + j);
+//                 // printf("[store]: _outbuff = %d\n", _outbuff[i * VALUES_PER_WORD + j]);
+// #endif
             }
         }
     }
@@ -162,7 +162,7 @@ void compute_PE_2(word_t *input_west, word_t *input_north, word_t *output_east, 
         printf("[humu]: compute_PE_2: PE_index = %d, temp2 = %d\n", PE_index, (int)(temp2));
         printf("[humu]: compute_PE_2: PE_index = %d, tempC[%d] = %d\n", PE_index, PE_index, (int)(tempC[PE_index]));
 #endif
-        out_buff = tempC[PE_index];
+            out_buff = tempC[PE_index];
     }
 
     // pass west to east and pass north to south
@@ -200,6 +200,8 @@ void compute_PE_3(word_t *input_west, word_t *input_north, word_t *output_east, 
         out_buff = tempC[PE_index];
     }
 
+
+
     // pass west to east and pass north to south
 
     for (int i = 0; i < stream_length; i++) {
@@ -235,6 +237,8 @@ void compute_PE_4(word_t *input_west, word_t *input_north, word_t *output_east, 
         out_buff = tempC[PE_index];
     }
 
+
+
     // pass west to east and pass north to south
 
     for (int i = 0; i < stream_length; i++) {
@@ -269,6 +273,8 @@ void compute_PE_5(word_t *input_west, word_t *input_north, word_t *output_east, 
 #endif
         out_buff = tempC[PE_index];
     }
+
+
 
     // pass west to east and pass north to south
 

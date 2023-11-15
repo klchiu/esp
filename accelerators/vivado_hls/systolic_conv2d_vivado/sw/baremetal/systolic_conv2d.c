@@ -18,13 +18,13 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
     return (sizeof(void *) / _st);
 }
 
-#define SLD_SYSTOLIC_CONV2D 0x087
+#define SLD_SYSTOLIC_CONV2D 0x086
 #define DEV_NAME          "sld,systolic_conv2d_vivado"
 
 /* <<--params-->> */
-const int32_t matrix_C_dim = 2;
-const int32_t matrix_A_dim = 2;
-const int32_t matrix_B_dim = 2;
+const int32_t matrix_C_dim = 3;
+const int32_t matrix_A_dim = 5;
+const int32_t matrix_B_dim = 3;
 int32_t state_control = 0;
 
 
@@ -76,23 +76,42 @@ static void init_buf(token_t *in, token_t *gold)
     int i;
     int j;
 
+    int index_A = 0;
+    int index_B = 0;
+    // Prepare input data (matrix A)
     for (i = 0; i < 1; i++) {
-        for (j = 0; j < matrix_A_dim * matrix_A_dim * 2; j++) {
-            in[i * in_words_adj + j] = (token_t)(j+2);
+        for (j = 0; j < matrix_A_dim * matrix_A_dim; j++) {
+            index_A = i * in_words_adj + j;
+            in[index_A] = (token_t)(j+1);
         }
     }
+    index_A += 1;
+    
+    // Prepare input data (matrix B)
+    for (i = 0; i < 1; i++) {
+        for (j = 0; j < matrix_B_dim * matrix_B_dim; j++) {
+            index_B = i * in_words_adj + j;
+            in[index_A + index_B] = (token_t)(j+1);
+        }
+    }
+
 
     // for (i = 0; i < 1; i++) {
     //     for (j = 0; j < matrix_C_dim * matrix_C_dim; j++) {
     //         gold[i * out_words_adj + j] = (token_t)(j);
     //     }
     // }
-	gold[0] = 36;
-	gold[1] = 41;
-	gold[2] = 64;
-	gold[3] = 73;
+    gold[0] = 219;
+    gold[1] = 264;
+    gold[2] = 309;
+    gold[3] = 444;
+    gold[4] = 489;
+    gold[5] = 534;
+    gold[6] = 669;
+    gold[7] = 714;
+    gold[8] = 759;
 
-	for (i = 0 ;i < matrix_A_dim*matrix_A_dim * 2 ; i++){
+	for (i = 0 ;i < matrix_A_dim*matrix_A_dim + matrix_B_dim * matrix_B_dim ; i++){
 		printf("in[%d] = %d\n", i, in[i]);
 	}
 		
@@ -118,10 +137,10 @@ int main(int argc, char *argv[])
     unsigned           coherence;
 
     if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-        in_words_adj  = matrix_A_dim * matrix_A_dim * 2;
+        in_words_adj  = matrix_A_dim * matrix_A_dim + matrix_B_dim * matrix_B_dim;
         out_words_adj = matrix_C_dim * matrix_C_dim;
     } else {
-        in_words_adj  = round_up(matrix_A_dim * matrix_A_dim * 2, DMA_WORD_PER_BEAT(sizeof(token_t)));
+        in_words_adj  = round_up(matrix_A_dim * matrix_A_dim + matrix_B_dim * matrix_B_dim, DMA_WORD_PER_BEAT(sizeof(token_t)));
         out_words_adj = round_up(matrix_C_dim * matrix_C_dim, DMA_WORD_PER_BEAT(sizeof(token_t)));
     }
     in_len     = in_words_adj * (1);
@@ -131,8 +150,18 @@ int main(int argc, char *argv[])
     out_offset = in_len;
     mem_size   = (out_offset * sizeof(token_t)) + out_size;
 
+    printf("[check]: DMA_WORD_PER_BEAT(sizeof(token_t)) = %u\n", DMA_WORD_PER_BEAT(sizeof(token_t))    );
+    printf("[check]: in_words_adj     = %u\n", in_words_adj    );
+    printf("[check]: out_words_adj     = %u\n", out_words_adj    );
+    printf("[check]: in_len     = %u\n", in_len    );
+    printf("[check]: out_len    = %u\n", out_len   );
+    printf("[check]: in_size    = %u\n", in_size   );
+    printf("[check]: out_size   = %u\n", out_size  );
+    printf("[check]: out_offset = %u\n", out_offset);
+    printf("[check]: mem_size   = %u\n", mem_size  );
 
-	printf("Baremetal App of Systolic Gemm\n");
+
+	printf("Baremetal App of Systolic Conv2d\n");
 
     espdevs_tmp.addr = 0x60010000;
     // Search for the device
@@ -187,11 +216,11 @@ int main(int argc, char *argv[])
             init_buf(mem, gold);
 
 
-printf("Check mem buff--------\n");
-for(i = 0 ; i < mem_size; i++){
-    printf("mem[%d] = %d\n", i, mem[i]);
-}
-printf("End Check mem buff--------\n");
+// printf("Check mem buff--------\n");
+// for(i = 0 ; i < 43; i++){
+//     printf("mem[%d] = %d\n", i, mem[i]);
+// }
+// printf("End Check mem buff--------\n");
 
 
             // Pass common configuration parameters
@@ -273,7 +302,7 @@ printf("End Check mem buff--------\n");
         }
 
 printf("Check mem buff--------\n");
-for(i = 0 ; i < mem_size; i++){
+for(i = 0 ; i < 43; i++){
     printf("mem[%d] = %d\n", i, mem[i]);
 }
 printf("End Check mem buff--------\n");

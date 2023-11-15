@@ -1,0 +1,7 @@
+This is an accelerator for Conv2D computation.
+
+A conv B = C
+
+sizeof(A) = 5x5
+sizeof(B) = 3x3
+sizeof(C) = 3x3

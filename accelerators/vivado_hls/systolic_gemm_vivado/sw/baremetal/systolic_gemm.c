@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 
 
 printf("Check mem buff--------\n");
-for(i = 0 ; i < mem_size; i++){
+for(i = 0 ; i < 15; i++){
     printf("mem[%d] = %d\n", i, mem[i]);
 }
 printf("End Check mem buff--------\n");
@@ -273,7 +273,7 @@ printf("End Check mem buff--------\n");
         }
 
 printf("Check mem buff--------\n");
-for(i = 0 ; i < mem_size; i++){
+for(i = 0 ; i < 15; i++){
     printf("mem[%d] = %d\n", i, mem[i]);
 }
 printf("End Check mem buff--------\n");

@@ -383,9 +383,9 @@ compute_dataflow:
         for (int a = 0; a < 1; a++) {
 #pragma HLS inline off
             compute_PE_2(input_west_11, input_north_11, input_west_12, input_north_21, _outbuff[0], 0, 4);
-            compute_PE_3(input_west_12, input_north_12, output_east_12, input_north_22, _outbuff[1], 1, 4);
-            compute_PE_4(input_west_21, input_north_21, input_west_22, output_south_21, _outbuff[2], 2, 4);
-            compute_PE_5(input_west_22, input_north_22, output_east_22, output_south_22, _outbuff[3], 3, 4);
+            compute_PE_2(input_west_12, input_north_12, output_east_12, input_north_22, _outbuff[1], 1, 4);
+            compute_PE_2(input_west_21, input_north_21, input_west_22, output_south_21, _outbuff[2], 2, 4);
+            compute_PE_2(input_west_22, input_north_22, output_east_22, output_south_22, _outbuff[3], 3, 4);
         }
     }
 

@@ -14,14 +14,14 @@ int main(int argc, char **argv) {
     /* <<--params-->> */
 	 const unsigned do_relu = 0;
 	 const unsigned stride = 1;
-	 const unsigned feature_map_width = 6;
+	 const unsigned feature_map_width = 10;
 	 const unsigned n_channels = 2;
-	 const unsigned n_filters = 2;
+	 const unsigned n_filters = 8;
 	 const unsigned batch_size = 1;
 	 const unsigned filter_dim = 3;
 	 const unsigned is_padded = 1;
-	 const unsigned pool_type = 0;
-	 const unsigned feature_map_height = 6;
+	 const unsigned pool_type = 1;
+	 const unsigned feature_map_height = 10;
 
     uint32_t in_words_adj;
     uint32_t out_words_adj;

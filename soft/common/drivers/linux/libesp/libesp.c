@@ -92,7 +92,7 @@ int unlock_a_device2(char *devname, char *puffinname)
     // fprintf(stderr, "[%s]: unlock this: %s\n", puffinname, acc_lock);
     // unlock the acc_lock file
     ret_flock = flock(fileno(pFile), LOCK_UN);
-    // fprintf(stderr, "[%s]: unlock_a_device() ret_flock: %d\n", puffinname, ret_flock);
+    // fprintf(stderr, "[%s]: unlock_a_device2() ret_flock: %d\n", puffinname, ret_flock);
 
     fclose(pFile);
 
@@ -102,136 +102,7 @@ int unlock_a_device2(char *devname, char *puffinname)
     return ret_flock;
 }
 
-int lock_a_device(char *devname_noid, char *puffinname)
-{
-    FILE * pFile;
-    char   acc[40];
-    char   acc_lock[40];
-    int8_t i = 0;
-    // int8_t dev_id      = -1;
-    int8_t acc_num_max = 6; // assume maximum number of accelerator is 6 at the beginning
 
-    for (i = 0; i < acc_num_max; i++) {
-
-        sprintf(acc, "/dev/%s.%d", devname_noid, i);
-        sprintf(acc_lock, "/lock/%s.%d", devname_noid, i);
-
-        if (access(acc, F_OK) == 0) { // device exists
-            // fprintf(stderr, "[%s]: Found --> %s\n", puffinname, acc[i]);
-
-            if (access(acc_lock, F_OK) != 0) { // lock not exists
-                // fprintf(stderr, "[%s]: Lock NOT exists --> %s\n", puffinname, acc_lock[i]);
-
-                pFile = fopen(acc_lock, "w");
-                if (pFile != NULL) {
-                    fputs("This file serves as a lock for accelerator.\n", pFile);
-                }
-                fclose(pFile);
-                // fprintf(stderr, "[%s]: Create lock file --> %s\n", puffinname, acc_lock[i]);
-                return i;
-            }
-            // else { // lock exists
-            // fprintf(stderr, "[%s]: Lock exists --> %s\n", puffinname, acc_lock[i]);
-            // fprintf(stderr, ".%d", i);
-            // sleep(1);
-            // }
-        }
-        // else { // device not exists
-        // fprintf(stderr, "[%s]: No found --> %s\n", puffinname, acc[i]);
-        // return -1;
-        // }
-    }
-
-    return -1;
-}
-
-int unlock_a_device(char *devname_noid, int dev_id, char *puffinname)
-{
-    char acc_lock[40];
-
-    sprintf(acc_lock, "/lock/%s.%d", devname_noid, dev_id);
-    // sprintf(acc_lock, "/lock/%s", devname);
-
-    // fprintf(stderr, "[%s]: Let's just remove the lock file: %s\n", puffinname, acc_lock);
-    remove(acc_lock);
-
-    return -1;
-}
-
-int lock_dir(char *puffinname)
-{
-    FILE *pFile;
-    char  dirLock[] = "/lock/dirLock";
-    int   ret_flock;
-    // int   ret = -1;
-
-    // fprintf(stderr, "[%s]: lock_dir() \n", puffinname);
-
-    while (true) {
-
-        if (access(dirLock, F_OK) == 0) { // lock exists
-            // fprintf(stderr, "[%s]: dirLock exists\n", puffinname);
-            continue;
-        } else { // lock not exists
-            // fprintf(stderr, "[%s]: dirLock NOT exists\n", puffinname);
-
-            pFile = fopen(dirLock, "w");
-            if (pFile != NULL) {
-                fputs("This file serves as a lock for the /lock directory.\n", pFile);
-            }
-            // fprintf(stderr, "[%s]: Create lock file --> dirLock\n", puffinname);
-            fclose(pFile);
-        }
-
-        // if dirLock is unlocked:
-        // [humu]: lock the dirLock.
-        // else if dirLock is locked:
-        // [humu]: wait until it's unlocked
-
-        pFile = fopen(dirLock, "r");
-
-        ret_flock = flock(fileno(pFile), LOCK_EX | LOCK_NB);
-        if (ret_flock == -1) { // fail to lock it
-            if (errno == EWOULDBLOCK) {
-                // fprintf(stderr, "[%s]: dirLock was locked, wait until it's unlocked\n", puffinname);
-                fclose(pFile);
-                continue;
-            } else {
-                // fprintf(stderr, "[%s]: other lock error --> errno = %d\n", puffinname, errno);
-                fclose(pFile);
-                return -1;
-            }
-        } else { // successfully lock it
-            // flock(fileno(pFile), LOCK_EX);
-            // fprintf(stderr, "[%s]: dirLock was unlocked, lock it\n", puffinname);
-            fclose(pFile);
-            return 0;
-        }
-        fclose(pFile);
-    }
-
-    return -1;
-}
-
-int unlock_dir(char *puffinname)
-{
-    FILE *pFile;
-    char  dirLock[] = "/lock/dirLock";
-    int   ret_flock = -1;
-
-    pFile = fopen(dirLock, "r");
-
-    // fprintf(stderr, "[%s]: unlock dirLock\n", puffinname);
-    ret_flock = flock(fileno(pFile), LOCK_UN);
-    // fprintf(stderr, "[%s]: ret_flock: %d\n", puffinname, ret_flock);
-
-    fclose(pFile);
-
-    // fprintf(stderr, "[%s]: Let's just remove the dirLock\n", puffinname);
-    remove(dirLock);
-
-    return ret_flock;
-}
 
 void insert_buf(void *buf, contig_handle_t *handle, enum contig_alloc_policy policy)
 {
@@ -385,7 +256,8 @@ void *accelerator_thread_serial(void *ptr)
         // for (k = 0 ; k < 200; k++){
         //     fprintf(stderr, "%s\t%d\n", info->devname, k);
         // }
-        // fprintf(stderr, "[humu]: accelerator_thread_serial: after ioctl, ------- puffinname: %s\n", info->puffinname);
+        // fprintf(stderr, "[humu]: accelerator_thread_serial: after ioctl, ------- puffinname: %s\n",
+        // info->puffinname);
 
         gettime(&th_end);
         if (rc < 0) {
@@ -459,26 +331,8 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     int dev_id = -1;
 
 
-    // dev_id = -2;
-    // fprintf(stderr, "[%s]: Firstt dev_id: %d\n", cfg->puffinname, dev_id);
-    // while(dev_id == -1){
-    // do{
-    // fprintf(stderr, "[%s]: Midd dev_id: %d\n", cfg->puffinname, dev_id);
-    // fprintf(stderr, "[humu]: Midd dev_id: %d\n", dev_id);
-
-    // if(lock_dir() != 0){
-    //     continue;
-    // }
-    // lock_dir(cfg->puffinname);
-    // dev_id = lock_a_device(cfg->devname_noid, cfg->puffinname);
-    // unlock_dir(cfg->puffinname);
-
-    // }while (dev_id < 0);
-    // }
-    // fprintf(stderr, "[%s]: Lastt dev_id: %d\n", cfg->puffinname, dev_id);
-
     dev_id = lock_a_device2(cfg->devname_noid, cfg->puffinname);
-    if(dev_id < 0){
+    if (dev_id < 0) {
         fprintf(stderr, "Failed to find a device!\n");
         return;
     }
@@ -486,21 +340,21 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     // dev_id = 1;
 
     // [humu]: there should be a better way of changing the dev number in devname c string
-    char *temp_name; 
-    if(dev_id < 10){
+    char *temp_name;
+    if (dev_id < 10) {
         temp_name = malloc(sizeof(char) * (strlen(cfg->devname)));
         sprintf(temp_name, "%s.%d", cfg->devname_noid, dev_id);
-    }
-    else{
+    } else {
         temp_name = malloc(sizeof(char) * (strlen(cfg->devname) + 1));
         sprintf(temp_name, "%s.%d", cfg->devname_noid, dev_id);
     }
 
     // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
-    cfg->devname                        = temp_name;
+    cfg->devname = temp_name;
 
-// fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d, devname: %s\n", cfg->puffinname, dev_id,
-//              cfg->devname);
+    // fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d, devname: %s\n", cfg->puffinname,
+    // dev_id,
+    //              cfg->devname);
 
     if (thread_is_p2p(&cfg[0])) {
         esp_thread_info_t *cfg_ptrs[1];
@@ -523,9 +377,6 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
         free(cfg_ptrs);
     }
 
-    // lock_dir(cfg->puffinname);
-    // unlock_a_device(cfg->devname_noid, dev_id, cfg->puffinname);
-    // unlock_dir(cfg->puffinname);
 
     unlock_a_device2(cfg->devname, cfg->puffinname);
 }
@@ -624,7 +475,8 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
             const char *       prefix = "/dev/";
             char               path[70];
 
-            // fprintf(stderr, "[%s]: esp_run_parallel: after changing devname, ------- devname: %s\n", info->puffinname,
+            // fprintf(stderr, "[%s]: esp_run_parallel: after changing devname, ------- devname: %s\n",
+            // info->puffinname,
             //         info->devname);
 
             if (strlen(info->devname) > 64) {
@@ -635,7 +487,8 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
 
             // [humu]: we can try to check the available accelerators here
             sprintf(path, "%s%s", prefix, info->devname);
-            // fprintf(stderr, "[%s]: esp_run_parallel: after changing path, ------- path: %s\n", info->puffinname, path);
+            // fprintf(stderr, "[%s]: esp_run_parallel: after changing path, ------- path: %s\n", info->puffinname,
+            // path);
 
             info->fd = open(path, O_RDWR, 0);
 

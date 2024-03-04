@@ -133,6 +133,8 @@ int main(int argc, char **argv)
 {
     int test, n_tests, start_test = 1;
 
+    printf(" -- This is gemmU8 --\n");
+
     unsigned in_len;
     unsigned in1_len;
     unsigned out_len;

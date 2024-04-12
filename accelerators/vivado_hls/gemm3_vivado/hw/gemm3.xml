@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="gemm3" desc="Accelerator GEMM3" data_size="4" device_id="093" hls_tool="vivado_hls">
+    <param name="m1_offset" desc="m1_offset" />
+    <param name="m2_offset" desc="m2_offset" />
+    <param name="d1" desc="d1" />
+    <param name="d2" desc="d2" />
+    <param name="d3" desc="d3" />
+    <param name="m3_offset" desc="m3_offset" />
+  </accelerator>
+</sld>

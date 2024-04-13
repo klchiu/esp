@@ -71,7 +71,7 @@ typedef struct dma_info {
 #define SIZE_WORD_T SIZE_DWORD
 #endif
 
-void top(dma_word_t *out, dma_word_t *in1,
+void top(dma_word_t *out, dma_word_t *in1, dma_word_t *in2,
 	/* <<--params-->> */
 	 const unsigned conf_info_m3_offset,
 	 const unsigned conf_info_d3,
@@ -81,7 +81,10 @@ void top(dma_word_t *out, dma_word_t *in1,
 	 const unsigned conf_info_m1_offset,
 	 dma_info_t &load_ctrl, dma_info_t &store_ctrl);
 
-void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],
+void compute(word_t _in1buff[SIZE_IN1_CHUNK_DATA],
+word_t _in2buff[SIZE_IN2_CHUNK_DATA],
+const unsigned m3_offset, const unsigned d3, const unsigned d2, const unsigned d1,
+             const unsigned m2_offset, const unsigned m1_offset,
 	     word_t _outbuff[SIZE_OUT_CHUNK_DATA]);
 
 #endif

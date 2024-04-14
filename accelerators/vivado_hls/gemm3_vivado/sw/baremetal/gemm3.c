@@ -11,6 +11,164 @@
 #include <fixed_point.h>
 #include <string.h>
 
+// -- include from lenet-c
+#include "lenet.h"
+// --
+
+// #include "lenet.h"
+#include <stdlib.h>
+#include <stdio.h>
+// #include <time.h>
+
+#define FILE_TRAIN_IMAGE "train-images-idx3-ubyte"
+#define FILE_TRAIN_LABEL "train-labels-idx1-ubyte"
+#define FILE_TEST_IMAGE  "t10k-images-idx3-ubyte"
+#define FILE_TEST_LABEL  "t10k-labels-idx1-ubyte"
+#define LENET_FILE       "model.dat"
+#define COUNT_TRAIN      60000
+#define COUNT_TEST       1
+
+int read_data(unsigned char (*data)[28][28], unsigned char label[], const int count, const char data_file[],
+              const char label_file[])
+{
+    int i, j, c;
+
+    printf("[humu][read_data]: start data\n");
+
+    // token_t *mem_data = 0xA0020000;
+    for (c = 0; c < COUNT_TEST; c++) {
+        for (i = 0; i < 28; i++) {
+            for (j = 0; j < 28; j++) {
+                data[c][i][j] = 77;
+                printf("%d, %d, %d", c, i, j);
+            }
+        }
+    }
+
+    printf("[humu][read_data]: finish data\n");
+
+    // token_t *mem_label = 0xA0030000;
+    for (c = 0; c < COUNT_TEST; c++) {
+        label[c] = 6;
+    }
+
+    printf("[humu][read_data]: finish label\n");
+
+    // FILE *fp_image = fopen(data_file, "rb");
+    // FILE *fp_label = fopen(label_file, "rb");
+    // if (!fp_image || !fp_label)
+    //     return 1;
+    // fseek(fp_image, 16, SEEK_SET);
+    // fseek(fp_label, 8, SEEK_SET);
+    // fread(data, sizeof(*data) * count, 1, fp_image);
+    // fread(label, count, 1, fp_label);
+    // fclose(fp_image);
+    // fclose(fp_label);
+    return 0;
+}
+
+// void training(LeNet5 *lenet, image *train_data, uint8 *train_label, int batch_size, int total_size)
+// {
+//     for (int i = 0, percent = 0; i <= total_size - batch_size; i += batch_size) {
+//         TrainBatch(lenet, train_data + i, train_label + i, batch_size);
+//         if (i * 100 / total_size > percent)
+//             printf("batchsize:%d\ttrain:%2d%%\n", batch_size, percent = i * 100 / total_size);
+//     }
+// }
+
+int testing(LeNet5 *lenet, image *test_data, uint8 *test_label, int total_size)
+{
+    int right = 0, percent = 0;
+    for (int i = 0; i < total_size; ++i) {
+
+        printf("[humu][testing]: before Predict(), number: %d\n", i);
+
+        uint8 l = test_label[i];
+        int   p = Predict(lenet, test_data[i], 10);
+        right += l == p;
+        if (i * 100 / total_size > percent)
+            printf("test:%2d%%\n", percent = i * 100 / total_size);
+    }
+    return right;
+}
+
+// int save(LeNet5 *lenet, char filename[])
+// {
+//     FILE *fp = fopen(filename, "wb");
+//     if (!fp)
+//         return 1;
+//     fwrite(lenet, sizeof(LeNet5), 1, fp);
+//     fclose(fp);
+//     return 0;
+// }
+
+int load(LeNet5 *lenet, char filename[])
+{
+    // token_t *mem_model = 0xA0010000;
+
+    int a, b, c, d;
+
+    for (a = 0; a < INPUT; a++) {
+        for (b = 0; b < LAYER1; b++) {
+            for (c = 0; c < LENGTH_KERNEL; c++) {
+                for (d = 0; d < LENGTH_KERNEL; d++) {
+                    lenet->weight0_1[a][b][c][d] = 10;
+                }
+            }
+        }
+    }
+
+    for (a = 0; a < LAYER2; a++) {
+        for (b = 0; b < LAYER3; b++) {
+            for (c = 0; c < LENGTH_KERNEL; c++) {
+                for (d = 0; d < LENGTH_KERNEL; d++) {
+                    lenet->weight2_3[a][b][c][d] = 32;
+                }
+            }
+        }
+    }
+
+    for (a = 0; a < LAYER4; a++) {
+        for (b = 0; b < LAYER5; b++) {
+            for (c = 0; c < LENGTH_KERNEL; c++) {
+                for (d = 0; d < LENGTH_KERNEL; d++) {
+                    lenet->weight4_5[a][b][c][d] = 54;
+                }
+            }
+        }
+    }
+
+    for (a = 0; a < LAYER5 * LENGTH_FEATURE5 * LENGTH_FEATURE5; a++) {
+        for (b = 0; b < OUTPUT; b++) {
+            lenet->weight5_6[a][b] = 65;
+        }
+    }
+
+    for (a = 0; a < LAYER1; a++) {
+        lenet->bias0_1[a] = 10;
+    }
+
+    for (a = 0; a < LAYER3; a++) {
+        lenet->bias2_3[a] = 32;
+    }
+
+    for (a = 0; a < LAYER5; a++) {
+        lenet->bias4_5[a] = 54;
+    }
+
+    for (a = 0; a < OUTPUT; a++) {
+        lenet->bias5_6[a] = 65;
+    }
+
+    // FILE *fp = fopen(filename, "rb");
+    // if (!fp)
+    //     return 1;
+    // fread(lenet, sizeof(LeNet5), 1, fp);
+    // fclose(fp);
+    return 0;
+}
+// ----------------------------------------------------
+
 typedef int32_t token_t;
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st)
@@ -22,12 +180,28 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME  "sld,gemm3_vivado"
 
 /* <<--params-->> */
-const int32_t d3        = 8;
-const int32_t d2        = 8;
-const int32_t d1        = 8;
+const int32_t d3        = 2;
+const int32_t d2        = 2;
+const int32_t d1        = 2;
 const int32_t m1_offset = d1 * d3;
 const int32_t m2_offset = m1_offset + d1 * d2;
 const int32_t m3_offset = 0;
+
+// for conv2d
+const int32_t n_channels         = 2;
+const int32_t feature_map_height = 5;
+const int32_t feature_map_width  = 5;
+const int32_t n_kernels          = 2;
+const int32_t kernel_height      = 3;
+const int32_t kernel_width       = 3;
+const int32_t pad_h              = 1;
+const int32_t pad_w              = 1;
+const int32_t is_padded          = 1;
+const int32_t stride_h           = 1;
+const int32_t stride_w           = 1;
+const int32_t do_relu            = 0;
+const int32_t pool_type          = 0;
+const int32_t batch_size         = 1;
 
 // static unsigned in_words_adj;
 // static unsigned out_words_adj;
@@ -54,6 +228,14 @@ static unsigned mem_size;
 #define GEMM3_M2_OFFSET_REG 0x44
 #define GEMM3_M1_OFFSET_REG 0x40
 
+void check_mem_buf(token_t *mem, int length)
+{
+    int i;
+    for (i = 0; i < length; i++) {
+        printf("check mem[%d] = %d\n", i, mem[i]);
+    }
+}
+
 void print_matrix(int d1, int d2, int *m1_data)
 {
     printf("--------------------------------------------\n");
@@ -74,7 +256,7 @@ void init_m1(int d1, int d2, int *m1_data)
         }
     }
 
-    // print_matrix(d1, d2, m1_data);
+    print_matrix(d1, d2, m1_data);
 }
 
 void init_m2(int d2, int d3, int *m2_data)
@@ -85,7 +267,7 @@ void init_m2(int d2, int d3, int *m2_data)
         }
     }
 
-    // print_matrix(d2, d3, m2_data);
+    print_matrix(d2, d3, m2_data);
 }
 
 void gemm_pv(int d1, int d2, int d3, int *m1_data, int *m2_data, int *m3_data)
@@ -107,10 +289,6 @@ static int validate_buf(token_t *mem_out, token_t *gold)
     int j;
     int errors = 0;
 
-    for (j = 0; j < d1 * d2 * 3; j++) {
-        printf("check mem[%d] = %d\n", j, mem_out[j]);
-    }
-
     for (j = 0; j < d1 * d3; j++) {
 
         if (mem_out[m3_offset + j] != gold[j]) {
@@ -127,20 +305,23 @@ static void init_buf(token_t *mem_in, token_t *gold, int *m1_data, int *m2_data,
     int i;
     int j;
 
-    for (j = 0; j < d1 * d2; j++)
+    for (j = 0; j < d1 * d2; j++) {
         mem_in[m1_offset + j] = (token_t)m1_data[j];
+    }
 
-    for (j = 0; j < d2 * d3; j++)
-        mem_in[m2_offset + j] = (token_t)m2_data[j];
+    for (j = 0; j < d2 * d3; j++) {
+        // mem_in[m2_offset + j] = (token_t)m2_data[j];
+        mem_in[m2_offset + j] = (token_t)(j + 10);
+    }
 
-    for (j = 0; j < d1 * d3; j++)
+    for (j = 0; j < d1 * d3; j++) {
         gold[j] = (token_t)m3_data[j];
+    }
 }
 
-int main(int argc, char *argv[])
+int gemm3(int argc, char *argv[])
 {
     printf("Baremetal App of Vivado Gemm3\n");
-
 
     int                i;
     int                n;
@@ -166,7 +347,7 @@ int main(int argc, char *argv[])
     memset(m3_data, 0, d1 * d3 * sizeof(int));
     // print_matrix(d1, d3, m3_data);
     gemm_pv(d1, d2, d3, m1_data, m2_data, m3_data);
-    // print_matrix(d1, d3, m3_data);
+    print_matrix(d1, d3, m3_data);
 
     // if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
     //     in_words_adj  = m2_offset;
@@ -182,10 +363,6 @@ int main(int argc, char *argv[])
     in2_size = in2_len * sizeof(token_t);
     out_size = out_len * sizeof(token_t);
     mem_size = in1_size + in2_size + out_size;
-
-
-    // Search for the device
-    printf("Scanning device tree... \n");
 
     espdevs_tmp.addr = 0x60010000;
     // Search for the device
@@ -241,6 +418,7 @@ int main(int argc, char *argv[])
             printf("  --------------------\n");
             printf("  Generate input...\n");
             init_buf(mem, gold, m1_data, m2_data, m3_data);
+            check_mem_buf(mem, d1 * d2 * 3);
 
             // Pass common configuration parameters
 
@@ -288,10 +466,13 @@ int main(int argc, char *argv[])
 
             /* Validation */
             errors = validate_buf(mem, gold);
-            if (errors)
+            check_mem_buf(mem, d1 * d2 * 3);
+
+            if (errors) {
                 printf("  ... FAIL\n");
-            else
+            } else {
                 printf("  ... PASS\n");
+            }
         }
         aligned_free(ptable);
         aligned_free(mem);
@@ -302,5 +483,65 @@ int main(int argc, char *argv[])
     aligned_free(m2_data);
     aligned_free(m3_data);
 
+    return 0;
+}
+
+int lenet5(int argc, char *argv[])
+{
+    printf("[humu]: Start lenet5() !\n");
+
+    // image *train_data  = (image *)calloc(COUNT_TRAIN, sizeof(image));
+    // uint8 *train_label = (uint8 *)calloc(COUNT_TRAIN, sizeof(uint8));
+    image *test_data  = (image *)aligned_malloc(COUNT_TEST * sizeof(image));
+    uint8 *test_label = (uint8 *)aligned_malloc(COUNT_TEST * sizeof(uint8));
+    // if (read_data(train_data, train_label, COUNT_TRAIN, FILE_TRAIN_IMAGE, FILE_TRAIN_LABEL)) {
+    //     printf("ERROR!!!\nDataset File Not Find!Please Copy Dataset to the Floder Included the exe\n");
+    //     free(train_data);
+    //     free(train_label);
+    //     // system("pause");
+    // }
+    
+#include "test_data.h"
+    // if (read_data(test_data, test_label, COUNT_TEST, FILE_TEST_IMAGE, FILE_TEST_LABEL)) {
+    //     printf("ERROR!!!\nDataset File Not Find!Please Copy Dataset to the Floder Included the exe\n");
+    //     aligned_free(test_data);
+    //     aligned_free(test_label);
+    //     // system("pause");
+    // }
+
+    printf("[humu]: Finish read_data()\n");
+
+    LeNet5 *lenet = (LeNet5 *)aligned_malloc(sizeof(LeNet5));
+#include "model_data.h"
+    // load(lenet, LENET_FILE);
+
+    printf("[humu]: Finish load()\n");
+
+    // clock_t start     = clock();
+    int batches[] = {300};
+    // for (int i = 0; i < sizeof(batches) / sizeof(*batches); ++i)
+    //     training(lenet, train_data, train_label, batches[i], COUNT_TRAIN);
+
+    int right = testing(lenet, test_data, test_label, COUNT_TEST);
+
+    printf("[humu]: Finish testing()\n");
+
+    printf("%d/%d\n", right, COUNT_TEST);
+    // printf("Time:%u\n", (unsigned)(clock() - start));
+    // save(lenet, LENET_FILE);
+    aligned_free(lenet);
+    // free(train_data);
+    // free(train_label);
+    aligned_free(test_data);
+    aligned_free(test_label);
+    // system("pause");
+
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    // gemm3(argc, argv);
+    lenet5(argc, argv);
     return 0;
 }

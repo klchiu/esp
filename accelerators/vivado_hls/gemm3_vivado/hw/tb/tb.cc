@@ -162,7 +162,7 @@ int main(int argc, char **argv)
         }
     }
 
-    // Set golden output
+    // Calculate golden output
     memset(m3_data, 0, d1 * d3 * sizeof(int));
     // print_matrix(d1, d3, m3_data);
     gemm_pv(d1, d2, d3, m1_data, m2_data, m3_data);

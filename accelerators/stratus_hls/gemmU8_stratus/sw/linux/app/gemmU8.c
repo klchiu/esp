@@ -21,8 +21,8 @@ static void validate_buffer(token_t *acc_buf, native_t *sw_buf, unsigned len)
 #endif
         if (sw_buf[i] != val) {
             errors++;
-            // if (errors <= MAX_PRINTED_ERRORS)
-            //     printf("index %d : output %d : expected %d <-- ERROR\n", i, (int)val, (int)sw_buf[i]);
+            if (errors <= MAX_PRINTED_ERRORS)
+                printf("index %d : output %d : expected %d <-- ERROR\n", i, (int)val, (int)sw_buf[i]);
         }
     }
 

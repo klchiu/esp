@@ -84,7 +84,7 @@ void system_t::config_proc()
 	CONV_K_IN_CHANNELS = CONV_F_CHANNELS;
 	DO_RELU = 0;
 	POOL_TYPE = 1;
-	BATCH_SIZE = 2;
+	BATCH_SIZE = 1;
 
 	channels = CONV_F_CHANNELS;
         height = CONV_F_HEIGHT;

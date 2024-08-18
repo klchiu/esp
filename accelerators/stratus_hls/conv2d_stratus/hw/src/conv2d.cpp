@@ -35,12 +35,12 @@ void conv2d::load_input()
     /* <<--params-->> */
     uint16_t n_channels;
     uint16_t n_filters;
-    uint4_t filter_dim;
-    uint4_t stride;
+    uint16_t filter_dim;
+    uint16_t stride;
     bool is_padded;
     uint16_t height;
     uint16_t width;
-    uint2_t pool_type;
+    uint16_t pool_type;
     uint16_t batch_size;
     {
         HLS_PROTO("load-config");
@@ -65,7 +65,7 @@ void conv2d::load_input()
     bool ping_input = true;
     bool ping_weights = true;
     bool ping_bias = true;
-    uint4_t pad;
+    uint16_t pad;
     uint16_t output_w;
     uint16_t feature_size;
     uint16_t filter_size;
@@ -88,7 +88,7 @@ void conv2d::load_input()
     uint32_t filters_offset_start_base;
     uint32_t feature_offset_start_base;
     uint32_t bias_offset_start_base;
-    uint12_t loadable_chan, chan_iters, chan_rem;
+    uint16_t loadable_chan, chan_iters, chan_rem;
     uint16_t loadable_chan_sz, chan_rem_sz;
 
     compute_dimensions(height, width, n_channels, (bool) is_padded,
@@ -135,32 +135,32 @@ void conv2d::load_input()
     // Load
     {
 #ifndef STRATUS_HLS
-	ESP_REPORT_INFO("output_w %u", output_w);
-	ESP_REPORT_INFO("pad %u", (uint32_t) pad);
-	ESP_REPORT_INFO("feature_size %u", feature_size);
-	ESP_REPORT_INFO("filter_size %u", filter_size);
-	ESP_REPORT_INFO("filters_size %u", filters_size);
-	ESP_REPORT_INFO("max_cacheable_rows %u", max_cacheable_rows);
-	ESP_REPORT_INFO("max_cacheable_rows_init %u", max_cacheable_rows_init);
-	ESP_REPORT_INFO("max_cacheable_size %u", max_cacheable_size);
-	ESP_REPORT_INFO("max_cacheable_size_init %u", max_cacheable_size_init);
-	ESP_REPORT_INFO("max_cacheable_filters %u", max_cacheable_filters);
-	ESP_REPORT_INFO("max_cacheable_filters_size %u", max_cacheable_filters_size);
-	ESP_REPORT_INFO("max_cacheable_bias_chunks %u", max_cacheable_bias_chunks);
-	ESP_REPORT_INFO("max_cacheable_bias_size %u", max_cacheable_bias_size);
-	ESP_REPORT_INFO("total_input_chunks %u", total_input_chunks);
-	ESP_REPORT_INFO("total_filters_chunks %u", total_filters_chunks);
-	ESP_REPORT_INFO("feature_offset_incr %u", feature_offset_incr);
-	ESP_REPORT_INFO("feature_offset_incr_init %u", feature_offset_incr_init);
-	ESP_REPORT_INFO("channel_offset_incr %u", channel_offset_incr);
-	ESP_REPORT_INFO("filters_offset_start_base %u", filters_offset_start_base);
-	ESP_REPORT_INFO("bias_offset_start_base %u", bias_offset_start_base);
-	ESP_REPORT_INFO("feature_offset_start_base %u", feature_offset_start_base);
-	ESP_REPORT_INFO("loadable_chan %u", (unsigned) loadable_chan);
-	ESP_REPORT_INFO("chan_iters %u", (unsigned) chan_iters);
-	ESP_REPORT_INFO("chan_rem %u", (unsigned) chan_rem);
-	ESP_REPORT_INFO("loadable_chan_sz %u", (unsigned) loadable_chan_sz);
-	ESP_REPORT_INFO("chan_rem_sz %u", (unsigned) chan_rem_sz);
+	ESP_REPORT_INFO("[load_input]: output_w %u", output_w);
+	ESP_REPORT_INFO("[load_input]: pad %u", (uint32_t) pad);
+	ESP_REPORT_INFO("[load_input]: feature_size %u", feature_size);
+	ESP_REPORT_INFO("[load_input]: filter_size %u", filter_size);
+	ESP_REPORT_INFO("[load_input]: filters_size %u", filters_size);
+	ESP_REPORT_INFO("[load_input]: max_cacheable_rows %u", max_cacheable_rows);
+	ESP_REPORT_INFO("[load_input]: max_cacheable_rows_init %u", max_cacheable_rows_init);
+	ESP_REPORT_INFO("[load_input]: max_cacheable_size %u", max_cacheable_size);
+	ESP_REPORT_INFO("[load_input]: max_cacheable_size_init %u", max_cacheable_size_init);
+	ESP_REPORT_INFO("[load_input]: max_cacheable_filters %u", max_cacheable_filters);
+	ESP_REPORT_INFO("[load_input]: max_cacheable_filters_size %u", max_cacheable_filters_size);
+	ESP_REPORT_INFO("[load_input]: max_cacheable_bias_chunks %u", max_cacheable_bias_chunks);
+	ESP_REPORT_INFO("[load_input]: max_cacheable_bias_size %u", max_cacheable_bias_size);
+	ESP_REPORT_INFO("[load_input]: total_input_chunks %u", total_input_chunks);
+	ESP_REPORT_INFO("[load_input]: total_filters_chunks %u", total_filters_chunks);
+	ESP_REPORT_INFO("[load_input]: feature_offset_incr %u", feature_offset_incr);
+	ESP_REPORT_INFO("[load_input]: feature_offset_incr_init %u", feature_offset_incr_init);
+	ESP_REPORT_INFO("[load_input]: channel_offset_incr %u", channel_offset_incr);
+	ESP_REPORT_INFO("[load_input]: filters_offset_start_base %u", filters_offset_start_base);
+	ESP_REPORT_INFO("[load_input]: bias_offset_start_base %u", bias_offset_start_base);
+	ESP_REPORT_INFO("[load_input]: feature_offset_start_base %u", feature_offset_start_base);
+	ESP_REPORT_INFO("[load_input]: loadable_chan %u", (unsigned) loadable_chan);
+	ESP_REPORT_INFO("[load_input]: chan_iters %u", (unsigned) chan_iters);
+	ESP_REPORT_INFO("[load_input]: chan_rem %u", (unsigned) chan_rem);
+	ESP_REPORT_INFO("[load_input]: loadable_chan_sz %u", (unsigned) loadable_chan_sz);
+	ESP_REPORT_INFO("[load_input]: chan_rem_sz %u", (unsigned) chan_rem_sz);
 #endif
 	// Chunking
 	uint32_t infeature_offset_incr = channel_offset_incr * n_channels;

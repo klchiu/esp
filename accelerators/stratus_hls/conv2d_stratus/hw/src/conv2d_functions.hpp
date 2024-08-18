@@ -7,9 +7,9 @@
 
 inline void conv2d::compute_dimensions(
     const uint16_t height, const uint16_t width, const uint16_t n_channels,
-    const bool is_padded, const uint4_t stride, const uint4_t filter_dim,
-    const uint16_t n_filters, const uint2_t pool_type, const uint16_t batch_size,
-    uint16_t *output_w, uint4_t *pad,
+    const bool is_padded, const uint16_t stride, const uint16_t filter_dim,
+    const uint16_t n_filters, const uint16_t pool_type, const uint16_t batch_size,
+    uint16_t *output_w, uint16_t *pad,
     uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
     uint16_t *max_cacheable_rows, uint16_t *max_cacheable_rows_init,
     uint16_t *max_cacheable_size,  uint16_t *max_cacheable_size_init,
@@ -21,9 +21,49 @@ inline void conv2d::compute_dimensions(
     uint16_t *out_channel_pool_offset_incr,
     uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
     uint32_t *feature_offset_start_base,
-    uint12_t *loadable_chan, uint12_t *chan_iters, uint12_t *chan_rem,
+    uint16_t *loadable_chan, uint16_t *chan_iters, uint16_t *chan_rem,
     uint16_t *loadable_chan_sz, uint16_t *chan_rem_sz)
 {
+#ifndef STRATUS_HLS
+    ESP_REPORT_INFO("[compute_dimensions]: height = %u", (unsigned)height);
+    ESP_REPORT_INFO("[compute_dimensions]: width = %u", (unsigned)width);
+    ESP_REPORT_INFO("[compute_dimensions]: n_channels = %u", (unsigned)n_channels);
+    ESP_REPORT_INFO("[compute_dimensions]: is_padded = %u", (unsigned)is_padded);
+    ESP_REPORT_INFO("[compute_dimensions]: stride = %u", stride);
+    ESP_REPORT_INFO("[compute_dimensions]: filter_dim = %u", filter_dim);
+    ESP_REPORT_INFO("[compute_dimensions]: n_filters = %u", (unsigned)n_filters);
+    ESP_REPORT_INFO("[compute_dimensions]: pool_type = %u", pool_type);
+    ESP_REPORT_INFO("[compute_dimensions]: batch_size = %u", (unsigned)batch_size);
+    ESP_REPORT_INFO("[compute_dimensions]: *output_w = %u", (unsigned)*output_w);
+    ESP_REPORT_INFO("[compute_dimensions]: *pad = %u", *pad);
+    ESP_REPORT_INFO("[compute_dimensions]: *feature_size = %u", (unsigned)*feature_size);
+    ESP_REPORT_INFO("[compute_dimensions]: *filter_size = %u", (unsigned)*filter_size);
+    ESP_REPORT_INFO("[compute_dimensions]: *filters_size = %u", (unsigned)*filters_size);
+    ESP_REPORT_INFO("[compute_dimensions]: *max_cacheable_rows = %u", (unsigned)*max_cacheable_rows);
+    ESP_REPORT_INFO("[compute_dimensions]: *max_cacheable_rows_init = %u", (unsigned)*max_cacheable_rows_init);
+    ESP_REPORT_INFO("[compute_dimensions]: *max_cacheable_size = %u", (unsigned)*max_cacheable_size);
+    ESP_REPORT_INFO("[compute_dimensions]: *max_cacheable_size_init = %u", (unsigned)*max_cacheable_size_init);
+    ESP_REPORT_INFO("[compute_dimensions]: *max_cacheable_filters = %u", (unsigned)*max_cacheable_filters);
+    ESP_REPORT_INFO("[compute_dimensions]: *max_cacheable_filters_size = %u", (unsigned)*max_cacheable_filters_size);
+    ESP_REPORT_INFO("[compute_dimensions]: *max_cacheable_bias_chunks  = %u", (unsigned)*max_cacheable_bias_chunks );
+    ESP_REPORT_INFO("[compute_dimensions]: *max_cacheable_bias_size = %u", (unsigned)*max_cacheable_bias_size);
+    ESP_REPORT_INFO("[compute_dimensions]: *total_input_chunks = %u", (unsigned)*total_input_chunks);
+    ESP_REPORT_INFO("[compute_dimensions]: *total_filters_chunks = %u", (unsigned)*total_filters_chunks);
+    ESP_REPORT_INFO("[compute_dimensions]: *feature_offset_incr = %u", (unsigned)*feature_offset_incr);
+    ESP_REPORT_INFO("[compute_dimensions]: *feature_offset_incr_init = %u", (unsigned)*feature_offset_incr_init);
+    ESP_REPORT_INFO("[compute_dimensions]: *channel_offset_incr = %u", (unsigned)*channel_offset_incr);
+    ESP_REPORT_INFO("[compute_dimensions]: *out_channel_offset_incr = %u", (unsigned)*out_channel_offset_incr);
+    ESP_REPORT_INFO("[compute_dimensions]: *out_channel_pool_offset_incr = %u", (unsigned)*out_channel_pool_offset_incr);
+    ESP_REPORT_INFO("[compute_dimensions]: *filters_offset_start_base = %u", (unsigned)*filters_offset_start_base);
+    ESP_REPORT_INFO("[compute_dimensions]: *bias_offset_start_base = %u", (unsigned)*bias_offset_start_base);
+    ESP_REPORT_INFO("[compute_dimensions]: *feature_offset_start_base = %u", (unsigned)*feature_offset_start_base);
+    ESP_REPORT_INFO("[compute_dimensions]: *loadable_chan = %u", *loadable_chan);
+    ESP_REPORT_INFO("[compute_dimensions]: *chan_iters = %u", *chan_iters);
+    ESP_REPORT_INFO("[compute_dimensions]: *chan_rem = %u", *chan_rem);
+    ESP_REPORT_INFO("[compute_dimensions]: *loadable_chan_sz = %u", (unsigned)*loadable_chan_sz);
+    ESP_REPORT_INFO("[compute_dimensions]: *chan_rem_sz = %u", (unsigned)*chan_rem_sz);
+#endif
+
     uint8_t filter_dim2 = (uint8_t) filter_dim * filter_dim;
     /* Spatial dimensions of the output activation map */
     *pad = is_padded ? (filter_dim >> 1) : 0;

@@ -1,0 +1,4 @@
+# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
+APPNAME := gemm8
+include $(DRIVERS)/common.mk

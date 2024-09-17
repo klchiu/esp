@@ -33,6 +33,24 @@
 
 unsigned DMA_WORD_PER_BEAT(unsigned _st);
 
+
+
+struct gemmRun2_stratus_access {
+	struct esp_access esp;
+	/* <<--regs-->> */
+	unsigned do_relu;
+	unsigned transpose;
+	unsigned ninputs;
+	unsigned d3;
+	unsigned d2;
+	unsigned d1;
+	unsigned st_offset;
+	unsigned ld_offset1;
+	unsigned ld_offset2;
+	unsigned src_offset;
+	unsigned dst_offset;
+};
+
 typedef struct esp_accelerator_thread_info {
 	bool run;
 	char *devname;

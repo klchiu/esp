@@ -5,42 +5,170 @@
 
 #include "libesp.h"
 
+#include <dirent.h>
+
+
+#include "acc_gemm_profile.h"
+
+
+#define MAX_ENTRIES 200
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
+
+// Function to find the best accelerator with the smallest max_size >= gemm_size
+const AcceleratorEntry* find_best_accelerator(int gemm_size) {
+    const AcceleratorEntry* best_accelerator = NULL;
+
+    for (int i = 0; i < ACC_ENTRIES_COUNT; i++) {
+         // Check if the current accelerator's max_size is greater than or equal to the given gemm_size
+        if (accEntries[i].max_size >= gemm_size) {
+            // Select the accelerator with the smallest max_size
+            if (!best_accelerator || accEntries[i].max_size < best_accelerator->max_size) {
+                best_accelerator = &accEntries[i];
+            }
+        }
+    }
+
+    return best_accelerator;
+}
+
 buf2handle_node *head = NULL;
+char gemm_acc_array[16][10];
+
+int get_the_gemm_acc_max_ability(char *devname, char *puffinname)
+{
+    // return the max ability of gemm acc (taking the number from the cfg for now)
+
+    char buffer[3] = {0};
+
+    if (strstr(devname, "gemm") != NULL) // gemm found
+    {
+        char *substr = strstr(devname, "gemm");
+        substr += strlen("gemm");        // Move the pointer to the end of "gemm"
+        strncpy(buffer, substr, 2);      // Copy the next two characters to the buffer
+        return strtol(buffer, NULL, 10); // Convert the buffer to an integer
+    }
+
+    return -1;
+}
+
+void list_files(const char *path)
+{
+    struct dirent *entry;
+    DIR *dp = opendir(path);
+
+    if (dp == NULL)
+    {
+        perror("opendir");
+        return;
+    }
+
+    while ((entry = readdir(dp)))
+    {
+        printf("%s\n", entry->d_name);
+    }
+
+    closedir(dp);
+}
+
+int pick_which_gemm_to_use(esp_thread_info_t info[])
+{
+    // return two digit int to indicate which gemm to use, return -1 if using
+    // original gemm starting from the smallest one
+
+    printf("[humu]: pick_which_gemm_to_use() start\n");
+
+    int ret = -1;
+//     int gemm_acc_size;
+//     int i = 0;
+
+//     // const char *path = ".";
+//     // list_files(path);
+
+//     const char *path = "/dev/";
+
+//     struct dirent *entry;
+//     DIR *dp = opendir(path);
+
+//     if (dp == NULL)
+//     {
+//         perror("opendir");
+//         return ret;
+//     }
+
+//     printf("[humu]: pick_which_gemm_to_use() debug 1\n");
+
+
+//     while ((entry = readdir(dp)))
+//     {
+//         // printf("%s\n", entry->d_name);
+//         sprintf(gemm_acc_array[i], "%s", entry->d_name);
+//         gemm_acc_size = get_the_gemm_acc_max_ability(entry->d_name, "deadpool");
+//         // if(info->max_d123 > gemm_acc_size){
+//         if (16 > gemm_acc_size)
+//         {
+//             ret = gemm_acc_size;
+//         }
+//         i++;
+//     }
+
+//     closedir(dp);
+
+    printf("[humu]: gemm_size from pick_which_gemm_to_use: %d\n", ret);
+    return ret;
+}
 
 int lock_a_device2(char *devname_noid, char *puffinname)
 {
-    FILE * pFile;
-    char   acc[16][40];
-    char   acc_lock[16][40];
+    // lock_a_device2: if find the available accelerator, return the id, else
+    // return -1
+
+    FILE *pFile;
+    char acc[16][40];
+    char acc_lock[16][40];
     int8_t i = 0;
     // int8_t dev_id      = -1;
-    int8_t acc_num_max = 4; // assume maximum number of accelerator is 4 at the beginning
-    int    ret_flock;
+    int8_t acc_num_max =
+        4; // assume maximum number of accelerator is 4 at the beginning
+    int ret_flock;
 
     // Check the available resources
     // for (int8_t i = 0; i < 4; i++) {
 
-    while (true) {
+    fprintf(stderr, "[%s]: lock this: %s\n", puffinname, devname_noid);
+
+    while (true)
+    {
         i = i % acc_num_max;
 
         sprintf(acc[i], "/dev/%s.%d", devname_noid, i);
 
-        if (access(acc[i], F_OK) == 0) { // device exists
+        if (access(acc[i], F_OK) == 0)
+        { // device exists
             // fprintf(stderr, "[%s]: Found --> %s\n", puffinname, acc[i]);
 
             sprintf(acc_lock[i], "/lock/%s.%d", devname_noid, i);
 
-            if (access(acc_lock[i], F_OK) != 0) { // lock not exists
-                // fprintf(stderr, "[%s]: Lock NOT exists --> %s\n", puffinname, acc_lock[i]);
+            if (access(acc_lock[i], F_OK) != 0)
+            { // lock not exists
+                // fprintf(stderr, "[%s]: Lock NOT exists --> %s\n", puffinname,
+                // acc_lock[i]);
 
                 pFile = fopen(acc_lock[i], "w");
-                if (pFile != NULL) {
+                if (pFile != NULL)
+                {
                     fputs("This file serves as a lock for accelerator.\n", pFile);
                 }
                 fclose(pFile);
-                // fprintf(stderr, "[%s]: Create lock file --> %s\n", puffinname, acc_lock[i]);
-            } else { // lock exists
-                // fprintf(stderr, "[%s]: Lock exists --> %s\n", puffinname, acc_lock[i]);
+                // fprintf(stderr, "[%s]: Create lock file --> %s\n", puffinname,
+                // acc_lock[i]);
+            }
+            else
+            { // lock exists
+                // fprintf(stderr, "[%s]: Lock exists --> %s\n", puffinname,
+                // acc_lock[i]);
                 i++;
                 continue;
             }
@@ -53,19 +181,27 @@ int lock_a_device2(char *devname_noid, char *puffinname)
             pFile = fopen(acc_lock[i], "r");
 
             ret_flock = flock(fileno(pFile), LOCK_EX | LOCK_NB);
-            if (ret_flock == -1) { // fail to lock it
-                if (errno == EWOULDBLOCK) {
-                    // fprintf(stderr, "[%s]: lock file was locked, keep finding the next available accelerator\n",
-                    // puffinname);
+            if (ret_flock == -1)
+            { // fail to lock it
+                if (errno == EWOULDBLOCK)
+                {
+                    // fprintf(stderr, "[%s]: lock file was locked, keep finding the next
+                    // available accelerator\n", puffinname);
                     i++;
                     continue;
-                } else {
-                    fprintf(stderr, "[%s]: other lock error --> errno = %d\n", puffinname, errno);
+                }
+                else
+                {
+                    fprintf(stderr, "[%s]: other lock error --> errno = %d\n", puffinname,
+                            errno);
                     return -1;
                 }
-            } else { // successfully lock it
+            }
+            else
+            { // successfully lock it
                 flock(fileno(pFile), LOCK_EX);
-                // fprintf(stderr, "[%s]: lock file was unlocked, lock it: %s\n", puffinname, acc_lock[i]);
+                // fprintf(stderr, "[%s]: lock file was unlocked, lock it: %s\n",
+                // puffinname, acc_lock[i]);
                 return i;
             }
             fclose(pFile);
@@ -77,49 +213,59 @@ int lock_a_device2(char *devname_noid, char *puffinname)
         i++;
     }
 
+    fprintf(stderr, "[%s]: lock this: %s done\n", puffinname, devname_noid);
+
+
     return -1;
 }
 
 int unlock_a_device2(char *devname, char *puffinname)
 {
+    // unlock_a_device2: release the accelerator, return flock
+
     FILE *pFile;
-    char  acc_lock[40];
-    int   ret_flock = -1;
+    char acc_lock[40];
+    int ret_flock = -1;
 
     sprintf(acc_lock, "/lock/%s", devname);
     pFile = fopen(acc_lock, "r");
 
-    // fprintf(stderr, "[%s]: unlock this: %s\n", puffinname, acc_lock);
+    fprintf(stderr, "[%s]: unlock this: %s\n", puffinname, acc_lock);
     // unlock the acc_lock file
     ret_flock = flock(fileno(pFile), LOCK_UN);
-    // fprintf(stderr, "[%s]: unlock_a_device2() ret_flock: %d\n", puffinname, ret_flock);
+    // fprintf(stderr, "[%s]: unlock_a_device2() ret_flock: %d\n", puffinname,
+    // ret_flock);
 
     fclose(pFile);
 
-    // fprintf(stderr, "[%s]: Let's just remove the lock file: %s\n", puffinname, acc_lock);
+    // fprintf(stderr, "[%s]: Let's just remove the lock file: %s\n", puffinname,
+    // acc_lock);
     remove(acc_lock);
+
+    fprintf(stderr, "[%s]: leave unlock_a_device2 %s\n", puffinname, acc_lock);
 
     return ret_flock;
 }
 
-
-
-void insert_buf(void *buf, contig_handle_t *handle, enum contig_alloc_policy policy)
+void insert_buf(void *buf, contig_handle_t *handle,
+                enum contig_alloc_policy policy)
 {
     buf2handle_node *new = malloc(sizeof(buf2handle_node));
-    new->buf             = buf;
-    new->handle          = handle;
-    new->policy          = policy;
+    new->buf = buf;
+    new->handle = handle;
+    new->policy = policy;
 
     new->next = head;
-    head      = new;
+    head = new;
 }
 
 contig_handle_t *lookup_handle(void *buf, enum contig_alloc_policy *policy)
 {
     buf2handle_node *cur = head;
-    while (cur != NULL) {
-        if (cur->buf == buf) {
+    while (cur != NULL)
+    {
+        if (cur->buf == buf)
+        {
             if (policy != NULL)
                 *policy = cur->policy;
             return cur->handle;
@@ -132,7 +278,8 @@ contig_handle_t *lookup_handle(void *buf, enum contig_alloc_policy *policy)
 void remove_buf(void *buf)
 {
     buf2handle_node *cur = head;
-    if (cur->buf == buf) {
+    if (cur->buf == buf)
+    {
         head = cur->next;
         contig_free(*(cur->handle));
         free(cur);
@@ -140,9 +287,10 @@ void remove_buf(void *buf)
     }
 
     buf2handle_node *prev;
-    while (cur != NULL && cur->buf != buf) {
+    while (cur != NULL && cur->buf != buf)
+    {
         prev = cur;
-        cur  = cur->next;
+        cur = cur->next;
     }
 
     if (cur == NULL)
@@ -164,15 +312,17 @@ unsigned DMA_WORD_PER_BEAT(unsigned _st) { return (sizeof(void *) / _st); }
 void *accelerator_thread(void *ptr)
 {
     esp_thread_info_t *info = (esp_thread_info_t *)ptr;
-    struct timespec    th_start;
-    struct timespec    th_end;
-    int                rc = 0;
+    struct timespec th_start;
+    struct timespec th_end;
+    int rc = 0;
 
     gettime(&th_start);
-    // fprintf(stderr, "[humu]: accelerator_thread: before ioctl, devname: %s\n", info->devname);
+    // fprintf(stderr, "[humu]: accelerator_thread: before ioctl, devname: %s\n",
+    // info->devname);
     rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
     gettime(&th_end);
-    if (rc < 0) {
+    if (rc < 0)
+    {
         perror("ioctl");
     }
 
@@ -183,15 +333,16 @@ void *accelerator_thread(void *ptr)
 
 void *accelerator_thread_p2p(void *ptr)
 {
-    struct thread_args *args   = (struct thread_args *)ptr;
-    esp_thread_info_t * thread = args->info;
-    unsigned            nacc   = args->nacc;
-    int                 rc     = 0;
-    int                 i;
+    struct thread_args *args = (struct thread_args *)ptr;
+    esp_thread_info_t *thread = args->info;
+    unsigned nacc = args->nacc;
+    int rc = 0;
+    int i;
 
     pthread_t *threads = malloc(nacc * sizeof(pthread_t));
 
-    for (i = 0; i < nacc; i++) {
+    for (i = 0; i < nacc; i++)
+    {
         esp_thread_info_t *info = thread + i;
         if (!info->run)
             continue;
@@ -200,7 +351,8 @@ void *accelerator_thread_p2p(void *ptr)
             perror("pthread_create");
     }
 
-    for (i = 0; i < nacc; i++) {
+    for (i = 0; i < nacc; i++)
+    {
         esp_thread_info_t *info = thread + i;
         if (!info->run)
             continue;
@@ -216,51 +368,55 @@ void *accelerator_thread_p2p(void *ptr)
 
 void *accelerator_thread_serial(void *ptr)
 {
-    struct thread_args *args   = (struct thread_args *)ptr;
-    esp_thread_info_t * thread = args->info;
-    unsigned            nacc   = args->nacc;
-    int                 i;
+    struct thread_args *args = (struct thread_args *)ptr;
+    esp_thread_info_t *thread = args->info;
+    unsigned nacc = args->nacc;
+    int i;
     // int                 dev_id = -1;
     int k = 0;
     k++;
 
-    for (i = 0; i < nacc; i++) {
+    for (i = 0; i < nacc; i++)
+    {
 
-        struct timespec    th_start;
-        struct timespec    th_end;
-        int                rc   = 0;
+        struct timespec th_start;
+        struct timespec th_end;
+        int rc = 0;
         esp_thread_info_t *info = thread + i;
 
         if (!info->run)
             continue;
 
-        // fprintf(stderr, "[humu]: accelerator_thread_serial: dev_id = %d\n", dev_id);
-        // fprintf(stderr, "[humu]: accelerator_thread_serial: strlen(info->devname) = %ld\n", strlen(info->devname));
+        // fprintf(stderr, "[humu]: accelerator_thread_serial: dev_id = %d\n",
+        // dev_id); fprintf(stderr, "[humu]: accelerator_thread_serial:
+        // strlen(info->devname) = %ld\n", strlen(info->devname));
 
         gettime(&th_start);
-        // fprintf(stderr, "[humu]: accelerator_thread_serial: before ioctl, ------- devname: %s\n", info->devname);
-        // fprintf(stderr, "[humu]: fd: %d, ioctl_req: %d\n", info->fd, info->ioctl_req);
-        // fprintf(stderr, "    contig->unused  = %d\n", info->esp_desc->contig->unused);
-        // fprintf(stderr, "    run             = %d\n", info->esp_desc->run);
-        // fprintf(stderr, "    p2p_store       = %d\n", info->esp_desc->p2p_store);
-        // fprintf(stderr, "    p2p_nsrcs       = %d\n", info->esp_desc->p2p_nsrcs);
-        // fprintf(stderr, "    coherence       = %d\n", info->esp_desc->coherence);
-        // fprintf(stderr, "    footprint       = %d\n", info->esp_desc->footprint);
-        // fprintf(stderr, "    alloc_policy    = %d\n", info->esp_desc->alloc_policy);
-        // fprintf(stderr, "    ddr_node        = %d\n", info->esp_desc->ddr_node);
-        // fprintf(stderr, "    in_place        = %d\n", info->esp_desc->in_place);
-        // fprintf(stderr, "    reuse_factor    = %d\n", info->esp_desc->reuse_factor);
+        // fprintf(stderr, "[humu]: accelerator_thread_serial: before ioctl, -------
+        // devname: %s\n", info->devname); fprintf(stderr, "[humu]: fd: %d,
+        // ioctl_req: %d\n", info->fd, info->ioctl_req); fprintf(stderr, "
+        // contig->unused  = %d\n", info->esp_desc->contig->unused); fprintf(stderr,
+        // "    run             = %d\n", info->esp_desc->run); fprintf(stderr, "
+        // p2p_store       = %d\n", info->esp_desc->p2p_store); fprintf(stderr, "
+        // p2p_nsrcs       = %d\n", info->esp_desc->p2p_nsrcs); fprintf(stderr, "
+        // coherence       = %d\n", info->esp_desc->coherence); fprintf(stderr, "
+        // footprint       = %d\n", info->esp_desc->footprint); fprintf(stderr, "
+        // alloc_policy    = %d\n", info->esp_desc->alloc_policy); fprintf(stderr, "
+        // ddr_node        = %d\n", info->esp_desc->ddr_node); fprintf(stderr, "
+        // in_place        = %d\n", info->esp_desc->in_place); fprintf(stderr, "
+        // reuse_factor    = %d\n", info->esp_desc->reuse_factor);
 
         rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
         // sleep(5);
         // for (k = 0 ; k < 200; k++){
         //     fprintf(stderr, "%s\t%d\n", info->devname, k);
         // }
-        // fprintf(stderr, "[humu]: accelerator_thread_serial: after ioctl, ------- puffinname: %s\n",
-        // info->puffinname);
+        // fprintf(stderr, "[humu]: accelerator_thread_serial: after ioctl, -------
+        // puffinname: %s\n", info->puffinname);
 
         gettime(&th_end);
-        if (rc < 0) {
+        if (rc < 0)
+        {
             perror("ioctl");
         }
 
@@ -274,50 +430,56 @@ void *accelerator_thread_serial(void *ptr)
 
 void *esp_alloc_policy(struct contig_alloc_params params, size_t size)
 {
-    contig_handle_t *handle     = malloc(sizeof(contig_handle_t));
-    void *           contig_ptr = contig_alloc_policy(params, size, handle);
+    contig_handle_t *handle = malloc(sizeof(contig_handle_t));
+    void *contig_ptr = contig_alloc_policy(params, size, handle);
     insert_buf(contig_ptr, handle, params.policy);
     return contig_ptr;
 }
 
 void *esp_alloc(size_t size)
 {
-    contig_handle_t *handle     = malloc(sizeof(contig_handle_t));
-    void *           contig_ptr = contig_alloc(size, handle);
+    contig_handle_t *handle = malloc(sizeof(contig_handle_t));
+    void *contig_ptr = contig_alloc(size, handle);
     insert_buf(contig_ptr, handle, CONTIG_ALLOC_PREFERRED);
     return contig_ptr;
 }
 
-static void esp_config(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nacc)
+static void esp_config(esp_thread_info_t *cfg[], unsigned nthreads,
+                       unsigned *nacc)
 {
     int i, j;
-    for (i = 0; i < nthreads; i++) {
+    for (i = 0; i < nthreads; i++)
+    {
         unsigned len = nacc[i];
-        for (j = 0; j < len; j++) {
+        for (j = 0; j < len; j++)
+        {
             esp_thread_info_t *info = cfg[i] + j;
             if (!info->run)
                 continue;
 
             enum contig_alloc_policy policy;
-            contig_handle_t *        handle = lookup_handle(info->hw_buf, &policy);
+            contig_handle_t *handle = lookup_handle(info->hw_buf, &policy);
 
-            (info->esp_desc)->contig       = contig_to_khandle(*handle);
-            (info->esp_desc)->ddr_node     = contig_to_most_allocated(*handle);
+            (info->esp_desc)->contig = contig_to_khandle(*handle);
+            (info->esp_desc)->ddr_node = contig_to_most_allocated(*handle);
             (info->esp_desc)->alloc_policy = policy;
-            (info->esp_desc)->run          = true;
+            (info->esp_desc)->run = true;
         }
     }
 }
 
-static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns, int nthreads, unsigned *nacc)
+static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
+                            int nthreads, unsigned *nacc)
 {
     int i, j;
 
     // fprintf(stderr, "[humu]: print_time_info\n");
     fprintf(stderr, "  > Test time: %llu ns\n", hw_ns);
-    for (i = 0; i < nthreads; i++) {
+    for (i = 0; i < nthreads; i++)
+    {
         unsigned len = nacc[i];
-        for (j = 0; j < len; j++) {
+        for (j = 0; j < len; j++)
+        {
             esp_thread_info_t *cur = info[i] + j;
             if (cur->run)
                 fprintf(stderr, "    - %s time: %llu ns\n", cur->devname, cur->hw_ns);
@@ -325,26 +487,110 @@ static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
     }
 }
 
+static void print_accelerator_entry(const AcceleratorEntry* entry, int gemm_size)
+{
+    printf("[humu]: [%d] acc_name = %s\n", gemm_size, entry->acc_name);
+    printf("[humu]: [%d] gemm_size = %d\n", gemm_size, entry->gemm_size);
+    printf("[humu]: [%d] speedup = %f\n", gemm_size, entry->speedup);
+    printf("[humu]: [%d] max_size = %d\n", gemm_size, entry->max_size);
+}
+
 void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 {
     int i;
     int dev_id = -1;
 
+    char gemmname_noid[20];
 
-    dev_id = lock_a_device2(cfg->devname_noid, cfg->puffinname);
-    if (dev_id < 0) {
+    const AcceleratorEntry* best_accelerator = NULL;
+
+
+
+    // printf("[humu]: check the return of find_best_accelerator function\n");
+    // int gemm_size = -1;
+    // for (gemm_size = 0; gemm_size < 100; gemm_size++){
+    //     best_accelerator = find_best_accelerator(gemm_size);
+    //    print_accelerator_entry(best_accelerator, gemm_size);
+    // }
+
+
+    if (strstr(cfg->devname_noid, "gemm") != NULL) // if we are using gemm
+    {
+        printf("[humu]: It's a GeMM operation!\n");
+
+        struct gemmRun2_stratus_access *tmp = (struct gemmRun2_stratus_access *)cfg[0].esp_desc;
+        // printf("[humu]: d1 = %d\n", tmp->d1);
+        // printf("[humu]: d2 = %d\n", tmp->d2);
+        // printf("[humu]: d3 = %d\n", tmp->d3);
+        int max_d123 = MAX(tmp->d1, MAX(tmp->d2, tmp->d3));
+        // printf("[humu]: max_d123 = %d\n", max_d123);
+
+        best_accelerator = find_best_accelerator(max_d123);
+        print_accelerator_entry(best_accelerator, max_d123);
+
+        sprintf(gemmname_noid, "%s%s", best_accelerator->acc_name, "_stratus");
+        
+        printf("[humu]: gemmname_noid = %s\n", gemmname_noid);
+
+        dev_id = lock_a_device2(gemmname_noid, cfg->puffinname);
+
+/*
+        // gemm_size = pick_which_gemm_to_use(cfg);
+        // gemm_size = 8;
+
+        if (gemm_size > 0 && gemm_size <= 128)
+        {
+            // use the fixed size gemm
+            sprintf(gemmname_noid, "%s%d%s", "gemm", gemm_size, "_stratus");
+            printf("[ESP_RUN]: Use the Fixed size Gemm!\t\t\tgemm_size = %d, gemmname_noid: %s, devname_noid: %s\n",
+                   gemm_size, gemmname_noid, cfg->devname_noid);
+
+            dev_id = lock_a_device2(gemmname_noid, cfg->puffinname);
+        }
+        else if (gemm_size == -1 || gemm_size > 128)
+        {
+            // use the original gemm
+            printf("[ESP_RUN]: Use the original Gemm!\t\t\tgemm_size = %d\n", gemm_size);
+            dev_id = lock_a_device2(cfg->devname_noid, cfg->puffinname);
+        }
+        else
+        {
+            // shouldn't execute this line
+            printf("[ESP_RUN]: You SHOULDN'T SEE THIS MESSAGE!\n");
+            return;
+        }
+*/
+    }
+    else // if we are using other acc
+    {
+        printf("[humu]: It's not a GeMM operation!\n");
+        dev_id = lock_a_device2(cfg->devname_noid, cfg->puffinname);
+    }
+
+    // dev_id = lock_a_device2(cfg->devname_noid, cfg->puffinname);
+
+    if (dev_id < 0)
+    {
         fprintf(stderr, "Failed to find a device!\n");
         return;
     }
+    
+    printf("[ESP_RUN]: debug 3\n");
+
+    fprintf(stderr, "---- in esp_run() %s\n", cfg->puffinname);
 
     // dev_id = 1;
 
-    // [humu]: there should be a better way of changing the dev number in devname c string
+    // [humu]: there should be a better way of changing the dev number in devname
+    // c string
     char *temp_name;
-    if (dev_id < 10) {
+    if (dev_id < 10)
+    {
         temp_name = malloc(sizeof(char) * (strlen(cfg->devname)));
         sprintf(temp_name, "%s.%d", cfg->devname_noid, dev_id);
-    } else {
+    }
+    else
+    {
         temp_name = malloc(sizeof(char) * (strlen(cfg->devname) + 1));
         sprintf(temp_name, "%s.%d", cfg->devname_noid, dev_id);
     }
@@ -352,22 +598,26 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
     cfg->devname = temp_name;
 
-    // fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d, devname: %s\n", cfg->puffinname,
-    // dev_id,
+    // fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d,
+    // devname: %s\n", cfg->puffinname, dev_id,
     //              cfg->devname);
 
-    if (thread_is_p2p(&cfg[0])) {
+    if (thread_is_p2p(&cfg[0]))
+    {
         esp_thread_info_t *cfg_ptrs[1];
         cfg_ptrs[0] = cfg;
 
         esp_run_parallel(cfg_ptrs, 1, &nacc);
-    } else {
+    }
+    else
+    {
         // fprintf(stderr, "[humu]: esp_run, before malloc 1\n");
         esp_thread_info_t **cfg_ptrs = malloc(sizeof(esp_thread_info_t *) * nacc);
         // fprintf(stderr, "[humu]: esp_run, before malloc 2\n");
         unsigned *nacc_arr = malloc(sizeof(unsigned) * nacc);
 
-        for (i = 0; i < nacc; i++) {
+        for (i = 0; i < nacc; i++)
+        {
             nacc_arr[i] = 1;
             cfg_ptrs[i] = &cfg[i];
         }
@@ -378,35 +628,50 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     }
 
 
-    unlock_a_device2(cfg->devname, cfg->puffinname);
+    if (strstr(cfg->devname_noid, "gemm") != NULL) // if we are using gemm
+    {
+        unlock_a_device2(gemmname_noid, cfg->puffinname);
+    }
+    else // if we are using other acc
+    {
+        unlock_a_device2(cfg->devname, cfg->puffinname);
+    }
+    fprintf(stderr, "[humu]: leave esp_run()\n");
 }
 
-unsigned long long esp_run_parallel_no_print(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nacc)
+unsigned long long esp_run_parallel_no_print(esp_thread_info_t *cfg[],
+                                             unsigned nthreads,
+                                             unsigned *nacc)
 {
-    int                i, j;
+    int i, j;
     unsigned long long acc_time;
-    struct timespec    th_start;
-    struct timespec    th_end;
-    pthread_t *        thread = malloc(nthreads * sizeof(pthread_t));
-    int                rc     = 0;
+    struct timespec th_start;
+    struct timespec th_end;
+    pthread_t *thread = malloc(nthreads * sizeof(pthread_t));
+    int rc = 0;
     esp_config(cfg, nthreads, nacc);
-    for (i = 0; i < nthreads; i++) {
+    for (i = 0; i < nthreads; i++)
+    {
         unsigned len = nacc[i];
-        for (j = 0; j < len; j++) {
-            esp_thread_info_t *info   = cfg[i] + j;
-            const char *       prefix = "/dev/";
-            char               path[70];
+        for (j = 0; j < len; j++)
+        {
+            esp_thread_info_t *info = cfg[i] + j;
+            const char *prefix = "/dev/";
+            char path[70];
 
-            if (strlen(info->devname) > 64) {
+            if (strlen(info->devname) > 64)
+            {
                 contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
                 contig_free(*handle);
-                die("Error: device name %s exceeds maximum length of 64 characters\n", info->devname);
+                die("Error: device name %s exceeds maximum length of 64 characters\n",
+                    info->devname);
             }
 
             sprintf(path, "%s%s", prefix, info->devname);
 
             info->fd = open(path, O_RDWR, 0);
-            if (info->fd < 0) {
+            if (info->fd < 0)
+            {
                 contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
                 contig_free(*handle);
                 die_errno("fopen failed\n");
@@ -415,33 +680,42 @@ unsigned long long esp_run_parallel_no_print(esp_thread_info_t *cfg[], unsigned 
     }
 
     gettime(&th_start);
-    for (i = 0; i < nthreads; i++) {
+    for (i = 0; i < nthreads; i++)
+    {
         struct thread_args *args = malloc(sizeof(struct thread_args));
         ;
         args->info = cfg[i];
         args->nacc = nacc[i];
 
-        if (thread_is_p2p(cfg[i])) {
+        if (thread_is_p2p(cfg[i]))
+        {
             if (nthreads == 1) // [humu]: no need to create a new thread
                 accelerator_thread_p2p((void *)args);
             else
-                rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p, (void *)args);
-        } else {
+                rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p,
+                                    (void *)args);
+        }
+        else
+        {
             if (nthreads == 1) // [humu]: no need to create a new thread
                 accelerator_thread_serial((void *)args);
             else
-                rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void *)args);
+                rc = pthread_create(&thread[i], NULL, accelerator_thread_serial,
+                                    (void *)args);
         }
-        if (rc != 0) {
+        if (rc != 0)
+        {
             perror("pthread_create");
         }
     }
 
-    for (i = 0; i < nthreads; i++) {
+    for (i = 0; i < nthreads; i++)
+    {
         if (nthreads > 1) // [humu]: no need to join the thread if nthreads == 1
             rc = pthread_join(thread[i], NULL);
 
-        if (rc != 0) {
+        if (rc != 0)
+        {
             perror("pthread_join");
         }
     }
@@ -455,88 +729,107 @@ unsigned long long esp_run_parallel_no_print(esp_thread_info_t *cfg[], unsigned 
     return acc_time;
 }
 
-void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nacc)
+void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads,
+                      unsigned *nacc)
 {
     int i, j;
     // unsigned long long acc_time;
     struct timespec th_start;
     struct timespec th_end;
-    pthread_t *     thread = malloc(nthreads * sizeof(pthread_t));
-    int             rc     = 0;
+    pthread_t *thread = malloc(nthreads * sizeof(pthread_t));
+    int rc = 0;
     // int            dev_id = -1;
 
     // fprintf(stderr, "[humu]: esp_run_parallel()\n");
 
     esp_config(cfg, nthreads, nacc);
-    for (i = 0; i < nthreads; i++) {
+    for (i = 0; i < nthreads; i++)
+    {
         unsigned len = nacc[i];
-        for (j = 0; j < len; j++) {
-            esp_thread_info_t *info   = cfg[i] + j;
-            const char *       prefix = "/dev/";
-            char               path[70];
+        for (j = 0; j < len; j++)
+        {
+            esp_thread_info_t *info = cfg[i] + j;
+            const char *prefix = "/dev/";
+            char path[70];
 
-            // fprintf(stderr, "[%s]: esp_run_parallel: after changing devname, ------- devname: %s\n",
-            // info->puffinname,
+            // fprintf(stderr, "[%s]: esp_run_parallel: after changing devname,
+            // ------- devname: %s\n", info->puffinname,
             //         info->devname);
 
-            if (strlen(info->devname) > 64) {
+            if (strlen(info->devname) > 64)
+            {
                 contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
                 contig_free(*handle);
-                die("Error: device name %s exceeds maximum length of 64 characters\n", info->devname);
+                die("Error: device name %s exceeds maximum length of 64 characters\n",
+                    info->devname);
             }
 
             // [humu]: we can try to check the available accelerators here
             sprintf(path, "%s%s", prefix, info->devname);
-            // fprintf(stderr, "[%s]: esp_run_parallel: after changing path, ------- path: %s\n", info->puffinname,
-            // path);
+            // fprintf(stderr, "[%s]: esp_run_parallel: after changing path, -------
+            // path: %s\n", info->puffinname, path);
 
             info->fd = open(path, O_RDWR, 0);
 
-            // fprintf(stderr, "[%s]: esp_run_parallel: after open path, ------- path: %s\n", info->puffinname, path);
+            // fprintf(stderr, "[%s]: esp_run_parallel: after open path, ------- path:
+            // %s\n", info->puffinname, path);
 
-            if (info->fd < 0) {
+            if (info->fd < 0)
+            {
                 contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
                 contig_free(*handle);
                 die_errno("fopen failed\n");
             }
-            // fprintf(stderr, "[%s]: esp_run_parallel: after open path 2, ------- path: %s\n", info->puffinname, path);
+            // fprintf(stderr, "[%s]: esp_run_parallel: after open path 2, -------
+            // path: %s\n", info->puffinname, path);
         }
     }
 
     gettime(&th_start);
-    for (i = 0; i < nthreads; i++) {
+    for (i = 0; i < nthreads; i++)
+    {
         struct thread_args *args = malloc(sizeof(struct thread_args));
 
         args->info = cfg[i];
         args->nacc = nacc[i];
 
-        if (thread_is_p2p(cfg[i])) {
+        if (thread_is_p2p(cfg[i]))
+        {
             if (nthreads == 1) // [humu]: no need to create a new thread
                 accelerator_thread_p2p((void *)args);
             else
-                rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p, (void *)args);
-        } else {
+                rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p,
+                                    (void *)args);
+        }
+        else
+        {
             if (nthreads == 1) // [humu]: no need to create a new thread
             {
-                // fprintf(stderr, "[humu]: esp_run_parallel(), nthreads = %d, devname = %s\n", nthreads,
-                // args->info->devname);
+                // fprintf(stderr, "[humu]: esp_run_parallel(), nthreads = %d, devname =
+                // %s\n", nthreads, args->info->devname);
                 accelerator_thread_serial((void *)args);
-            } else {
-                // fprintf(stderr, "[humu]: esp_run_parallel(), nthreads = %d, devname = %s\n", nthreads,
-                // args->info->devname);
-                rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void *)args);
+            }
+            else
+            {
+                // fprintf(stderr, "[humu]: esp_run_parallel(), nthreads = %d, devname =
+                // %s\n", nthreads, args->info->devname);
+                rc = pthread_create(&thread[i], NULL, accelerator_thread_serial,
+                                    (void *)args);
             }
         }
-        if (rc != 0) {
+        if (rc != 0)
+        {
             perror("pthread_create");
         }
     }
 
-    for (i = 0; i < nthreads; i++) {
+    for (i = 0; i < nthreads; i++)
+    {
         if (nthreads > 1) // [humu]: no need to join the thread if nthreads == 1
             rc = pthread_join(thread[i], NULL);
 
-        if (rc != 0) {
+        if (rc != 0)
+        {
             perror("pthread_join");
         }
     }
@@ -544,7 +837,8 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
     gettime(&th_end);
     free(thread);
 
-    // fprintf(stderr, "[humu]: esp_run_parallel, before calling print_time_info\n");
+    // fprintf(stderr, "[humu]: esp_run_parallel, before calling
+    // print_time_info\n");
     print_time_info(cfg, ts_subtract(&th_start, &th_end), nthreads, nacc);
 
     return;
@@ -552,7 +846,8 @@ void esp_run_parallel(esp_thread_info_t *cfg[], unsigned nthreads, unsigned *nac
 
 void esp_run_1_no_thread(esp_thread_info_t cfg[], unsigned nacc)
 {
-    if (nacc != 1) {
+    if (nacc != 1)
+    {
         perror("nacc != 1");
         return;
     }
@@ -564,18 +859,21 @@ void esp_run_1_no_thread(esp_thread_info_t cfg[], unsigned nacc)
     esp_config(&cfg, 1, &nacc);
 
     const char *prefix = "/dev/";
-    char        path[70];
+    char path[70];
 
-    if (strlen(cfg->devname) > 64) {
+    if (strlen(cfg->devname) > 64)
+    {
         contig_handle_t *handle = lookup_handle(cfg->hw_buf, NULL);
         contig_free(*handle);
-        die("Error: device name %s exceeds maximum length of 64 characters\n", cfg->devname);
+        die("Error: device name %s exceeds maximum length of 64 characters\n",
+            cfg->devname);
     }
 
     sprintf(path, "%s%s", prefix, cfg->devname);
 
     cfg->fd = open(path, O_RDWR, 0);
-    if (cfg->fd < 0) {
+    if (cfg->fd < 0)
+    {
         contig_handle_t *handle = lookup_handle(cfg->hw_buf, NULL);
         contig_free(*handle);
         die_errno("fopen failed\n");
@@ -589,7 +887,8 @@ void esp_run_1_no_thread(esp_thread_info_t cfg[], unsigned nacc)
 
     accelerator_thread_serial((void *)args);
 
-    if (rc != 0) {
+    if (rc != 0)
+    {
         perror("pthread_create");
     }
 
@@ -599,21 +898,26 @@ void esp_run_1_no_thread(esp_thread_info_t cfg[], unsigned nacc)
 
 unsigned long long esp_run_no_print(esp_thread_info_t cfg[], unsigned nacc)
 {
-    // [humu]: this api should be the same as esp_run except no print and return the acc time instead
+    // [humu]: this api should be the same as esp_run except no print and return
+    // the acc time instead
 
-    int                i;
+    int i;
     unsigned long long acc_time;
 
-    if (thread_is_p2p(&cfg[0])) {
+    if (thread_is_p2p(&cfg[0]))
+    {
         esp_thread_info_t *cfg_ptrs[1];
         cfg_ptrs[0] = cfg;
 
         acc_time = esp_run_parallel_no_print(cfg_ptrs, 1, &nacc);
-    } else {
+    }
+    else
+    {
         esp_thread_info_t **cfg_ptrs = malloc(sizeof(esp_thread_info_t *) * nacc);
-        unsigned *          nacc_arr = malloc(sizeof(unsigned) * nacc);
+        unsigned *nacc_arr = malloc(sizeof(unsigned) * nacc);
 
-        for (i = 0; i < nacc; i++) {
+        for (i = 0; i < nacc; i++)
+        {
             nacc_arr[i] = 1;
             cfg_ptrs[i] = &cfg[i];
         }

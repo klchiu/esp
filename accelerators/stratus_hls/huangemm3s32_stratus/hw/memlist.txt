@@ -1,0 +1,4 @@
+huangemm3s32_plm_block_in_dma32 32 32 2w:0r 0w:2r
+huangemm3s32_plm_block_out_dma32 32 32 2w:0r 0w:2r
+huangemm3s32_plm_block_in_dma64 32 32 2w:0r 0w:2r
+huangemm3s32_plm_block_out_dma64 32 32 2w:0r 0w:2r

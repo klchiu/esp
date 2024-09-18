@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="huangemm3s64" desc="Accelerator HUANGEMM3S64" data_size="4" device_id="234" hls_tool="stratus_hls">
+    <param name="rows" desc="huangemm3s64_len" />
+    <param name="cols" desc="huangemm3s64_vec" />
+    <param name="loaded_cols" desc="huangemm3s64_n" />
+  </accelerator>
+</sld>

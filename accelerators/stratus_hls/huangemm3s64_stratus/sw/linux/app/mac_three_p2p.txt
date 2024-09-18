@@ -1,0 +1,363 @@
+// Copyright (c) 2011-2024 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
+#include "libesp.h"
+#include "cfg.h"
+
+#define FX_IL 12
+
+// static unsigned in_words_adj;
+// static unsigned out_words_adj;
+static unsigned inA_len;
+static unsigned inB_len;
+static unsigned out_len;
+static unsigned inA_size;
+static unsigned inB_size;
+static unsigned out_size;
+static unsigned out_offset;
+static unsigned mem_size;
+static unsigned input_size;
+
+/* User-defined code */
+
+static void print_fixed32(token_t fixed_num, int integer_bit) {
+
+	int float_bit = 32 - integer_bit;
+	// printf("float bit: %d\n", float_bit);
+	// preserve the floating points
+	int huan_mask = (1 << float_bit) - 1;
+
+	int integer_part = fixed_num >> float_bit;
+	long long frac_part = ((double)(fixed_num & huan_mask) / (double)(1 << float_bit)) * 100000 ;
+
+
+	printf("%d.%lld", integer_part, frac_part);
+}
+
+// static void dump_Matrix(token_t *A, int size, char* name){
+// 	printf("=============== dump Matrix =============\n");
+// 	for (int i = 0; i < size; i++){
+// 		printf("%s[%d] = ", name, i);
+// 		print_fixed32(A[i], FX_IL);
+// 		// printf("%d", A[i * cols + j]);
+// 		printf("\n");
+// 	}
+// }
+
+static void dump_A_and_B(token_t *A, token_t *B){
+	printf("=============== dump A and B =============\n");
+	for (int i = 0; i < rows; i++){
+		for (int j = 0; j < cols; j++){
+			printf("A[%d] = ", i * cols + j);
+			print_fixed32(A[i * cols + j], FX_IL);
+			// printf("%d", A[i * cols + j]);
+			printf("\n");
+		}
+	}
+
+	for (int i = 0; i < rows; i++){
+		for (int j = 0; j < cols; j++){
+			printf("B[%d] = ", i * cols + j);
+			print_fixed32(B[i * cols + j], FX_IL);
+			// printf("%d", B[i * cols + j]);
+			printf("\n");
+		}
+	}
+}
+
+static void dump_mem(token_t *mem){
+	printf("=============== dump memory =============\n");
+	for (int n = 0; n < 3; ++n){
+		for (int i = 0; i < rows; i++){
+			for (int j = 0; j < cols; j++){
+				printf("mem[%d] = ", n * cols * rows + i * cols + j);
+				print_fixed32(mem[n * cols * rows + i * cols + j], FX_IL);
+				// printf("%d", mem[n * cols * rows + i * cols + j]);
+				printf("\n");
+			}
+		}
+	}
+}
+
+// static void dump_3mem(token_t *mem){
+// 	printf("=============== dump memory =============\n");
+// 	for (int n = 0; n < 3*3; ++n){
+// 		for (int i = 0; i < rows; i++){
+// 			for (int j = 0; j < cols; j++){
+// 				printf("total_mem[%d] = ", n * cols * rows + i * cols + j);
+// 				print_fixed32(mem[n * cols * rows + i * cols + j], FX_IL);
+// 				// printf("%d", mem[n * cols * rows + i * cols + j]);
+// 				printf("\n");
+// 			}
+// 		}
+// 	}
+// }
+
+static int validate_buf(token_t *out, token_t *gold)
+{
+	int i;
+	int j;
+	unsigned errors = 0;
+
+	for (i = 0; i < rows; i++){
+		for (j = 0; j < cols; j++){
+			if (gold[i * cols + j] != out[i * cols + j]){
+				// float tmp1 = fixed32_to_float(gold[i * cols + j], FX_IL);
+				// float tmp2 = fixed32_to_float(out[i * cols + j], FX_IL);
+
+				// int fixed1_5 = float_to_fixed32(1.56, FX_IL);
+				// printf("fixed1_5 int: %d\n", (fixed1_5 >> 20));
+				// print_fixed32(fixed1_5, FX_IL);
+				// printf("\n");
+
+				///////////////// please use this part //////////////
+				printf("gold[%d] = ", i * cols + j);
+				print_fixed32(gold[i * cols + j], FX_IL);
+				printf(", out[%d] = ", i * cols + j);
+				print_fixed32(out[i * cols + j], FX_IL);
+				printf("\n");
+				////////////////// please use the above part ///////////////
+
+
+				// printf(stderr, "gold[%d] = %f, ", i * cols + j, tmp1);
+				
+				// printf(stderr, "out[%d] = %f\n", i * cols + j, tmp2);
+				errors++;
+			}
+		}
+	}
+
+	return errors;
+}
+
+
+/* User-defined code */
+static void init_buf (token_t *inA, token_t *inB, token_t * gold)
+{
+	// initialize input
+
+	///////////// converting functions ///////////////
+	// static inline int float_to_fixed32(float value, int n_int_bits)
+	// static inline float fixed32_to_float(int value, int n_int_bits)
+	//////////////////////////////////////////////////
+
+	// inA[0] = 1; inA[1] = 5; inA[2] = 9; inA[3] = 13;
+    // inA[4] = 2; inA[5] = 6; inA[6] = 10; inA[7] = 14; 
+	// inA[8] = 3; inA[9] = 7; inA[10] = 11; inA[11] = 15; 
+	// inA[12] = 4; inA[13] = 8; inA[14] = 12; inA[15] = 16;
+
+	// inB[0] = 0+1; inB[1] = 1+1; inB[2] = 2+1; inB[3] = 3+1;
+    // inB[4] = 4+1; inB[5] = 5+1; inB[6] = 6+1; inB[7] = 7+1;
+    // inB[8] = 8+1; inB[9] = 9+1; inB[10] = 10+1; inB[11] = 11+1;
+    // inB[12] = 12+1; inB[13] = 13+1; inB[14] = 14+1; inB[15] = 15+1;
+
+	inA[0] = float_to_fixed32(1.0, FX_IL);
+    inA[1] = float_to_fixed32(5.0, FX_IL);
+    inA[2] = float_to_fixed32(9.0, FX_IL);
+    inA[3] = float_to_fixed32(13.0, FX_IL);
+    inA[4] = float_to_fixed32(2.0, FX_IL);
+    inA[5] = float_to_fixed32(6.0, FX_IL);
+    inA[6] = float_to_fixed32(10.0, FX_IL);
+    inA[7] = float_to_fixed32(14.0, FX_IL);
+    inA[8] = float_to_fixed32(3.0, FX_IL);
+    inA[9] = float_to_fixed32(7.0, FX_IL);
+    inA[10] = float_to_fixed32(11.0, FX_IL);
+    inA[11] = float_to_fixed32(15.0, FX_IL);
+    inA[12] = float_to_fixed32(4.0, FX_IL);
+    inA[13] = float_to_fixed32(8.0, FX_IL);
+    inA[14] = float_to_fixed32(12.0, FX_IL);
+    inA[15] = float_to_fixed32(16.0, FX_IL);
+
+	inB[0] = float_to_fixed32(0.0+1.0, FX_IL);
+    inB[1] = float_to_fixed32(1.0+1.0, FX_IL);
+    inB[2] = float_to_fixed32(2.0+1.0, FX_IL);
+    inB[3] = float_to_fixed32(3.0+1.0, FX_IL);
+    inB[4] = float_to_fixed32(4.0+1.0, FX_IL);
+    inB[5] = float_to_fixed32(5.0+1.0, FX_IL);
+    inB[6] = float_to_fixed32(6.0+1.0, FX_IL);
+    inB[7] = float_to_fixed32(7.0+1.0, FX_IL);
+    inB[8] = float_to_fixed32(8.0+1.0, FX_IL);
+    inB[9] = float_to_fixed32(9.0+1.0, FX_IL);
+    inB[10] = float_to_fixed32(10.0+1.0, FX_IL);
+    inB[11] = float_to_fixed32(11.0+1.0, FX_IL);
+    inB[12] = float_to_fixed32(12.0+1.0, FX_IL);
+    inB[13] = float_to_fixed32(13.0+1.0, FX_IL);
+    inB[14] = float_to_fixed32(14.0+1.0, FX_IL);
+    inB[15] = float_to_fixed32(15.0+1.0, FX_IL);
+
+
+	// Compute golden output
+
+	// gold[0] = 90.0;
+    // gold[1] = 100.0;
+    // gold[2] = 110.0;
+    // gold[3] = 120.0;
+    // gold[4] = 202.0;
+    // gold[5] = 228.0;
+    // gold[6] = 254.0;
+    // gold[7] = 280.0;
+    // gold[8] = 314.0;
+    // gold[9] = 356.0;
+    // gold[10] = 398.0;
+    // gold[11] = 440.0;
+    // gold[12] = 426.0;
+    // gold[13] = 484.0;
+    // gold[14] = 542.0;
+    // gold[15] = 600.0;
+
+	gold[0] = float_to_fixed32(90.0, FX_IL);
+    gold[1] = float_to_fixed32(100.0, FX_IL);
+    gold[2] = float_to_fixed32(110.0, FX_IL);
+    gold[3] = float_to_fixed32(120.0, FX_IL);
+    gold[4] = float_to_fixed32(202.0, FX_IL);
+    gold[5] = float_to_fixed32(228.0, FX_IL);
+    gold[6] = float_to_fixed32(254.0, FX_IL);
+    gold[7] = float_to_fixed32(280.0, FX_IL);
+    gold[8] = float_to_fixed32(314.0, FX_IL);
+    gold[9] = float_to_fixed32(356.0, FX_IL);
+    gold[10] = float_to_fixed32(398.0, FX_IL);
+    gold[11] = float_to_fixed32(440.0, FX_IL);
+    gold[12] = float_to_fixed32(426.0, FX_IL);
+    gold[13] = float_to_fixed32(484.0, FX_IL);
+    gold[14] = float_to_fixed32(542.0, FX_IL);
+    gold[15] = float_to_fixed32(600.0, FX_IL);
+}
+
+
+/* User-defined code */
+static void init_parameters()
+{
+	inA_len = rows*loaded_cols;
+	inB_len = loaded_cols*cols;
+	out_len = rows*cols;
+	inA_size = inA_len * sizeof(token_t);
+	inB_size = inB_len * sizeof(token_t);
+	out_size = out_len * sizeof(token_t);
+	out_offset = inA_len + inB_len;
+	mem_size = inA_size + inB_size + out_size;
+	input_size = inA_size + inB_size;
+}
+
+
+int main(int argc, char **argv)
+{
+	int errors;
+
+	// token_t *mem;
+	token_t *mem1;
+	// token_t *mem2;
+	// token_t *mem3;
+	token_t *Ap1;
+	token_t *Bp1;
+	// token_t *Ap2;
+	// token_t *Bp2;
+	// token_t *Ap3;
+	// token_t *Bp3;
+	token_t *gold;
+	// token_t *buf;
+
+	init_parameters();
+
+	////////////// memory layout ///////////////////
+	//
+	// ---------------------------------------- mem1
+	//               A1
+	// ---------------------------------------- 
+	//               B1
+	// ---------------------------------------- mem2
+	//               A2
+	// ----------------------------------------
+	//               B2
+	// ---------------------------------------- mem3
+	//               dummy
+	// ---------------------------------------- 
+	//               dummy
+	// ---------------------------------------- 
+	//               O
+	// ----------------------------------------
+	//
+	////////////////////////////////////////////////
+
+	// mem = (token_t *) esp_alloc(mem_size*3);
+	// mem1 = mem;
+	// mem2 = mem + mem_size;
+	// mem3 = mem + 2*mem_size;
+
+	mem1 = (token_t *) esp_alloc(mem_size);
+	// mem2 = (token_t *) esp_alloc(mem_size);
+	// mem3 = (token_t *) esp_alloc(mem_size);
+
+
+	cfg_000[0].hw_buf = mem1;
+	// cfg_000[1].hw_buf = mem2;
+	// cfg_000[2].hw_buf = mem3;
+    
+	gold = malloc(out_size);
+
+	Ap1 = mem1;
+	Bp1 = mem1;
+	Bp1 += inA_len;
+
+	// Ap2 = mem2;
+	// Bp2 = mem2;
+	// Bp2 += inA_len;
+
+	// Ap3 = mem3;
+	// Bp3 = mem3;
+	// Bp3 += inA_len;
+
+	init_buf(Ap1, Bp1, gold);
+	// init_buf(Ap2, Bp2, gold);
+	// init_buf(Ap3, Bp3, gold);
+	dump_A_and_B(Ap1, Bp1);
+	printf("=============== before calculation and validation ==================\n");
+	printf("=============== this is A1:\n");
+	dump_mem(mem1);
+	// printf("=============== this is A2:\n");
+	// dump_mem(mem2);
+	// printf("=============== this is O:\n");
+	// dump_mem(mem3);
+	// printf("=============== this is the total memory layout:\n");
+	// dump_3mem(mem);
+	// printf("=============== this is O:\n");
+	// dump_mem(mem3);
+
+	// dump_mem(mem);
+
+	printf("\n====== %s ======\n\n", cfg_000[0].devname);
+	/* <<--print-params-->> */
+	printf("  .rows = %d\n", rows);
+	printf("  .cols = %d\n", cols);
+	printf("  .loaded_cols = %d\n", loaded_cols);
+	printf("\n  ** START **\n");
+
+	
+	esp_run(cfg_000, 1);
+
+	printf("\n  ** DONE **\n");
+
+	// errors = validate_buf(&mem3[out_offset], gold);
+	errors = validate_buf(&mem1[out_offset], gold);
+	// char ans[] = "answer";
+	// dump_Matrix(&mem3[out_offset], 16, ans);
+	printf("=============== after calculation and validation ==================\n");
+	printf("=============== this is A1:\n");
+	dump_mem(mem1);
+	// printf("=============== this is A2:\n");
+	// dump_mem(mem2);
+	// printf("=============== this is O:\n");
+	// dump_mem(mem3);
+
+	free(gold);
+	esp_free(mem1);
+	// esp_free(mem2);
+	// esp_free(mem3);
+
+	if (!errors)
+		printf("+ Test PASSED\n");
+	else
+		printf("+ Test FAILED\n");
+
+	printf("\n====== %s ======\n\n", cfg_000[0].devname);
+
+	return errors;
+}

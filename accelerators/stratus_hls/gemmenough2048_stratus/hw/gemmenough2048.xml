@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="gemmenough2048" desc="Accelerator GEMMENOUGH2048" data_size="4" device_id="209" hls_tool="stratus_hls">
+    <param name="ld_offset2" desc="ld_offset2" />
+    <param name="ld_offset1" desc="ld_offset1" />
+    <param name="st_offset" desc="st_offset" />
+    <param name="d1" desc="d1" />
+    <param name="d2" desc="d2" />
+    <param name="d3" desc="d3" />
+    <param name="ninputs" desc="ninputs" />
+  </accelerator>
+</sld>

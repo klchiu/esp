@@ -1,0 +1,4 @@
+gemmenough512_plm_block_in_dma32 524288 32 1w:0r 0w:1r
+gemmenough512_plm_block_out_dma32 524288 32 1w:0r 0w:1r
+gemmenough512_plm_block_in_dma64 524288 32 2w:0r 0w:1r
+gemmenough512_plm_block_out_dma64 524288 32 1w:0r 0w:2r

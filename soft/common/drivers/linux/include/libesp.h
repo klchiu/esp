@@ -35,6 +35,17 @@ unsigned DMA_WORD_PER_BEAT(unsigned _st);
 
 
 
+struct huangemm3s_stratus_access {
+	struct esp_access esp;
+	/* <<--regs-->> */
+	unsigned rows;
+	unsigned cols;
+	unsigned loaded_cols;
+	unsigned src_offset;
+	unsigned dst_offset;
+};
+
+
 struct gemmRun2_stratus_access {
 	struct esp_access esp;
 	/* <<--regs-->> */

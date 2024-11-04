@@ -21,12 +21,23 @@
 const AcceleratorEntry* find_best_accelerator(int gemm_size) {
     const AcceleratorEntry* best_accelerator = NULL;
 
+    fprintf(stderr, "[humu]: find_best_accelerator, gemm_size = %d\n", gemm_size);
+    fprintf(stderr, "[humu]: ACC_ENTRIES_COUNT = %ld\n", ACC_ENTRIES_COUNT);
+
     for (int i = 0; i < ACC_ENTRIES_COUNT; i++) {
          // Check if the current accelerator's max_size is greater than or equal to the given gemm_size
+        
+        fprintf(stderr, "[humu]: accEntries[%d].max_size = %d\n", i, accEntries[i].max_size);
+
         if (accEntries[i].max_size >= gemm_size) {
+
             // Select the accelerator with the smallest max_size
             if (!best_accelerator || accEntries[i].max_size < best_accelerator->max_size) {
+                
                 best_accelerator = &accEntries[i];
+                
+                fprintf(stderr, "-- [humu]: best_accelerator->max_size = %d\n", best_accelerator->max_size);
+
             }
         }
     }
@@ -67,7 +78,7 @@ void list_files(const char *path)
 
     while ((entry = readdir(dp)))
     {
-        printf("%s\n", entry->d_name);
+        fprintf(stderr, "%s\n", entry->d_name);
     }
 
     closedir(dp);
@@ -78,7 +89,7 @@ int pick_which_gemm_to_use(esp_thread_info_t info[])
     // return two digit int to indicate which gemm to use, return -1 if using
     // original gemm starting from the smallest one
 
-    printf("[humu]: pick_which_gemm_to_use() start\n");
+    fprintf(stderr, "[humu]: pick_which_gemm_to_use() start\n");
 
     int ret = -1;
 //     int gemm_acc_size;
@@ -98,12 +109,12 @@ int pick_which_gemm_to_use(esp_thread_info_t info[])
 //         return ret;
 //     }
 
-//     printf("[humu]: pick_which_gemm_to_use() debug 1\n");
+//     fprintf(stderr, "[humu]: pick_which_gemm_to_use() debug 1\n");
 
 
 //     while ((entry = readdir(dp)))
 //     {
-//         // printf("%s\n", entry->d_name);
+//         // fprintf(stderr, "%s\n", entry->d_name);
 //         sprintf(gemm_acc_array[i], "%s", entry->d_name);
 //         gemm_acc_size = get_the_gemm_acc_max_ability(entry->d_name, "deadpool");
 //         // if(info->max_d123 > gemm_acc_size){
@@ -116,7 +127,7 @@ int pick_which_gemm_to_use(esp_thread_info_t info[])
 
 //     closedir(dp);
 
-    printf("[humu]: gemm_size from pick_which_gemm_to_use: %d\n", ret);
+    fprintf(stderr, "[humu]: gemm_size from pick_which_gemm_to_use: %d\n", ret);
     return ret;
 }
 
@@ -126,8 +137,8 @@ int lock_a_device2(char *devname_noid, char *puffinname)
     // return -1
 
     FILE *pFile;
-    char acc[16][40];
-    char acc_lock[16][40];
+    char acc[16][60];
+    char acc_lock[16][60];
     int8_t i = 0;
     // int8_t dev_id      = -1;
     int8_t acc_num_max =
@@ -137,7 +148,7 @@ int lock_a_device2(char *devname_noid, char *puffinname)
     // Check the available resources
     // for (int8_t i = 0; i < 4; i++) {
 
-    fprintf(stderr, "[%s]: lock this: %s\n", puffinname, devname_noid);
+    fprintf(stderr, "[%s]: try to lock this: %s\n", puffinname, devname_noid);
 
     while (true)
     {
@@ -224,7 +235,7 @@ int unlock_a_device2(char *devname, char *puffinname)
     // unlock_a_device2: release the accelerator, return flock
 
     FILE *pFile;
-    char acc_lock[40];
+    char acc_lock[60];
     int ret_flock = -1;
 
     sprintf(acc_lock, "/lock/%s", devname);
@@ -489,10 +500,10 @@ static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
 
 static void print_accelerator_entry(const AcceleratorEntry* entry, int gemm_size)
 {
-    printf("[humu]: [%d] acc_name = %s\n", gemm_size, entry->acc_name);
-    printf("[humu]: [%d] gemm_size = %d\n", gemm_size, entry->gemm_size);
-    printf("[humu]: [%d] speedup = %f\n", gemm_size, entry->speedup);
-    printf("[humu]: [%d] max_size = %d\n", gemm_size, entry->max_size);
+    fprintf(stderr, "[humu]: gemm_size = %d, acc_name = %s\n", gemm_size, entry->acc_name);
+    fprintf(stderr, "[humu]: gemm_size = %d, gemm_size = %d\n", gemm_size, entry->gemm_size);
+    fprintf(stderr, "[humu]: gemm_size = %d, speedup = %f\n", gemm_size, entry->speedup);
+    fprintf(stderr, "[humu]: gemm_size = %d, max_size = %d\n", gemm_size, entry->max_size);
 }
 
 void esp_run(esp_thread_info_t cfg[], unsigned nacc)
@@ -500,13 +511,14 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     int i;
     int dev_id = -1;
 
-    char gemmname_noid[20];
+    char gemmname_noid[40];
+    char gemmname[50];
 
     const AcceleratorEntry* best_accelerator = NULL;
 
 
 
-    // printf("[humu]: check the return of find_best_accelerator function\n");
+    // fprintf(stderr, "[humu]: check the return of find_best_accelerator function\n");
     // int gemm_size = -1;
     // for (gemm_size = 0; gemm_size < 100; gemm_size++){
     //     best_accelerator = find_best_accelerator(gemm_size);
@@ -514,25 +526,65 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     // }
 
 
-    if (strstr(cfg->devname_noid, "gemm") != NULL) // if we are using gemm
+    if (strstr(cfg->devname_noid, "huangemm") != NULL) // if we are using huangemm
     {
-        printf("[humu]: It's a GeMM operation!\n");
+        fprintf(stderr, "[humu]: It's a Huan GeMM operation!\n");
+
+        struct huangemm3s_stratus_access *tmp = (struct huangemm3s_stratus_access *)cfg[0].esp_desc;
+        
+        int huan_d1 = tmp->rows;
+        int huan_d2 = tmp->loaded_cols;
+        int huan_d3 = tmp->cols;
+
+        fprintf(stderr, "[humu]: huan_d1 = %d\n", huan_d1);
+        fprintf(stderr, "[humu]: huan_d2 = %d\n", huan_d2);
+        fprintf(stderr, "[humu]: huan_d3 = %d\n", huan_d3);
+
+
+        int max_d123 = MAX(huan_d1, MAX(huan_d2, huan_d3));
+        // fprintf(stderr, "[humu]: max_d123 = %d\n", max_d123);
+
+        best_accelerator = find_best_accelerator(max_d123);
+        
+        fprintf(stderr, "[humu]: max_d123 = %d\n", max_d123);
+
+        print_accelerator_entry(best_accelerator, max_d123);
+
+
+        sprintf(gemmname_noid, "%s%s", best_accelerator->acc_name, "_stratus");
+        
+        fprintf(stderr, "[humu]: gemmname_noid = %s, max_d123 = %d\n", gemmname_noid, max_d123);
+
+        dev_id = lock_a_device2(gemmname_noid, cfg->puffinname);
+
+        sprintf(gemmname, "%s.%d", gemmname_noid, dev_id);
+
+        fprintf(stderr, "[humu]: gemmname = %s\n", gemmname);
+    }
+    else if (strstr(cfg->devname_noid, "gemm") != NULL) // if we are using gemm
+    {
+        fprintf(stderr, "[humu]: It's a GeMM operation!\n");
 
         struct gemmRun2_stratus_access *tmp = (struct gemmRun2_stratus_access *)cfg[0].esp_desc;
-        // printf("[humu]: d1 = %d\n", tmp->d1);
-        // printf("[humu]: d2 = %d\n", tmp->d2);
-        // printf("[humu]: d3 = %d\n", tmp->d3);
+        fprintf(stderr, "[humu]: d1 = %d\n", tmp->d1);
+        fprintf(stderr, "[humu]: d2 = %d\n", tmp->d2);
+        fprintf(stderr, "[humu]: d3 = %d\n", tmp->d3);
         int max_d123 = MAX(tmp->d1, MAX(tmp->d2, tmp->d3));
-        // printf("[humu]: max_d123 = %d\n", max_d123);
+        // fprintf(stderr, "[humu]: max_d123 = %d\n", max_d123);
 
         best_accelerator = find_best_accelerator(max_d123);
         print_accelerator_entry(best_accelerator, max_d123);
 
         sprintf(gemmname_noid, "%s%s", best_accelerator->acc_name, "_stratus");
         
-        printf("[humu]: gemmname_noid = %s\n", gemmname_noid);
+        fprintf(stderr, "[humu]: gemmname_noid = %s, max_d123 = %d\n", gemmname_noid, max_d123);
 
         dev_id = lock_a_device2(gemmname_noid, cfg->puffinname);
+
+        sprintf(gemmname, "%s.%d", gemmname_noid, dev_id);
+
+        fprintf(stderr, "[humu]: gemmname = %s\n", gemmname);
+
 
 /*
         // gemm_size = pick_which_gemm_to_use(cfg);
@@ -542,7 +594,7 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
         {
             // use the fixed size gemm
             sprintf(gemmname_noid, "%s%d%s", "gemm", gemm_size, "_stratus");
-            printf("[ESP_RUN]: Use the Fixed size Gemm!\t\t\tgemm_size = %d, gemmname_noid: %s, devname_noid: %s\n",
+            fprintf(stderr, "[ESP_RUN]: Use the Fixed size Gemm!\t\t\tgemm_size = %d, gemmname_noid: %s, devname_noid: %s\n",
                    gemm_size, gemmname_noid, cfg->devname_noid);
 
             dev_id = lock_a_device2(gemmname_noid, cfg->puffinname);
@@ -550,20 +602,20 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
         else if (gemm_size == -1 || gemm_size > 128)
         {
             // use the original gemm
-            printf("[ESP_RUN]: Use the original Gemm!\t\t\tgemm_size = %d\n", gemm_size);
+            fprintf(stderr, "[ESP_RUN]: Use the original Gemm!\t\t\tgemm_size = %d\n", gemm_size);
             dev_id = lock_a_device2(cfg->devname_noid, cfg->puffinname);
         }
         else
         {
             // shouldn't execute this line
-            printf("[ESP_RUN]: You SHOULDN'T SEE THIS MESSAGE!\n");
+            fprintf(stderr, "[ESP_RUN]: You SHOULDN'T SEE THIS MESSAGE!\n");
             return;
         }
 */
     }
     else // if we are using other acc
     {
-        printf("[humu]: It's not a GeMM operation!\n");
+        fprintf(stderr, "[humu]: It's not a GeMM operation!\n");
         dev_id = lock_a_device2(cfg->devname_noid, cfg->puffinname);
     }
 
@@ -575,7 +627,6 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
         return;
     }
     
-    printf("[ESP_RUN]: debug 3\n");
 
     fprintf(stderr, "---- in esp_run() %s\n", cfg->puffinname);
 
@@ -598,9 +649,8 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     // info->devname[strlen(info->devname)-1] = '2';// + 1; // dev_id;
     cfg->devname = temp_name;
 
-    // fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d,
-    // devname: %s\n", cfg->puffinname, dev_id,
-    //              cfg->devname);
+    fprintf(stderr, "[%s]: esp_run: after changing devname, ------- dev_id: %d, devname: %s\n", 
+                    cfg->puffinname, dev_id, cfg->devname);
 
     if (thread_is_p2p(&cfg[0]))
     {
@@ -628,9 +678,9 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     }
 
 
-    if (strstr(cfg->devname_noid, "gemm") != NULL) // if we are using gemm
+    if (strstr(cfg->devname_noid, "gemm") != NULL) // if we are using gemm or huangemm
     {
-        unlock_a_device2(gemmname_noid, cfg->puffinname);
+        unlock_a_device2(gemmname, cfg->puffinname);
     }
     else // if we are using other acc
     {

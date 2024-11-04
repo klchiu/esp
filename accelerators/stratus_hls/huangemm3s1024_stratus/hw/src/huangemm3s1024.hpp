@@ -38,8 +38,11 @@ public:
         // Map arrays to memories
         /* <<--plm-bind-->> */
 
-        HLS_MAP_plm(O_pong, PLM_OUT_NAME);
-        HLS_MAP_plm(O_ping, PLM_OUT_NAME);
+        // HLS_MAP_plm(O_pong, PLM_OUT_NAME);
+        // HLS_MAP_plm(O_ping, PLM_OUT_NAME);
+        HLS_MAP_plm(O_pong, PLM_IN_NAME);
+        HLS_MAP_plm(O_ping, PLM_IN_NAME);
+
         HLS_MAP_plm(A_ping, PLM_IN_NAME);
         HLS_MAP_plm(A_pong, PLM_IN_NAME);
         HLS_MAP_plm(B_ping, PLM_IN_NAME);

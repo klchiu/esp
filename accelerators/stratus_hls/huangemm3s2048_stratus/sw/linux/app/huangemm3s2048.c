@@ -4,6 +4,11 @@
 #include "cfg.h"
 #include <test/time.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #define FX_IL 12
 // #define DBG_APP 1
 
@@ -536,7 +541,7 @@ static void validation_float32(float* out, float* gold) {
 	for (int j = 0; j < rows; ++j) {
 		for (int k = 0; k < cols; ++k) {
 			if (gold[j*cols + k] != out[j*cols + k]) {
-				printf("failed in float 32 (cpu) verification\n");
+				printf("failed in float 32 (cpu) verification, gold[%d] = %f\tout[%d] = %f\n", j*cols + k, gold[j*cols + k], j*cols + k, out[j*cols + k]);
 			}
 		}
 	}
@@ -546,7 +551,7 @@ static void validation_fixed32(token_t* out, token_t* gold) {
 	for (int j = 0; j < rows; ++j) {
 		for (int k = 0; k < cols; ++k) {
 			if (gold[j*cols + k] != out[j*cols + k]) {
-				printf("failed in fixed 32 (acc) verification\n");
+				printf("failed in fixed 32 (acc) verification, gold[%d] = %f\tout[%d] = %f\n", j*cols + k, gold[j*cols + k], j*cols + k, out[j*cols + k]);
 			}
 		}
 	}
@@ -581,6 +586,7 @@ static void init_parameters()
 int main(int argc, char **argv)
 {
 	int errors;
+	int x, y, z;
 
 	// token_t *mem;
 	token_t *mem_acc;
@@ -599,7 +605,25 @@ int main(int argc, char **argv)
 	float* gold_cpu;
 	// token_t *buf;
 	unsigned long long time_s;
+	unsigned long long time_s_sw;
+	unsigned long long time_s_hw;
 	struct timespec t_test_1, t_test_2;
+
+	FILE *log_file = fopen("log.txt", "w");
+	if (log_file == NULL)
+	{
+	    printf("Error opening file!\n");
+	    exit(1);
+	}
+
+
+	printf("Let's Go!\n");
+
+	for(x = 8; x < 128; x+=8){
+		rows = x;
+		cols = x;
+		loaded_cols = x;
+	
 
 
 	init_parameters();
@@ -711,11 +735,23 @@ int main(int argc, char **argv)
 
 	zero_mem_fixed32(mem_acc);
 	random_input_initialization_float32(A_cpu, B_cpu);
+	
+	gettime(&t_test_1);
 	random_golden_initialization_float32(A_cpu, B_cpu, gold_cpu);
+	gettime(&t_test_2);
+	time_s_sw = ts_subtract(&t_test_1, &t_test_2);
+	printf("-------------------------------------------------------\n");
+    printf("Finish SW. time of test: %llu (ns)\n", time_s_sw);
+    printf("-------------------------------------------------------\n");
+
 	random_input_initialization_fixed32(A_acc, B_acc);
 	random_golden_initialization_fixed32(gold_cpu, gold_acc);
 	printf("really enter the acc flow\n");
 
+
+	printf("[debug]: rows = %d\n", rows);
+	printf("[debug]: cols = %d\n", cols);
+	printf("[debug]: loaded_cols = %d\n", loaded_cols);
 
 	// #### this is the original flow ####
 	// init_buf(Ap1, Bp1, gold);
@@ -768,12 +804,13 @@ int main(int argc, char **argv)
 	gettime(&t_test_1);
 	esp_run(cfg_000, 1);
 	gettime(&t_test_2);
-	time_s = ts_subtract(&t_test_1, &t_test_2);
+	time_s_hw = ts_subtract(&t_test_1, &t_test_2);
     printf("-------------------------------------------------------\n");
-    printf("Finish testing. time of test: %llu (ns)\n", time_s);
+    printf("Finish ACC. time of test: %llu (ns)\n", time_s_hw);
     printf("-------------------------------------------------------\n");
 	// }
 	
+
 
 	// printf("\n  ** DONE **\n");
 
@@ -793,6 +830,11 @@ int main(int argc, char **argv)
 	dump_mem(mem_acc);
 #endif
 
+
+	printf("%d,%llu,%llu,%d\n", x, time_s_sw, time_s_hw, errors);
+	fprintf(log_file, "%d,%llu,%llu,%d\n", x, time_s_sw, time_s_hw, errors);
+
+
 	free(gold_acc);
 	free(gold_cpu);
 	esp_free(mem_acc);
@@ -807,5 +849,10 @@ int main(int argc, char **argv)
 
 	printf("\n====== %s ======\n\n", cfg_000[0].devname);
 #endif
+
+	}
+
+	fclose(log_file);
+
 	return errors;
 }

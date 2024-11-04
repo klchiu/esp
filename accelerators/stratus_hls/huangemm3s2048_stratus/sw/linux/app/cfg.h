@@ -18,9 +18,9 @@ typedef int32_t token_t;
 #define HUANGEMM3S2048_LOADED_COLS 4
 
 /* <<--params-->> */
-const int32_t rows = HUANGEMM3S2048_ROWS;
-const int32_t cols = HUANGEMM3S2048_COLS;
-const int32_t loaded_cols = HUANGEMM3S2048_LOADED_COLS;
+int32_t rows = HUANGEMM3S2048_ROWS;
+int32_t cols = HUANGEMM3S2048_COLS;
+int32_t loaded_cols = HUANGEMM3S2048_LOADED_COLS;
 
 // #define NACC 2
 
@@ -46,6 +46,8 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "huangemm3s2048_stratus.0",
+		.devname_noid = "huangemm3s2048_stratus",
+		.puffinname = "Bruce",
 		.ioctl_req = HUANGEMM3S2048_STRATUS_IOC_ACCESS,
 		.esp_desc = &(huangemm3s2048_cfg_000[0].esp),
 	}

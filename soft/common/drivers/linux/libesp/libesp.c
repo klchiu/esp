@@ -18,7 +18,6 @@ int lock_a_device2(char *devname_noid, char *puffinname)
     int    ret_flock;
 
     // Check the available resources
-    // for (int8_t i = 0; i < 4; i++) {
 
     while (true) {
         i = i % acc_num_max;
@@ -55,7 +54,7 @@ int lock_a_device2(char *devname_noid, char *puffinname)
             ret_flock = flock(fileno(pFile), LOCK_EX | LOCK_NB);
             if (ret_flock == -1) { // fail to lock it
                 if (errno == EWOULDBLOCK) {
-                    // fprintf(stderr, "[%s]: lock file was locked, keep finding the next available accelerator\n",
+                    // fprintf(stderr, "[%s]: lock file was locked, keep searching the next available accelerator\n",
                     // puffinname);
                     i++;
                     continue;
@@ -101,8 +100,6 @@ int unlock_a_device2(char *devname, char *puffinname)
 
     return ret_flock;
 }
-
-
 
 void insert_buf(void *buf, contig_handle_t *handle, enum contig_alloc_policy policy)
 {
@@ -330,7 +327,6 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
     int i;
     int dev_id = -1;
 
-
     dev_id = lock_a_device2(cfg->devname_noid, cfg->puffinname);
     if (dev_id < 0) {
         fprintf(stderr, "Failed to find a device!\n");
@@ -376,7 +372,6 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
         free(nacc_arr);
         free(cfg_ptrs);
     }
-
 
     unlock_a_device2(cfg->devname, cfg->puffinname);
 }
@@ -625,6 +620,14 @@ unsigned long long esp_run_no_print(esp_thread_info_t cfg[], unsigned nacc)
     return acc_time;
 }
 
-void esp_free(void *buf) { remove_buf(buf); }
+void esp_free(void *buf)
+{
+    // formatting placeholder
+    remove_buf(buf);
+}
 
-void esp_dummy(int dummy) { fprintf(stderr, "esp_dummy: %d\n", dummy); }
+void esp_dummy(int dummy)
+{
+    // formatting placeholder
+    fprintf(stderr, "esp_dummy: %d\n", dummy);
+}
